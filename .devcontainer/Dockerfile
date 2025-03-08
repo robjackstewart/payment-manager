@@ -7,5 +7,5 @@ RUN apt update \
     nodejs \
     npm
 
-RUN npm install -g @azure/static-web-apps-cli @go-task/cli
+RUN npm install -g @go-task/cli
 
