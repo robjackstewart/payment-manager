@@ -1,7 +1,15 @@
 version: '3'
 
+includes:
+  backend:
+    taskfile: backend/Taskfile.yml
+    dir: backend
+
 tasks:
-  dependencies:check:
-    preconditions:
-      - sh: dotnet --version
-        msg: The .NET CLI is required.
+  environment:check:
+    deps:
+      - task: backend:environment:check
+
+  build:
+    deps:
+      - task: backend:build

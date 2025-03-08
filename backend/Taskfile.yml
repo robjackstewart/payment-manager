@@ -1,0 +1,34 @@
+version: '3'
+
+tasks:
+  environment:check:
+    preconditions:
+      - sh: dotnet --version
+        msg: "The .NET CLI is required"
+    cmds:
+      - echo "All backend tooling are installed"
+
+  build:
+    cmds:
+      - dotnet build
+
+  restore:
+    cmds:
+      - dotnet restore
+
+  test:
+    cmds:
+      - dotnet test
+
+  test:unit:
+    cmds:
+      - dotnet test --filter "FullyQualifiedName~Unit"
+
+  test:integration:
+    cmds:
+      - dotnet test --filter "FullyQualifiedName~Integration"
+
+  api:run:
+    dir: ./src/PaymentManager.WebApi
+    cmds:
+      - dotnet run
