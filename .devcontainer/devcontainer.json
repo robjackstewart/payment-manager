@@ -1,0 +1,16 @@
+{
+    "name": "Payments Manager Dev Container",
+    "dockerFile": "Dockerfile",
+    "customizations": {
+        "extensions": [
+            "task.vscode-task",
+            "ms-dotnettools.csharp",
+            "ms-dotnettools.csdevkit",
+            "ms-azuretools.vscode-docker"
+        ]
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    },
+    "forwardPorts": [3000, 7261]
+}

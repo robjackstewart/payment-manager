@@ -1,0 +1,38 @@
+version: '3'
+
+includes:
+  backend:
+    taskfile: backend/Taskfile.yml
+    dir: backend
+  frontend:
+    taskfile: frontend/Taskfile.yml
+    dir: frontend
+
+tasks:
+  environment:check:
+    deps:
+      - task: backend:environment:check
+
+  install-dependencies:
+    deps:
+      - task: backend:install-dependencies
+      - task: frontend:install-dependencies
+
+  lint:
+    deps:
+      - task: backend:lint
+      - task: frontend:lint
+
+  build:
+    deps:
+      - task: backend:build
+      - task: frontend:build
+
+  test:
+    deps:
+      - task: backend:test
+
+  run:
+    deps:
+      - task: backend:api:run
+      - task: frontend:run

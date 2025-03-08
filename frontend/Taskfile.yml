@@ -1,0 +1,29 @@
+version: '3'
+
+tasks:
+  environment:check:
+    preconditions:
+      - sh: npm --version
+        msg: "The npm CLI is required"
+    cmds:
+      - echo "All frontend tooling is installed"
+
+  install-dependencies:
+    cmds:
+      - npm install
+
+  build:
+    cmds:
+      - npm run build
+
+  lint:
+    cmds:
+      - npm run lint
+
+  lint:fix:
+    cmds:
+      - npm run lint -- --fix
+
+  run:
+    cmds:
+      - npm run start
