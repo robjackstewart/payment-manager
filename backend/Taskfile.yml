@@ -12,7 +12,7 @@ tasks:
     cmds:
       - dotnet build
 
-  restore:
+  install-dependencies:
     cmds:
       - dotnet restore
 

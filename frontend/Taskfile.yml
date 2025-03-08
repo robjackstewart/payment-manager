@@ -8,6 +8,10 @@ tasks:
     cmds:
       - echo "All frontend tooling is installed"
 
+  install-dependencies:
+    cmds:
+      - npm install
+
   build:
     cmds:
       - npm run build
