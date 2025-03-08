@@ -13,3 +13,7 @@ tasks:
   build:
     deps:
       - task: backend:build
+
+  test:
+    deps:
+      - task: backend:test

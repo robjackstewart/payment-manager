@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  - pull_request
+
+env:
+  tag: ${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dev container CLI
+        run: npm install -g @devcontainers/cli
+      - name: Spin up dev container
+        run: devcontainer up --workspace-folder .
+      - name: Build
+        run: devcontainer exec --workspace-folder . -- task build
+      - name: Test
+        run: devcontainer exec --workspace-folder . -- task test
