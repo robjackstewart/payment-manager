@@ -1,5 +1,5 @@
 {
-    "name": "Python 3",
+    "name": "Payments Manager Dev Container",
     "dockerFile": "Dockerfile",
     "customizations": {
         "extensions": [
