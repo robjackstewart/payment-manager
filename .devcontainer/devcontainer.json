@@ -1,0 +1,15 @@
+{
+    "name": "Python 3",
+    "dockerFile": "Dockerfile",
+    "customizations": {
+        "extensions": [
+            "task.vscode-task",
+            "ms-azuretools.vscode-azurestaticwebapps",
+            "ms-dotnettools.csharp",
+            "ms-azuretools.vscode-docker"
+        ]
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    }
+}

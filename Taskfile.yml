@@ -1,0 +1,7 @@
+version: '3'
+
+tasks:
+  dependencies:check:
+    preconditions:
+      - sh: swa --version
+        msg: "The static web app CLI is installed: https://azure.github.io/static-web-apps-cli/docs/use/install"
