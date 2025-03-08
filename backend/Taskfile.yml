@@ -16,6 +16,14 @@ tasks:
     cmds:
       - dotnet restore
 
+  lint:
+    cmds:
+      - dotnet format --verify-no-changes
+
+  lint:fix:
+    cmds:
+      - dotnet format
+
   test:
     cmds:
       - dotnet test

@@ -20,6 +20,10 @@ tasks:
     cmds:
       - npm run lint
 
+  lint:fix:
+    cmds:
+      - npm run lint -- --fix
+
   api:run:
     dir: ./src/PaymentManager.WebApi
     cmds:

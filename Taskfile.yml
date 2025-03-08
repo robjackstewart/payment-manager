@@ -18,6 +18,11 @@ tasks:
       - task: backend:install-dependencies
       - task: frontend:install-dependencies
 
+  lint:
+    deps:
+      - task: backend:lint
+      - task: frontend:lint
+
   build:
     deps:
       - task: backend:build

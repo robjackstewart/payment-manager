@@ -20,5 +20,7 @@ jobs:
         run: devcontainer exec --workspace-folder . -- task install-dependencies
       - name: Build
         run: devcontainer exec --workspace-folder . -- task build
+      - name: Lint
+        run: devcontainer exec --workspace-folder . -- task lint
       - name: Test
         run: devcontainer exec --workspace-folder . -- task test
