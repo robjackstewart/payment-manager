@@ -31,3 +31,8 @@ tasks:
   test:
     deps:
       - task: backend:test
+
+  run:
+    deps:
+      - task: backend:api:run
+      - task: frontend:run

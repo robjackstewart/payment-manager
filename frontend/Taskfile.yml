@@ -24,7 +24,6 @@ tasks:
     cmds:
       - npm run lint -- --fix
 
-  api:run:
-    dir: ./src/PaymentManager.WebApi
+  run:
     cmds:
       - npm run start
