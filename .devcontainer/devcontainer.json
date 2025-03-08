@@ -5,6 +5,7 @@
         "extensions": [
             "task.vscode-task",
             "ms-dotnettools.csharp",
+            "ms-dotnettools.csdevkit",
             "ms-azuretools.vscode-docker"
         ]
     },
