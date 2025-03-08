@@ -4,6 +4,9 @@ includes:
   backend:
     taskfile: backend/Taskfile.yml
     dir: backend
+  frontend:
+    taskfile: frontend/Taskfile.yml
+    dir: frontend
 
 tasks:
   environment:check:
@@ -13,6 +16,7 @@ tasks:
   build:
     deps:
       - task: backend:build
+      - task: frontend:build
 
   test:
     deps:

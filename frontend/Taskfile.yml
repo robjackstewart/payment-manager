@@ -1,0 +1,22 @@
+version: '3'
+
+tasks:
+  environment:check:
+    preconditions:
+      - sh: npm --version
+        msg: "The npm CLI is required"
+    cmds:
+      - echo "All frontend tooling is installed"
+
+  build:
+    cmds:
+      - npm run build
+
+  lint:
+    cmds:
+      - npm run lint
+
+  api:run:
+    dir: ./src/PaymentManager.WebApi
+    cmds:
+      - npm run start
