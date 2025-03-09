@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentManager.WebApi.Tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentManager.Tests.Common", "tests\PaymentManager.Tests.Common\PaymentManager.Tests.Common.csproj", "{D6F621F4-655F-461C-BD84-37EE901ECD62}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentManager.Domain", "src\PaymentManager.Domain\PaymentManager.Domain.csproj", "{C90BB1B0-FDA0-4EFD-BF84-3F7EC959B6AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,6 +82,10 @@ Global
 		{D6F621F4-655F-461C-BD84-37EE901ECD62}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D6F621F4-655F-461C-BD84-37EE901ECD62}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D6F621F4-655F-461C-BD84-37EE901ECD62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C90BB1B0-FDA0-4EFD-BF84-3F7EC959B6AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C90BB1B0-FDA0-4EFD-BF84-3F7EC959B6AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C90BB1B0-FDA0-4EFD-BF84-3F7EC959B6AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C90BB1B0-FDA0-4EFD-BF84-3F7EC959B6AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{2531A0DF-0962-4953-AEFF-588DBB5164F0} = {36E91073-B8B3-462D-B460-0AAC66950C31}
@@ -94,5 +100,6 @@ Global
 		{EBDDD842-49F4-448C-ABBF-93443631D5E1} = {8A20141B-F18A-44AF-97E7-E5F8641C70C9}
 		{B5CCA8A2-CA4B-4350-8B75-6AD81DCB4DCF} = {EBDDD842-49F4-448C-ABBF-93443631D5E1}
 		{D6F621F4-655F-461C-BD84-37EE901ECD62} = {8A20141B-F18A-44AF-97E7-E5F8641C70C9}
+		{C90BB1B0-FDA0-4EFD-BF84-3F7EC959B6AA} = {36E91073-B8B3-462D-B460-0AAC66950C31}
 	EndGlobalSection
 EndGlobal

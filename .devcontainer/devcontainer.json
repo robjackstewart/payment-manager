@@ -2,15 +2,28 @@
     "name": "Payments Manager Dev Container",
     "dockerFile": "Dockerfile",
     "customizations": {
-        "extensions": [
-            "task.vscode-task",
-            "ms-dotnettools.csharp",
-            "ms-dotnettools.csdevkit",
-            "ms-azuretools.vscode-docker"
-        ]
+        "vscode": {
+            "extensions": [
+                "task.vscode-task",
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.csdevkit",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "terminal.integrated.shellArgs.linux": [
+                    "-l"
+                ],
+                "editor.formatOnSave": true,
+                "dotnet.defaultSolution": "${workspaceFolder}/backend/src/payment-manager.backend.sln"
+            }
+        }
     },
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:2": {}
     },
-    "forwardPorts": [3000, 7261]
+    "forwardPorts": [
+        3000,
+        7261
+    ]
 }
