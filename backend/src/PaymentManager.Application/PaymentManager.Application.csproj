@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\PaymentManager.Common\PaymentManager.Common.csproj" />
     <ProjectReference Include="..\PaymentManager.Domain\PaymentManager.Domain.csproj" />
   </ItemGroup>

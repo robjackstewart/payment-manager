@@ -40,3 +40,18 @@ tasks:
     dir: ./src/PaymentManager.WebApi
     cmds:
       - dotnet run
+
+  add-migration:
+    dir: ./src/PaymentManager.Infrastructure
+    preconditions:
+      - sh: test -n "$MIGRATION_NAME"
+        msg: "Please provide a name for the migration via the MIGRATION_NAME environment variable"
+    cmds:
+      - dotnet ef migrations add $MIGRATION_NAME
+
+  update-database:
+    dir: ./src/PaymentManager.Infrastructure
+    cmds:
+      - |
+        CONNECTION=${CONNECTION:-"Data Source=PaymentManager.db"}
+        dotnet ef database update --connection "$CONNECTION"
