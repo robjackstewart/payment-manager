@@ -20,7 +20,6 @@ internal class PaymentManagerContext(DbContextOptions<PaymentManagerContext> opt
     public Task<int> SaveChanges(CancellationToken cancellationToken)
         => base.SaveChangesAsync(cancellationToken);
 
-
     internal class ContextDesignTimeFactory : IDesignTimeDbContextFactory<PaymentManagerContext>
     {
         public PaymentManagerContext CreateDbContext(string[] args)

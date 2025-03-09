@@ -13,6 +13,7 @@ public static class ApplicationConfiguration
                 c.SwaggerEndpoint("/openapi/v1.json", "Payment Manager");
             });
         }
+        app.UseExceptionHandler(_ => { });
         return app;
     }
 }

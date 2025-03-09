@@ -5,7 +5,7 @@ using PaymentManager.Domain.Entities;
 
 namespace PaymentManager.Infrastructure;
 
-internal sealed class ReadOnlyPaymentManagerContext(PaymentManagerContext context) : IReadOnlyPaymentManagerContext
+internal sealed class ReadOnlyPaymentManagerContext(IPaymentManagerContext context) : IReadOnlyPaymentManagerContext
 {
     public IQueryable<User> Users => context.Users.AsNoTracking().AsQueryable();
 }

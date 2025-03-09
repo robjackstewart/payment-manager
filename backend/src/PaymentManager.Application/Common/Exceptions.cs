@@ -14,11 +14,13 @@ public static class Exceptions
         public readonly ICollection<ValidationError> Errors;
     }
 
-    public class NotFoundException(string entity, string criteria) : Exception($"{entity} not found with criteria: {criteria}")
+    public class NotFoundException(Type Type, string Criteria) : Exception($"{Type.Name} not found with criteria: {Criteria}")
     {
+        public readonly Type Type = Type;
+        public readonly string Criteria = Criteria;
     }
 
-    public sealed class NotFoundException<T>(string criteria) : NotFoundException($"{typeof(T).Name}", criteria)
+    public sealed class NotFoundException<T>(string Criteria) : NotFoundException(typeof(T), Criteria)
     {
     }
 }

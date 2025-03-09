@@ -1,44 +1,11 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Payment Manager",
-    "version": "v1"
+    "title": "PaymentManager.WebApi | v1",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/User": {
-      "post": {
-        "tags": [
-          "PaymentManager.WebApi"
-        ],
-        "operationId": "Create User",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PaymentManager.Application.Commands.CreateUser"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentManager.Application.Commands.CreateUser+Response"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          }
-        }
-      }
-    },
-    "/api/User/{id}": {
+    "/api/users/{id}": {
       "get": {
         "tags": [
           "PaymentManager.WebApi"
@@ -61,7 +28,40 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentManager.Application.Queries.GetUser+Response"
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/api/user": {
+      "post": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Create User",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUser"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -75,17 +75,22 @@
   },
   "components": {
     "schemas": {
-      "PaymentManager.Application.Commands.CreateUser": {
+      "CreateUser": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
-        },
-        "additionalProperties": false
+        }
       },
-      "PaymentManager.Application.Commands.CreateUser+Response": {
+      "Response": {
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -93,26 +98,15 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
-        },
-        "additionalProperties": false
-      },
-      "PaymentManager.Application.Queries.GetUser+Response": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
+        }
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "PaymentManager.WebApi"
+    }
+  ]
 }

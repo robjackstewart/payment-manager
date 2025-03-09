@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Using Include="NUnit.Framework" />
+    <Using Include="Shouldly.Shouldly" />
   </ItemGroup>
 
   <ItemGroup>

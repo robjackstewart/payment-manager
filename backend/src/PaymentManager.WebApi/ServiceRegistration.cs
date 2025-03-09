@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using PaymentManager.Application;
 using PaymentManager.Infrastructure;
+using PaymentManager.WebApi.Endpoints;
 
 namespace PaymentManager.WebApi;
 
@@ -11,13 +12,14 @@ public static class ServiceRegistration
         services
             .AddPaymentManagerApplication()
             .AddPaymentManagerInfrastructure(configuration)
-            .AddSwaggerGen(c =>
-                {
-                    c.SwaggerDoc("v1",
-                        new OpenApiInfo { Title = "Payment Manager", Version = "v1" });
-                    c.CustomSchemaIds(type => type.FullName);
-                }).AddOpenApi();
+            .AddOpenApi()
+            .AddProblemDetails()
+            .AddExceptionHandler<ExceptionHandler>();
 
         return services;
     }
+
+    public static WebApplication MapEndpoints(this WebApplication app)
+        => app.MapGetUserEndpoint()
+            .MapCreateUserEndpoint();
 }
