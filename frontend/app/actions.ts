@@ -2,14 +2,12 @@ import { Response as CreateUserResponse, CreateUser } from "@/clients/payment-ma
 import { Response as GetUserResponse } from "@/clients/payment-manager-api/models";
 import { getPaymentManagerApiClient } from "./common/factory";
 
-export async function getUser(id: string): Promise<GetUserResponse | undefined> {
-    const client = getPaymentManagerApiClient();
-    const response = await client.api.users.byId(id).get()
-    return response;
+const paymentManagerApiClient = getPaymentManagerApiClient();
+
+export function getUser(id: string): Promise<GetUserResponse | undefined> {
+    return paymentManagerApiClient.api.users.byId(id).get();
 }
 
-export async function createUser(request: CreateUser): Promise<CreateUserResponse | undefined> {
-    const client = getPaymentManagerApiClient();
-    const response = await client.api.user.post(request);
-    return response;
+export function createUser(request: CreateUser): Promise<CreateUserResponse | undefined> {
+    return paymentManagerApiClient.api.user.post(request);
 }
