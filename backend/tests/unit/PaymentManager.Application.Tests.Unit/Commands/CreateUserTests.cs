@@ -20,8 +20,11 @@ internal sealed class CreateUserTests
         var request = new CreateUser(string.Empty);
         var validator = new CreateUser.Validator();
 
-        // Act & Assert
-        validator.ShouldHaveValidationErrorFor(x => x.Name, request);
+        // Act
+        var result = validator.TestValidate(request);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.Name);
     }
 
     [Test]
@@ -31,8 +34,11 @@ internal sealed class CreateUserTests
         var request = new CreateUser("Test name");
         var validator = new CreateUser.Validator();
 
-        // Act & Assert
-        validator.ShouldNotHaveValidationErrorFor(x => x.Name, request);
+        // Act
+        var result = validator.TestValidate(request);
+
+        // Assert
+        result.ShouldNotHaveValidationErrorFor(x => x.Name);
     }
 
     [Test]
