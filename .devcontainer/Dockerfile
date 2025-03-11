@@ -7,3 +7,4 @@ RUN apt update \
 
 RUN npm install -g @go-task/cli
 
+RUN dotnet workload update
