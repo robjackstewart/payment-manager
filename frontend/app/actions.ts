@@ -1,5 +1,5 @@
 import { GetUserResponse, CreateUserResponse, CreateUser } from "@/clients/payment-manager-api/models";
-import { getPaymentManagerApiClient } from "./common/factory";
+import { getPaymentManagerApiClient } from "./factory";
 
 const paymentManagerApiClient = getPaymentManagerApiClient();
 
