@@ -8,8 +8,6 @@ export function getPaymentManagerApiClient() {
     const authProvider = new AnonymousAuthenticationProvider();
     const adapter = new FetchRequestAdapter(authProvider);
     const config = getConfig();
-    console.log(config);
     adapter.baseUrl = config.paymentManagerApi.baseUrl;
-    console.log(adapter);
     return createPaymentManagerApiClient(adapter);
 }
