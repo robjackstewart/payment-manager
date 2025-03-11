@@ -18,6 +18,8 @@ tasks:
       - npm install
 
   build:
+    deps:
+      - task: clients:build
     cmds:
       - npm run build
 
