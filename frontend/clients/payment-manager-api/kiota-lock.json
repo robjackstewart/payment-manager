@@ -1,6 +1,6 @@
 {
-  "descriptionHash": "B93E7FE46AA930B30735F6E7FB4E3F007AE577CC12E3E6315399A6D528D01B770BE828D7D40160FAC1FFA2C213AA928F0732C9EDAF196CE274F26108A473F8B6",
-  "descriptionLocation": "../../../../backend/src/PaymentManager.WebApi/PaymentManager.WebApi.json",
+  "descriptionHash": "BE2CCE89AA9599241060A913DEA51FFA3B929EB091763FCB4A0A4C3DE7F0DE3BB1707A5F82D50A27C6E5CC62B1A70F6E9C844B949F48661C41E8EF165342A173",
+  "descriptionLocation": "../../../backend/src/PaymentManager.WebApi/PaymentManager.WebApi.json",
   "lockFileVersion": "1.0.0",
   "kiotaVersion": "1.23.0",
   "clientClassName": "PaymentManagerApiClient",

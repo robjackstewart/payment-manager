@@ -1,5 +1,4 @@
-import { Response as CreateUserResponse, CreateUser } from "@/clients/payment-manager-api/models";
-import { Response as GetUserResponse } from "@/clients/payment-manager-api/models";
+import { GetUserResponse, CreateUserResponse, CreateUser } from "@/clients/payment-manager-api/models";
 import { getPaymentManagerApiClient } from "./common/factory";
 
 const paymentManagerApiClient = getPaymentManagerApiClient();

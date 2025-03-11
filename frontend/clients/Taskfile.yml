@@ -4,3 +4,11 @@ tasks:
   build:
     cmds:
       - npx tsc
+
+  update:
+    cmds:
+      - dotnet kiota update --output ./payment-manager-api
+
+  generate:
+    cmds:
+      - dotnet kiota generate -l typescript -d ../../backend/src/PaymentManager.WebApi/PaymentManager.WebApi.json -c PaymentManagerApiClient --output ./payment-manager-api

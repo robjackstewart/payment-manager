@@ -1,4 +1,5 @@
 using CommunityToolkit.Diagnostics;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi.Models;
 using PaymentManager.Application;
 using PaymentManager.Infrastructure;
@@ -16,7 +17,20 @@ public static class ServiceRegistration
         services
             .AddPaymentManagerApplication()
             .AddPaymentManagerInfrastructure(configuration)
-            .AddOpenApi()
+            .AddOpenApi(opt =>
+            {
+                opt.CreateSchemaReferenceId = (jsonTypeInfo) =>
+                {
+                    // Normal behavior if not a nested class
+                    if (!jsonTypeInfo.Type.IsNested)
+                    {
+                        return OpenApiOptions.CreateDefaultSchemaReferenceId(jsonTypeInfo);
+                    }
+
+                    // Concatenate nested class name with parent class name
+                    return $"{jsonTypeInfo.Type.DeclaringType!.Name}{jsonTypeInfo.Type.Name}";
+                };
+            })
             .AddProblemDetails()
             .AddExceptionHandler<ExceptionHandler>()
             .AddCors(opt =>

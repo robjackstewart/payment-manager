@@ -38,12 +38,3 @@ tasks:
   run:
     cmds:
       - npm run start
-
-  api-client:generate:
-    
-    cmds:
-      - npm run generate-api-client
-
-  api-client:generate:
-    cmds:
-      - npm run update-api-client

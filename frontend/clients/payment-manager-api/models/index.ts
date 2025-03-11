@@ -16,17 +16,40 @@ export function createCreateUserFromDiscriminatorValue(parseNode: ParseNode | un
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {Response}
+ * @returns {CreateUserResponse}
  */
 // @ts-ignore
-export function createResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoResponse;
+export function createCreateUserResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoCreateUserResponse;
+}
+/**
+ * Creates a new instance of the appropriate class based on discriminator value
+ * @param parseNode The parse node to use to read the discriminator value and create the object
+ * @returns {GetUserResponse}
+ */
+// @ts-ignore
+export function createGetUserResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoGetUserResponse;
 }
 export interface CreateUser extends AdditionalDataHolder, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
      */
     additionalData?: Record<string, unknown>;
+    /**
+     * The name property
+     */
+    name?: string | null;
+}
+export interface CreateUserResponse extends AdditionalDataHolder, Parsable {
+    /**
+     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+     */
+    additionalData?: Record<string, unknown>;
+    /**
+     * The id property
+     */
+    id?: Guid | null;
     /**
      * The name property
      */
@@ -47,13 +70,24 @@ export function deserializeIntoCreateUser(createUser: Partial<CreateUser> | unde
  * @returns {Record<string, (node: ParseNode) => void>}
  */
 // @ts-ignore
-export function deserializeIntoResponse(response: Partial<Response> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+export function deserializeIntoCreateUserResponse(createUserResponse: Partial<CreateUserResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
-        "id": n => { response.id = n.getGuidValue(); },
-        "name": n => { response.name = n.getStringValue(); },
+        "id": n => { createUserResponse.id = n.getGuidValue(); },
+        "name": n => { createUserResponse.name = n.getStringValue(); },
     }
 }
-export interface Response extends AdditionalDataHolder, Parsable {
+/**
+ * The deserialization information for the current model
+ * @returns {Record<string, (node: ParseNode) => void>}
+ */
+// @ts-ignore
+export function deserializeIntoGetUserResponse(getUserResponse: Partial<GetUserResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+    return {
+        "id": n => { getUserResponse.id = n.getGuidValue(); },
+        "name": n => { getUserResponse.name = n.getStringValue(); },
+    }
+}
+export interface GetUserResponse extends AdditionalDataHolder, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
      */
@@ -83,11 +117,23 @@ export function serializeCreateUser(writer: SerializationWriter, createUser: Par
  * @param writer Serialization writer to use to serialize this model
  */
 // @ts-ignore
-export function serializeResponse(writer: SerializationWriter, response: Partial<Response> | undefined | null = {}) : void {
-    if (response) {
-        writer.writeGuidValue("id", response.id);
-        writer.writeStringValue("name", response.name);
-        writer.writeAdditionalData(response.additionalData);
+export function serializeCreateUserResponse(writer: SerializationWriter, createUserResponse: Partial<CreateUserResponse> | undefined | null = {}) : void {
+    if (createUserResponse) {
+        writer.writeGuidValue("id", createUserResponse.id);
+        writer.writeStringValue("name", createUserResponse.name);
+        writer.writeAdditionalData(createUserResponse.additionalData);
+    }
+}
+/**
+ * Serializes information the current object
+ * @param writer Serialization writer to use to serialize this model
+ */
+// @ts-ignore
+export function serializeGetUserResponse(writer: SerializationWriter, getUserResponse: Partial<GetUserResponse> | undefined | null = {}) : void {
+    if (getUserResponse) {
+        writer.writeGuidValue("id", getUserResponse.id);
+        writer.writeStringValue("name", getUserResponse.name);
+        writer.writeAdditionalData(getUserResponse.additionalData);
     }
 }
 /* tslint:enable */
