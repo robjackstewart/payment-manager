@@ -15,6 +15,7 @@ tasks:
 
   install-dependencies:
     deps:
+      - task: restore-dotnet-tools
       - task: backend:install-dependencies
       - task: frontend:install-dependencies
 
@@ -36,3 +37,7 @@ tasks:
     deps:
       - task: backend:api:run
       - task: frontend:run
+
+  restore-dotnet-tools:
+    cmds:
+      - dotnet tool restore

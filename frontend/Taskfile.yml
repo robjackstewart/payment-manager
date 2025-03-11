@@ -1,5 +1,10 @@
 version: '3'
 
+includes:
+  clients:
+    taskfile: clients/Taskfile.yml
+    dir: clients
+
 tasks:
   environment:check:
     preconditions:
@@ -13,8 +18,14 @@ tasks:
       - npm install
 
   build:
+    deps:
+      - task: clients:build
     cmds:
       - npm run build
+
+  dev:
+    cmds:
+      - npm run dev
 
   lint:
     cmds:

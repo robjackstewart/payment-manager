@@ -41,6 +41,10 @@ tasks:
     cmds:
       - dotnet run
 
+  run:
+    deps:
+      - api:run
+
   add-migration:
     dir: ./src/PaymentManager.Infrastructure
     preconditions:

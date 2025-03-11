@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "es2016",
+        "module": "commonjs",
+        "outDir": "./dist/payment-manager-api",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "declaration": true
+    },
+    "include": [
+        "./payment-manager-api/**/*"
+    ]
+}
