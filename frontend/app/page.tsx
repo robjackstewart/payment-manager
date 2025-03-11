@@ -1,3 +1,4 @@
+'use client';
 import { createUser } from "@/app/actions";
 
 async function createUserOnClick() {
@@ -6,6 +7,6 @@ async function createUserOnClick() {
 
 export default function Home() {
   return (
-    <button onClick={createUserOnClick}>Create</button>
+    <button onClick={createUserOnClick}>Create User</button>
   );
 }
