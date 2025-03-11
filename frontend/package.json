@@ -10,8 +10,6 @@
   },
   "dependencies": {
     "@microsoft/kiota-abstractions": "^1.0.0-preview.85",
-    "@microsoft/kiota-bundle": "^1.0.0-preview.85",
-    "@microsoft/kiota-http-fetchlibrary": "^1.0.0-preview.85",
     "@next/env": "^15.2.2",
     "next": "15.2.2",
     "react": "^19.0.0",
