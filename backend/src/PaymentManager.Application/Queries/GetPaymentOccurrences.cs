@@ -53,31 +53,31 @@ public record GetPaymentOccurences(Guid UserId, DateOnly From, DateOnly To) : IR
             return new Response(calculatedPaymentsOccurrences.OrderBy(p => p.Date).ThenBy(p => p.Id));
         }
 
-        private static ICollection<PaymentDto> GetPaymentDtos(ICollection<Payment> payments, DateOnly from, DateOnly to)
+        private static ICollection<PaymentOccurrenceDto> GetPaymentDtos(ICollection<Payment> payments, DateOnly from, DateOnly to)
             => [.. payments.Select(p => GetPaymentDtos(p, from, to)).SelectMany(x => x)];
 
-        private static ICollection<PaymentDto> GetPaymentDtos(Payment payment, DateOnly from, DateOnly to)
+        private static ICollection<PaymentOccurrenceDto> GetPaymentDtos(Payment payment, DateOnly from, DateOnly to)
             => payment.Schedule.Occurs switch
             {
-                Frequency.Unknown => Array.Empty<PaymentDto>(),
-                Frequency.Once => [new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, payment.Schedule.StartDate, payment.Source!.Name)],
+                Frequency.Unknown => Array.Empty<PaymentOccurrenceDto>(),
+                Frequency.Once => [new PaymentOccurrenceDto(payment.Id, payment.Name, payment.Description, payment.Amount, payment.Schedule.StartDate, payment.Source!.Name)],
                 Frequency.Daily => GetDailyPaymentDto(payment, from, to),
                 Frequency.Weekly => GetWeeklyPaymentDto(payment, from, to),
                 Frequency.Monthly => GetMonthlyPaymentDto(payment, from, to),
                 Frequency.Annually => GetAnnuallyPaymentDto(payment, from, to),
-                _ => Array.Empty<PaymentDto>()
+                _ => Array.Empty<PaymentOccurrenceDto>()
             };
 
-        private static List<PaymentDto> GetPaymentDto(Payment payment, DateOnly from, DateOnly to, Func<DateOnly, DateOnly> incrementDate)
+        private static List<PaymentOccurrenceDto> GetPaymentDto(Payment payment, DateOnly from, DateOnly to, Func<DateOnly, DateOnly> incrementDate)
         {
             var lowerBoundary = GetLowerBoundary(payment.Schedule.StartDate, from, incrementDate);
             var upperBoundary = GetUpperBoundary(payment.Schedule.EndDate!.Value, to, incrementDate);
             var currentDate = lowerBoundary;
-            var paymentDtos = new List<PaymentDto>();
+            var paymentDtos = new List<PaymentOccurrenceDto>();
 
             while (currentDate <= upperBoundary)
             {
-                paymentDtos.Add(new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, currentDate, payment.Source!.Name));
+                paymentDtos.Add(new PaymentOccurrenceDto(payment.Id, payment.Name, payment.Description, payment.Amount, currentDate, payment.Source!.Name));
                 currentDate = incrementDate(currentDate);
             }
 
@@ -102,21 +102,21 @@ public record GetPaymentOccurences(Guid UserId, DateOnly From, DateOnly To) : IR
         private static DateOnly GetUpperBoundary(DateOnly paymentEndDate, DateOnly to, Func<DateOnly, DateOnly> incrementDate)
             => paymentEndDate <= to ? paymentEndDate : to;
 
-        private static List<PaymentDto> GetDailyPaymentDto(Payment payment, DateOnly from, DateOnly to)
+        private static List<PaymentOccurrenceDto> GetDailyPaymentDto(Payment payment, DateOnly from, DateOnly to)
             => GetPaymentDto(payment, from, to, d => d.AddDays(1 * payment.Schedule.Every));
 
-        private static List<PaymentDto> GetWeeklyPaymentDto(Payment payment, DateOnly from, DateOnly to)
+        private static List<PaymentOccurrenceDto> GetWeeklyPaymentDto(Payment payment, DateOnly from, DateOnly to)
             => GetPaymentDto(payment, from, to, d => d.AddDays(7 * payment.Schedule.Every));
 
-        private static List<PaymentDto> GetMonthlyPaymentDto(Payment payment, DateOnly from, DateOnly to)
+        private static List<PaymentOccurrenceDto> GetMonthlyPaymentDto(Payment payment, DateOnly from, DateOnly to)
             => GetPaymentDto(payment, from, to, d => d.AddMonths(1 * payment.Schedule.Every));
 
-        private static List<PaymentDto> GetAnnuallyPaymentDto(Payment payment, DateOnly from, DateOnly to)
+        private static List<PaymentOccurrenceDto> GetAnnuallyPaymentDto(Payment payment, DateOnly from, DateOnly to)
             => GetPaymentDto(payment, from, to, d => d.AddYears(1 * payment.Schedule.Every));
     }
 
-    public record Response(IOrderedEnumerable<PaymentDto> Payments)
+    public record Response(IOrderedEnumerable<PaymentOccurrenceDto> Occurrences)
     {
-        public record PaymentDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
+        public record PaymentOccurrenceDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
     };
 }

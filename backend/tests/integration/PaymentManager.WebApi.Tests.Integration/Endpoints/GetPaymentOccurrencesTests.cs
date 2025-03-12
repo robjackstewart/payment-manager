@@ -12,8 +12,8 @@ namespace PaymentManager.WebApi.Tests.Integration.Endpoints;
 
 internal sealed class GetPaymentOccurrencesTests
 {
-    internal record ExpectedResponse(ExpectedPaymentDto[] Payments);
-    internal record ExpectedPaymentDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
+    internal record ExpectedResponse(ExpectedPaymentOccurrenceDto[] Occurrences);
+    internal record ExpectedPaymentOccurrenceDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
 
     [Test]
     public async Task PaymentsEndpoint_Should_ReturnAllPaymentsForDefaultUser_When_NoDateRangeSpecified()
@@ -137,30 +137,30 @@ internal sealed class GetPaymentOccurrencesTests
         context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
         await context.SaveChanges(cancellationToken);
 
-        var expectedPaymentDtos = new[]
+        var ExpectedPaymentOccurrenceDtos = new[]
         {
-            new ExpectedPaymentDto(oneTimePayment.Id, oneTimePayment.Name, oneTimePayment.Description, oneTimePayment.Amount, oneTimePayment.Schedule.StartDate, oneTimePayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate, weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate, biWeeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate, monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(2), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(3), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(4), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(5), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.EndDate.Value, monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate, annualPayment.Source!.Name),
-            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate.AddYears(1), annualPayment.Source!.Name),
-            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.EndDate.Value, annualPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(oneTimePayment.Id, oneTimePayment.Name, oneTimePayment.Description, oneTimePayment.Amount, oneTimePayment.Schedule.StartDate, oneTimePayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate, weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate, monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(2), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(3), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(4), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(5), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.EndDate.Value, monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate, annualPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate.AddYears(1), annualPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.EndDate.Value, annualPayment.Source!.Name),
         }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
 
-        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
+        var expectedResponse = new ExpectedResponse(ExpectedPaymentOccurrenceDtos);
 
         var client = applicationFactory.CreateClient();
 
@@ -297,27 +297,27 @@ internal sealed class GetPaymentOccurrencesTests
         context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
         await context.SaveChanges(cancellationToken);
 
-        var expectedPaymentDtos = new[]
+        var ExpectedPaymentOccurrenceDtos = new[]
         {
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(2), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(3), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(4), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(5), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.EndDate.Value, monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(2), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(3), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(4), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(5), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.EndDate.Value, monthlyPayment.Source!.Name),
 
-            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate.AddYears(1), annualPayment.Source!.Name),
-            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.EndDate.Value, annualPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate.AddYears(1), annualPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.EndDate.Value, annualPayment.Source!.Name),
         }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
 
-        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
+        var expectedResponse = new ExpectedResponse(ExpectedPaymentOccurrenceDtos);
 
-        // var t = expectedPaymentDtos.Where(p => p.Date >= DateOnly.FromDateTime(DateTime.UtcNow) && p.Date <= DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1))).ToArray();
+        // var t = ExpectedPaymentOccurrenceDtos.Where(p => p.Date >= DateOnly.FromDateTime(DateTime.UtcNow) && p.Date <= DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1))).ToArray();
 
         var client = applicationFactory.CreateClient();
 
@@ -453,23 +453,23 @@ internal sealed class GetPaymentOccurrencesTests
         context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
         await context.SaveChanges(cancellationToken);
 
-        var expectedPaymentDtos = new[]
+        var ExpectedPaymentOccurrenceDtos = new[]
         {
-            new ExpectedPaymentDto(oneTimePayment.Id, oneTimePayment.Name, oneTimePayment.Description, oneTimePayment.Amount, oneTimePayment.Schedule.StartDate, oneTimePayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate, weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate, biWeeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate, monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
-            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate, annualPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(oneTimePayment.Id, oneTimePayment.Name, oneTimePayment.Description, oneTimePayment.Amount, oneTimePayment.Schedule.StartDate, oneTimePayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate, weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate, monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate, annualPayment.Source!.Name),
         }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
 
-        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
+        var expectedResponse = new ExpectedResponse(ExpectedPaymentOccurrenceDtos);
 
         var client = applicationFactory.CreateClient();
 
@@ -605,17 +605,17 @@ internal sealed class GetPaymentOccurrencesTests
         context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
         await context.SaveChanges(cancellationToken);
 
-        var expectedPaymentDtos = new[]
+        var ExpectedPaymentOccurrenceDtos = new[]
         {
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
-            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentOccurrenceDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
         }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
 
-        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
+        var expectedResponse = new ExpectedResponse(ExpectedPaymentOccurrenceDtos);
 
         var client = applicationFactory.CreateClient();
 
