@@ -15,9 +15,10 @@ internal sealed class CreateUserEndpointTests
     {
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
-        var request = new CreateUser(TestContext.CurrentContext.Random.GetString());
+        var request = new CreateUserEndpoint.Request(TestContext.CurrentContext.Random.GetString());
+        var mediatRRequest = new CreateUser(request.Name);
         var sender = A.Fake<ISender>();
-        A.CallTo(() => sender.Send(request, A<CancellationToken>._)).Returns(new CreateUser.Response(Guid.NewGuid(), request.Name));
+        A.CallTo(() => sender.Send(mediatRRequest, A<CancellationToken>._)).Returns(new CreateUser.Response(Guid.NewGuid(), request.Name));
 
         // Act
         var result = await CreateUserEndpoint.Handle(request, sender, cancellationToken);

@@ -9,15 +9,17 @@ namespace PaymentManager.WebApi.Endpoints;
 
 internal static class CreateUserEndpoint
 {
-    internal static async Task<IResult> Handle(CreateUser request, ISender sender, CancellationToken cancellationToken)
+    public record Request(string Name);
+
+    internal static async Task<IResult> Handle(Request request, ISender sender, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(request, cancellationToken);
+        var result = await sender.Send(new CreateUser(request.Name), cancellationToken);
         return Results.Created($"/api/users/{result.Id}", result);
     }
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapPost("/api/user", ([FromBody] CreateUser request, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(request, sender, cancellationToken))
+        app.MapPost("/api/user", ([FromBody] Request request, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(request, sender, cancellationToken))
         .WithName("Create User")
         .Produces<CreateUser.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
         .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
