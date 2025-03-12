@@ -55,7 +55,7 @@ internal sealed class GetPaymentsTests
             Id = Guid.NewGuid(),
             Amount = 100,
             Name = "Daily Payment",
-            Description = "A payment thsat occurs four times across four consecutive days",
+            Description = "A payment thsat occurs across three consecutive days",
             UserId = user.Id,
             Schedule = new PaymentSchedule
             {
@@ -67,8 +67,25 @@ internal sealed class GetPaymentsTests
             Source = paymentSource,
             SourceId = paymentSource.Id
         };
+        var weeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = user.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                Occurs = Frequency.Weekly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
 
-        context.Payments.AddRange(oneTimePayment, dailyPayment);
+        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment);
         await context.SaveChanges(cancellationToken);
 
         var expectedResponse = new ExpectedResponse(
@@ -77,6 +94,9 @@ internal sealed class GetPaymentsTests
             new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
             new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
             new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(2), dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate, weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(14), weeklyPayment.Source!.Name),
         ]);
 
         var client = applicationFactory.CreateClient();
