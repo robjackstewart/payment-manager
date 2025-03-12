@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
-using static PaymentManager.Application.Queries.GetPayments;
-using static PaymentManager.Application.Queries.GetPayments.Response;
+using static PaymentManager.Application.Queries.GetPaymentOccurences;
+using static PaymentManager.Application.Queries.GetPaymentOccurences.Response;
 using static PaymentManager.Domain.Entities.PaymentSchedule;
 
 namespace PaymentManager.Application.Queries;
 
-public record GetPayments(Guid UserId, DateOnly From, DateOnly To) : IRequest<Response>
+public record GetPaymentOccurences(Guid UserId, DateOnly From, DateOnly To) : IRequest<Response>
 {
-    internal sealed class Validator : AbstractValidator<GetPayments>
+    internal sealed class Validator : AbstractValidator<GetPaymentOccurences>
     {
         public Validator()
         {
@@ -21,9 +21,9 @@ public record GetPayments(Guid UserId, DateOnly From, DateOnly To) : IRequest<Re
         }
     }
 
-    internal sealed class Handler(IReadOnlyPaymentManagerContext context, ILogger<Handler> logger) : IRequestHandler<GetPayments, Response>
+    internal sealed class Handler(IReadOnlyPaymentManagerContext context, ILogger<Handler> logger) : IRequestHandler<GetPaymentOccurences, Response>
     {
-        public async Task<Response> Handle(GetPayments request, CancellationToken cancellationToken)
+        public async Task<Response> Handle(GetPaymentOccurences request, CancellationToken cancellationToken)
         {
             var predicate = PredicateBuilder.New<Payment>(p => p.UserId == request.UserId);
 

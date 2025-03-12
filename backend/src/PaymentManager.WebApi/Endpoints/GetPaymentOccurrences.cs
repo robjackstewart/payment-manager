@@ -9,7 +9,7 @@ using PaymentManager.Domain.Entities;
 
 namespace PaymentManager.WebApi.Endpoints;
 
-internal static class GetPaymentsEndpoint
+internal static class GetPaymentOccurencesEndpoint
 {
     public record Request(string? From, string? To)
     {
@@ -29,16 +29,16 @@ internal static class GetPaymentsEndpoint
         await ValidationHandler<Request>.ThrowIfInvalid(new Request.Validator(), request, cancellationToken);
         var from = request.From is not null ? DateOnly.Parse(request.From) : DateOnly.MinValue;
         var to = request.To is not null ? DateOnly.Parse(request.To) : DateOnly.MaxValue;
-        var result = await sender.Send(new GetPayments(User.DefaultUser.Id, from, to), cancellationToken);
+        var result = await sender.Send(new GetPaymentOccurences(User.DefaultUser.Id, from, to), cancellationToken);
         return Results.Ok(result);
     }
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapGet("/api/payments", ([FromQuery(Name = nameof(from))] string? from, [FromQuery(Name = nameof(to))] string? to,
+        app.MapGet("/api/payments/occurrences", ([FromQuery(Name = nameof(from))] string? from, [FromQuery(Name = nameof(to))] string? to,
                     [FromServices] ISender sender,
                     CancellationToken cancellationToken) => Handle(new Request(from, to), sender, cancellationToken))
-                    .Produces<GetPayments.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
+                    .Produces<GetPaymentOccurences.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
                     .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest);
         return app;
     }

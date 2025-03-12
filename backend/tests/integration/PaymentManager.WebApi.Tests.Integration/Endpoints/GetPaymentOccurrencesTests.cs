@@ -6,12 +6,11 @@ using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
 using static PaymentManager.Domain.Entities.PaymentSchedule;
 using FluentAssertions;
-using FluentAssertions.Formatting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace PaymentManager.WebApi.Tests.Integration.Endpoints;
 
-internal sealed class GetPaymentsTests
+internal sealed class GetPaymentOccurrencesTests
 {
     internal record ExpectedResponse(ExpectedPaymentDto[] Payments);
     internal record ExpectedPaymentDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
@@ -166,7 +165,7 @@ internal sealed class GetPaymentsTests
         var client = applicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync($"/api/payments", cancellationToken);
+        var response = await client.GetAsync($"/api/payments/occurrences", cancellationToken);
 
         // Assert
         response.Should().NotBeNull();
@@ -323,7 +322,7 @@ internal sealed class GetPaymentsTests
         var client = applicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync($"/api/payments?from={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}", cancellationToken);
+        var response = await client.GetAsync($"/api/payments/occurrences?from={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}", cancellationToken);
 
         // Assert
         response.Should().NotBeNull();
@@ -475,7 +474,7 @@ internal sealed class GetPaymentsTests
         var client = applicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync($"/api/payments?to={DateTime.UtcNow.AddMonths(1):yyyy-MM-dd}", cancellationToken);
+        var response = await client.GetAsync($"/api/payments/occurrences?to={DateTime.UtcNow.AddMonths(1):yyyy-MM-dd}", cancellationToken);
 
         // Assert
         response.Should().NotBeNull();
@@ -621,7 +620,7 @@ internal sealed class GetPaymentsTests
         var client = applicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync($"/api/payments?to={DateTime.UtcNow.AddMonths(1):yyyy-MM-dd}&from={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}", cancellationToken);
+        var response = await client.GetAsync($"/api/payments/occurrences?to={DateTime.UtcNow.AddMonths(1):yyyy-MM-dd}&from={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}", cancellationToken);
 
         // Assert
         response.Should().NotBeNull();
@@ -640,7 +639,7 @@ internal sealed class GetPaymentsTests
         var client = applicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync($"/api/payments?to={Guid.NewGuid()}", cancellationToken);
+        var response = await client.GetAsync($"/api/payments/occurrences?to={Guid.NewGuid()}", cancellationToken);
 
         // Assert
         response.Should().NotBeNull();
@@ -662,7 +661,7 @@ internal sealed class GetPaymentsTests
         var client = applicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync($"/api/payments?from={Guid.NewGuid()}", cancellationToken);
+        var response = await client.GetAsync($"/api/payments/occurrences?from={Guid.NewGuid()}", cancellationToken);
 
         // Assert
         response.Should().NotBeNull();
