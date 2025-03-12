@@ -84,12 +84,29 @@ internal sealed class GetPaymentsTests
             Source = paymentSource,
             SourceId = paymentSource.Id
         };
+        var biWeeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = user.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                Occurs = Frequency.Weekly,
+                Every = 2
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
 
-        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment);
+        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment);
         await context.SaveChanges(cancellationToken);
 
-        var expectedResponse = new ExpectedResponse(
-        [
+        var expectedPaymentDtos = new[]
+        {
             new ExpectedPaymentDto(oneTimePayment.Id, oneTimePayment.Name, oneTimePayment.Description, oneTimePayment.Amount, oneTimePayment.Schedule.StartDate, oneTimePayment.Source!.Name),
             new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
             new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
@@ -97,7 +114,11 @@ internal sealed class GetPaymentsTests
             new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate, weeklyPayment.Source!.Name),
             new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
             new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(14), weeklyPayment.Source!.Name),
-        ]);
+            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate.AddDays(14), biWeeklyPayment.Source!.Name),
+        }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
+
+        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
 
         var client = applicationFactory.CreateClient();
 

@@ -46,11 +46,11 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
 
             logger.LogInformation("Retrieved {Count} payments", payments.Length);
 
-            var calculatedPaymentsOccurrences = GetPaymentDtos(payments, request.From, request.To);
+            var calculatedPaymentsOccurrences = GetPaymentDtos(payments, request.From, request.To).ToArray();
 
-            logger.LogInformation("Calculated {Count} payments occurrences", calculatedPaymentsOccurrences.Count);
+            logger.LogInformation("Calculated {Count} payments occurrences", calculatedPaymentsOccurrences.Length);
 
-            return new Response(calculatedPaymentsOccurrences);
+            return new Response(calculatedPaymentsOccurrences.OrderBy(p => p.Date).ThenBy(p => p.Id));
         }
 
         private static ICollection<PaymentDto> GetPaymentDtos(ICollection<Payment> payments, DateOnly from, DateOnly to)
@@ -97,7 +97,7 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
             => GetPaymentDto(payment, from, to, d => d.AddYears(1 * payment.Schedule.Every));
     }
 
-    public record Response(ICollection<PaymentDto> Payments)
+    public record Response(IOrderedEnumerable<PaymentDto> Payments)
     {
         public record PaymentDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
     };
