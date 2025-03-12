@@ -2,8 +2,10 @@
 import { getAllUsers } from "@/app/actions";
 import Link from "next/link";
 
-export default async function Home() {
-    const result = await getAllUsers();
+export default async function Users() {
+    const result = await getAllUsers().catch((error) => {
+        console.log(error);
+    });
     return (
         <div className="relative overflow-x-auto">
             <h1>Users</h1>
