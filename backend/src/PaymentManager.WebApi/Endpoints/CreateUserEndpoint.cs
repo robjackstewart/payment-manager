@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Net.Mime;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PaymentManager.Application.Commands;
@@ -18,8 +19,8 @@ internal static class CreateUserEndpoint
     {
         app.MapPost("/api/user", ([FromBody] CreateUser request, [FromServices] ISender sender) => Handle(request, sender))
         .WithName("Create User")
-        .Produces<CreateUser.Response>((int)HttpStatusCode.Created)
-        .Produces((int)HttpStatusCode.BadRequest);
+        .Produces<CreateUser.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
+        .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
         return app;
     }
 }

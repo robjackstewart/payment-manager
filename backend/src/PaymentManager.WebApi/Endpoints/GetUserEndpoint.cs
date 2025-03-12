@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Net.Mime;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PaymentManager.Application.Queries;
@@ -18,8 +19,8 @@ public static class GetUserEndpoint
     {
         app.MapGet("/api/users/{id:guid}", ([FromRoute] Guid id, [FromServices] ISender sender) => Handle(id, sender))
         .WithName("Get User")
-        .Produces<GetUser.Response>((int)HttpStatusCode.OK)
-        .Produces((int)HttpStatusCode.BadRequest); ;
+        .Produces<GetUser.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
+        .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
 
         return app;
     }
