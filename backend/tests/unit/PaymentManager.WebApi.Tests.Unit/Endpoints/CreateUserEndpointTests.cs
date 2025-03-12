@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using PaymentManager.WebApi.Endpoints;
-using Shouldly;
+using FluentAssertions;
 
 namespace PaymentManager.WebApi.Tests.Unit.Endpoints;
 
@@ -24,12 +24,12 @@ internal sealed class CreateUserEndpointTests
         var result = await CreateUserEndpoint.Handle(request, sender, cancellationToken);
 
         // Assert
-        result.ShouldNotBeNull();
-        result.ShouldBeOfType<Microsoft.AspNetCore.Http.HttpResults.Created<CreateUser.Response>>();
+        result.Should().NotBeNull();
+        result.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.Created<CreateUser.Response>>();
         var createdResult = result as Microsoft.AspNetCore.Http.HttpResults.Created<CreateUser.Response>;
-        createdResult.ShouldNotBeNull();
-        createdResult.Value.ShouldNotBeNull();
-        createdResult.Value.Name.ShouldBe(request.Name);
-        createdResult.Location.ShouldBe($"/api/users/{createdResult.Value!.Id}");
+        createdResult.Should().NotBeNull();
+        createdResult.Value.Should().NotBeNull();
+        createdResult.Value.Name.Should().Be(request.Name);
+        createdResult.Location.Should().Be($"/api/users/{createdResult.Value!.Id}");
     }
 }

@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
-using Shouldly;
 
 namespace PaymentManager.WebApi.Tests.Integration.Endpoints;
 
@@ -42,10 +42,10 @@ internal sealed class GetUserTests
         var response = await client.GetAsync($"/api/users/{user.Id}", cancellationToken);
 
         // Assert
-        response.ShouldNotBeNull();
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ExpectedResponse>();
-        body.ShouldBe(expectedResponse);
+        body.Should().Be(expectedResponse);
     }
 
     [Test]
@@ -62,12 +62,12 @@ internal sealed class GetUserTests
         var response = await client.GetAsync($"/api/users/{userId}", cancellationToken);
 
         // Assert
-        response.ShouldNotBeNull();
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await response.Content.ReadFromJsonAsync<ProblemDetails>();
-        body.ShouldNotBeNull();
-        body.Title.ShouldBe("User not found");
-        body.Detail.ShouldBe($"User not found with criteria: Id is '{userId}'");
+        body.Should().NotBeNull();
+        body.Title.Should().Be("User not found");
+        body.Detail.Should().Be($"User not found with criteria: Id is '{userId}'");
 
     }
 }

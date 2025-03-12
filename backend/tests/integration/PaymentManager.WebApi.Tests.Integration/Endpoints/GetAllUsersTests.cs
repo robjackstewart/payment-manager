@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
-using Shouldly;
 
 namespace PaymentManager.WebApi.Tests.Integration.Endpoints;
 
@@ -44,10 +44,10 @@ internal sealed class GetAllUsersTests
         var response = await client.GetAsync($"/api/users", cancellationToken);
 
         // Assert
-        response.ShouldNotBeNull();
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ExpectedResponse>();
-        body.ShouldNotBeNull();
-        body.ShouldBeEquivalentTo(expectedResponse);
+        body.Should().NotBeNull();
+        body.Should().BeEquivalentTo(expectedResponse);
     }
 }

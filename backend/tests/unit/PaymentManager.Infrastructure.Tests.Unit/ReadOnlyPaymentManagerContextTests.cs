@@ -26,6 +26,6 @@ internal sealed class ReadOnlyPaymentManagerContextTests
         var result = readOnlyPaymentManagerContext.Users.ToArray();
 
         // Assert
-        result.ShouldBe(users);
+        result.Should().BeEquivalentTo(users);
     }
 }

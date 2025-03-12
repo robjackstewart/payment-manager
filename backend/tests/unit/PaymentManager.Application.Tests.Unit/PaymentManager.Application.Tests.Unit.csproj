@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="FluentValidation" />
@@ -17,7 +18,6 @@
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit.Analyzers" />
     <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="Shouldly" />
   </ItemGroup>
 
   <ItemGroup>

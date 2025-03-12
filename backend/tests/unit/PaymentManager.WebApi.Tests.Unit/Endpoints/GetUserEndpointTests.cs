@@ -3,7 +3,7 @@ using MediatR;
 using NUnit.Framework;
 using PaymentManager.Application.Queries;
 using PaymentManager.WebApi.Endpoints;
-using Shouldly;
+using FluentAssertions;
 
 namespace PaymentManager.WebApi.Tests.Unit.Endpoints;
 
@@ -24,11 +24,11 @@ internal sealed class GetUserEndpointTests
         var result = await GetUserEndpoint.Handle(userId, sender, cancellationToken);
 
         // Assert
-        result.ShouldNotBeNull();
-        result.ShouldBeOfType<Microsoft.AspNetCore.Http.HttpResults.Ok<GetUser.Response>>();
+        result.Should().NotBeNull();
+        result.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.Ok<GetUser.Response>>();
         var createdResult = result as Microsoft.AspNetCore.Http.HttpResults.Ok<GetUser.Response>;
-        createdResult.ShouldNotBeNull();
-        createdResult.Value.ShouldNotBeNull();
-        createdResult.Value.ShouldBeEquivalentTo(mediatrResponse);
+        createdResult.Should().NotBeNull();
+        createdResult.Value.Should().NotBeNull();
+        createdResult.Value.Should().BeEquivalentTo(mediatrResponse);
     }
 }

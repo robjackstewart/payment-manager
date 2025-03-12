@@ -5,8 +5,8 @@ using FakeItEasy;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
 using MockQueryable.FakeItEasy;
-using Shouldly;
 using Microsoft.Extensions.Logging.Testing;
+using FluentAssertions;
 
 namespace PaymentManager.Application.Tests.Unit.Commands;
 
@@ -59,11 +59,11 @@ internal sealed class CreateUserTests
         var response = await handler.Handle(request, cancellationToken);
 
         // Assert
-        users.ShouldNotBeNull();
-        users.ShouldHaveSingleItem();
-        users.First().Name.ShouldBe(request.Name);
-        response.ShouldNotBeNull();
-        response.Id.ShouldNotBe(Guid.Empty);
-        response.Name.ShouldBe(request.Name);
+        users.Should().NotBeNull();
+        users.Should().HaveCount(1);
+        users.First().Name.Should().Be(request.Name);
+        response.Should().NotBeNull();
+        response.Id.Should().NotBe(Guid.Empty);
+        response.Name.Should().Be(request.Name);
     }
 }

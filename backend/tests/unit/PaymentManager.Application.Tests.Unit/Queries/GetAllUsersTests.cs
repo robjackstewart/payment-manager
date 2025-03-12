@@ -1,4 +1,5 @@
 using FakeItEasy;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Testing;
 using MockQueryable.FakeItEasy;
 using NUnit.Framework;
@@ -6,7 +7,6 @@ using NUnit.Framework.Constraints;
 using PaymentManager.Application.Common;
 using PaymentManager.Application.Queries;
 using PaymentManager.Domain.Entities;
-using Shouldly;
 using static PaymentManager.Application.Queries.GetAllUsers.Response;
 
 namespace PaymentManager.Application.Tests.Unit.Queries;
@@ -35,7 +35,7 @@ internal sealed class GetAllUsersTests
         var result = await handler.Handle(request, cancellationToken);
 
         // Assert
-        result.ShouldNotBeNull();
-        result.Users.ShouldBe(expectedUsers);
+        result.Should().NotBeNull();
+        result.Users.Should().BeEquivalentTo(expectedUsers);
     }
 }

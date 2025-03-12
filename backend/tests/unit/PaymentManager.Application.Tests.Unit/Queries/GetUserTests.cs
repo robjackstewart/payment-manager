@@ -1,4 +1,5 @@
 using FakeItEasy;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Testing;
 using MockQueryable.FakeItEasy;
 using NUnit.Framework;
@@ -6,7 +7,6 @@ using NUnit.Framework.Internal;
 using PaymentManager.Application.Common;
 using PaymentManager.Application.Queries;
 using PaymentManager.Domain.Entities;
-using Shouldly;
 using static PaymentManager.Application.Common.Exceptions;
 
 namespace PaymentManager.Application.Tests.Unit.Queries;
@@ -41,9 +41,9 @@ internal sealed class GetUserTests
         var result = await handler.Handle(request, cancellationToken);
 
         // Assert
-        result.ShouldNotBeNull();
-        result.Id.ShouldBe(matchingUser.Id);
-        result.Name.ShouldBe(matchingUser.Name);
+        result.Should().NotBeNull();
+        result.Id.Should().Be(matchingUser.Id);
+        result.Name.Should().Be(matchingUser.Name);
     }
 
     [Test]
@@ -66,6 +66,6 @@ internal sealed class GetUserTests
         var handle = new Func<Task>(() => handler.Handle(request, cancellationToken));
 
         // Act & Assert
-        await handle.ShouldThrowAsync<NotFoundException<User>>();
+        await handle.Should().ThrowAsync<NotFoundException<User>>();
     }
 }
