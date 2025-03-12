@@ -11,7 +11,7 @@ using static PaymentManager.Domain.Entities.PaymentSchedule;
 
 namespace PaymentManager.Application.Queries;
 
-public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
+public record GetPayments(Guid UserId, DateOnly From, DateOnly To) : IRequest<Response>
 {
     internal sealed class Validator : AbstractValidator<GetPayments>
     {
@@ -25,16 +25,16 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
     {
         public async Task<Response> Handle(GetPayments request, CancellationToken cancellationToken)
         {
-            var predicate = PredicateBuilder.New<Payment>(true);
+            var predicate = PredicateBuilder.New<Payment>(p => p.UserId == request.UserId);
 
             if (request.From != DateOnly.MinValue)
             {
-                predicate = predicate.And(p => p.Schedule.StartDate >= request.From);
+                predicate = predicate.And(p => p.Schedule.StartDate <= request.From && p.Schedule.EndDate >= request.From);
             }
 
             if (request.To != DateOnly.MaxValue)
             {
-                predicate = predicate.And(p => p.Schedule.EndDate <= request.To);
+                predicate = predicate.And(p => p.Schedule.StartDate <= request.To);
             }
 
             logger.LogInformation("Retrieving payments from {From} to {To}", request.From, request.To);
@@ -68,21 +68,39 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
                 _ => Array.Empty<PaymentDto>()
             };
 
-        private static List<PaymentDto> GetPaymentDto(Payment payment, DateOnly from, DateOnly to, Func<DateOnly, DateOnly> incrmementDate)
+        private static List<PaymentDto> GetPaymentDto(Payment payment, DateOnly from, DateOnly to, Func<DateOnly, DateOnly> incrementDate)
         {
-            var lowerBoundary = payment.Schedule.StartDate > from ? payment.Schedule.StartDate : from;
+            var lowerBoundary = GetLowerBoundary(payment.Schedule.StartDate, from, incrementDate);
+            var upperBoundary = GetUpperBoundary(payment.Schedule.EndDate!.Value, to, incrementDate);
             var currentDate = lowerBoundary;
             var paymentDtos = new List<PaymentDto>();
-            var upperBoundary = payment.Schedule.EndDate.HasValue && payment.Schedule.EndDate.Value < to ? payment.Schedule.EndDate.Value : to;
 
             while (currentDate <= upperBoundary)
             {
                 paymentDtos.Add(new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, currentDate, payment.Source!.Name));
-                currentDate = incrmementDate(currentDate);
+                currentDate = incrementDate(currentDate);
             }
 
             return paymentDtos;
         }
+
+        private static DateOnly GetLowerBoundary(DateOnly paymentStartDate, DateOnly from, Func<DateOnly, DateOnly> incrementDate)
+        {
+            if (paymentStartDate >= from)
+            {
+                return paymentStartDate;
+            }
+
+            var currentDate = paymentStartDate;
+            while (currentDate < from)
+            {
+                currentDate = incrementDate(currentDate);
+            }
+            return currentDate;
+        }
+
+        private static DateOnly GetUpperBoundary(DateOnly paymentEndDate, DateOnly to, Func<DateOnly, DateOnly> incrementDate)
+            => paymentEndDate <= to ? paymentEndDate : to;
 
         private static List<PaymentDto> GetDailyPaymentDto(Payment payment, DateOnly from, DateOnly to)
             => GetPaymentDto(payment, from, to, d => d.AddDays(1 * payment.Schedule.Every));

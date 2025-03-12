@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
-using Shouldly;
 using static PaymentManager.Domain.Entities.PaymentSchedule;
+using FluentAssertions;
+using FluentAssertions.Formatting;
+using Microsoft.AspNetCore.Mvc;
 
 namespace PaymentManager.WebApi.Tests.Integration.Endpoints;
 
@@ -13,37 +15,33 @@ internal sealed class GetPaymentsTests
 {
     internal record ExpectedResponse(ExpectedPaymentDto[] Payments);
     internal record ExpectedPaymentDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
+
     [Test]
-    public async Task PaymentsEndpoint_Should_ReturnAllPayments_When_NoDateRangeSpecified()
+    public async Task PaymentsEndpoint_Should_ReturnAllPaymentsForDefaultUser_When_NoDateRangeSpecified()
     {
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         using var applicationFactory = new PaymentMangerWebApiWebApplicationFactory();
         var context = applicationFactory.Services.GetRequiredService<IPaymentManagerContext>();
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Name = "User1"
-        };
         var paymentSource = new PaymentSource
         {
             Id = Guid.NewGuid(),
             Name = "PaymentSource1",
             Description = "PaymentSource1 Description",
-            UserId = user.Id,
-            User = user
+            UserId = User.DefaultUser.Id,
+
         };
         var oneTimePayment = new Payment
         {
             Id = Guid.NewGuid(),
-            Amount = 100,
+            Amount = 100.10m,
             Name = "One time payment",
             Description = "A payment that happens once",
-            UserId = user.Id,
+            UserId = User.DefaultUser.Id,
             Schedule = new PaymentSchedule
             {
                 EndDate = null,
-                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 Occurs = Frequency.Once,
                 Every = 0
             },
@@ -53,14 +51,14 @@ internal sealed class GetPaymentsTests
         var dailyPayment = new Payment
         {
             Id = Guid.NewGuid(),
-            Amount = 100,
+            Amount = 220.20m,
             Name = "Daily Payment",
             Description = "A payment thsat occurs across three consecutive days",
-            UserId = user.Id,
+            UserId = User.DefaultUser.Id,
             Schedule = new PaymentSchedule
             {
-                EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(2)),
-                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 Occurs = Frequency.Daily,
                 Every = 1
             },
@@ -70,14 +68,14 @@ internal sealed class GetPaymentsTests
         var weeklyPayment = new Payment
         {
             Id = Guid.NewGuid(),
-            Amount = 100,
+            Amount = 330.30m,
             Name = "Weekly Payment",
             Description = "A payment thsat occurs across three consecutive weeks",
-            UserId = user.Id,
+            UserId = User.DefaultUser.Id,
             Schedule = new PaymentSchedule
             {
-                EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(14)),
-                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 Occurs = Frequency.Weekly,
                 Every = 1
             },
@@ -87,14 +85,14 @@ internal sealed class GetPaymentsTests
         var biWeeklyPayment = new Payment
         {
             Id = Guid.NewGuid(),
-            Amount = 100,
+            Amount = 440.40m,
             Name = "Weekly Payment",
             Description = "A payment thsat occurs across three consecutive weeks",
-            UserId = user.Id,
+            UserId = User.DefaultUser.Id,
             Schedule = new PaymentSchedule
             {
-                EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(14)),
-                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 Occurs = Frequency.Weekly,
                 Every = 2
             },
@@ -105,14 +103,14 @@ internal sealed class GetPaymentsTests
         var monthlyPayment = new Payment
         {
             Id = Guid.NewGuid(),
-            Amount = 100,
+            Amount = 550.50m,
             Name = "Monthly Payment",
             Description = "A payment that occurs across 6 consecutive months",
-            UserId = user.Id,
+            UserId = User.DefaultUser.Id,
             Schedule = new PaymentSchedule
             {
-                EndDate = DateOnly.FromDateTime(DateTime.Now.AddMonths(6)),
-                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(6)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 Occurs = Frequency.Monthly,
                 Every = 1
             },
@@ -122,14 +120,14 @@ internal sealed class GetPaymentsTests
         var annualPayment = new Payment
         {
             Id = Guid.NewGuid(),
-            Amount = 100,
+            Amount = 660.60m,
             Name = "Monthly Payment",
             Description = "A payment that occurs across two consecutive years",
-            UserId = user.Id,
+            UserId = User.DefaultUser.Id,
             Schedule = new PaymentSchedule
             {
-                EndDate = DateOnly.FromDateTime(DateTime.Now.AddYears(2)),
-                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 Occurs = Frequency.Annually,
                 Every = 1
             },
@@ -171,9 +169,508 @@ internal sealed class GetPaymentsTests
         var response = await client.GetAsync($"/api/payments", cancellationToken);
 
         // Assert
-        response.ShouldNotBeNull();
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ExpectedResponse>();
-        body.ShouldBeEquivalentTo(expectedResponse);
+        body.Should().BeEquivalentTo(expectedResponse);
+    }
+
+    [Test]
+    public async Task PaymentsEndpoint_Should_ReturnAllPaymentsForDefaultUserThatHaveAnOccurrenceAfterTheFRomDate_When_OnlyFromDateIsSpecified()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        using var applicationFactory = new PaymentMangerWebApiWebApplicationFactory();
+        var context = applicationFactory.Services.GetRequiredService<IPaymentManagerContext>();
+        var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var paymentSource = new PaymentSource
+        {
+            Id = Guid.NewGuid(),
+            Name = "PaymentSource1",
+            Description = "PaymentSource1 Description",
+            UserId = User.DefaultUser.Id,
+
+        };
+        var oneTimePayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100.10m,
+            Name = "One time payment",
+            Description = "A payment that happens once",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = null,
+                StartDate = startDate,
+                Occurs = Frequency.Once,
+                Every = 0
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var dailyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 220.20m,
+            Name = "Daily Payment",
+            Description = "A payment thsat occurs across three consecutive days",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)),
+                StartDate = startDate,
+                Occurs = Frequency.Daily,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var weeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 330.30m,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = startDate,
+                Occurs = Frequency.Weekly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var biWeeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 440.40m,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = startDate,
+                Occurs = Frequency.Weekly,
+                Every = 2
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+
+        var monthlyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 550.50m,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across 6 consecutive months",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(6)),
+                StartDate = startDate,
+                Occurs = Frequency.Monthly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var annualPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 660.60m,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across two consecutive years",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(2)),
+                StartDate = startDate,
+                Occurs = Frequency.Annually,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+
+        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
+        await context.SaveChanges(cancellationToken);
+
+        var expectedPaymentDtos = new[]
+        {
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(2), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(3), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(4), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(5), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.EndDate.Value, monthlyPayment.Source!.Name),
+
+            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate.AddYears(1), annualPayment.Source!.Name),
+            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.EndDate.Value, annualPayment.Source!.Name),
+        }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
+
+        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
+
+        // var t = expectedPaymentDtos.Where(p => p.Date >= DateOnly.FromDateTime(DateTime.UtcNow) && p.Date <= DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1))).ToArray();
+
+        var client = applicationFactory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/payments?from={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}", cancellationToken);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ExpectedResponse>();
+        body.Should().BeEquivalentTo(expectedResponse, options => options);
+    }
+
+    [Test]
+    public async Task PaymentsEndpoint_Should_ReturnAllPaymentsThatHaveOccurencesPriorToTheToDateForDefaultUser_When_OnlyTheToDateIsProvided()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        using var applicationFactory = new PaymentMangerWebApiWebApplicationFactory();
+        var context = applicationFactory.Services.GetRequiredService<IPaymentManagerContext>();
+        var paymentSource = new PaymentSource
+        {
+            Id = Guid.NewGuid(),
+            Name = "PaymentSource1",
+            Description = "PaymentSource1 Description",
+            UserId = User.DefaultUser.Id,
+
+        };
+        var oneTimePayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100.10m,
+            Name = "One time payment",
+            Description = "A payment that happens once",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = null,
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Once,
+                Every = 0
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var dailyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 220.20m,
+            Name = "Daily Payment",
+            Description = "A payment thsat occurs across three consecutive days",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Daily,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var weeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 330.30m,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Weekly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var biWeeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 440.40m,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Weekly,
+                Every = 2
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+
+        var monthlyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 550.50m,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across 6 consecutive months",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(6)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Monthly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var annualPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 660.60m,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across two consecutive years",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Annually,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+
+        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
+        await context.SaveChanges(cancellationToken);
+
+        var expectedPaymentDtos = new[]
+        {
+            new ExpectedPaymentDto(oneTimePayment.Id, oneTimePayment.Name, oneTimePayment.Description, oneTimePayment.Amount, oneTimePayment.Schedule.StartDate, oneTimePayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate, weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate, monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate, annualPayment.Source!.Name),
+        }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
+
+        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
+
+        var client = applicationFactory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/payments?to={DateTime.UtcNow.AddMonths(1):yyyy-MM-dd}", cancellationToken);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ExpectedResponse>();
+        body.Should().BeEquivalentTo(expectedResponse);
+    }
+
+    [Test]
+    public async Task PaymentsEndpoint_Should_ReturnAllPaymentsWithinTheDateRangeForTheDefaultUser_When_BothToAndFromAreSpecified()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        using var applicationFactory = new PaymentMangerWebApiWebApplicationFactory();
+        var context = applicationFactory.Services.GetRequiredService<IPaymentManagerContext>();
+        var paymentSource = new PaymentSource
+        {
+            Id = Guid.NewGuid(),
+            Name = "PaymentSource1",
+            Description = "PaymentSource1 Description",
+            UserId = User.DefaultUser.Id,
+
+        };
+        var oneTimePayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100.10m,
+            Name = "One time payment",
+            Description = "A payment that happens once",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = null,
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Once,
+                Every = 0
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var dailyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 220.20m,
+            Name = "Daily Payment",
+            Description = "A payment thsat occurs across three consecutive days",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Daily,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var weeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 330.30m,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Weekly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var biWeeklyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 440.40m,
+            Name = "Weekly Payment",
+            Description = "A payment thsat occurs across three consecutive weeks",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Weekly,
+                Every = 2
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+
+        var monthlyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 550.50m,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across 6 consecutive months",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(6)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Monthly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var annualPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 660.60m,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across two consecutive years",
+            UserId = User.DefaultUser.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Occurs = Frequency.Annually,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+
+        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
+        await context.SaveChanges(cancellationToken);
+
+        var expectedPaymentDtos = new[]
+        {
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.EndDate.Value, dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(7), weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.EndDate.Value, weeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.EndDate.Value, biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+        }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
+
+        var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
+
+        var client = applicationFactory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/payments?to={DateTime.UtcNow.AddMonths(1):yyyy-MM-dd}&from={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}", cancellationToken);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ExpectedResponse>();
+        body.Should().BeEquivalentTo(expectedResponse);
+    }
+
+    [Test]
+    public async Task PaymentsEndpoint_Should_ReturnBadRequestWithProblemDetails_When_ToIsNotParsableToDateOnly()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        using var applicationFactory = new PaymentMangerWebApiWebApplicationFactory();
+
+        var client = applicationFactory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/payments?to={Guid.NewGuid()}", cancellationToken);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        body.Should().NotBeNull();
+        body!.Title.Should().Be("Invalid request");
+        body!.Detail.Should().Be("One or more validation errors occurred.");
+        body!.Errors.Should().BeEquivalentTo(new Dictionary<string, string[]> { { "To", ["Must be a valid date in the format 'yyyy-MM-dd'"] } });
+    }
+
+    [Test]
+    public async Task PaymentsEndpoint_Should_ReturnBadRequestWithProblemDetails_When_FromIsNotParsableToDateOnly()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        using var applicationFactory = new PaymentMangerWebApiWebApplicationFactory();
+
+        var client = applicationFactory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/payments?from={Guid.NewGuid()}", cancellationToken);
+
+        // Assert
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        body.Should().NotBeNull();
+        body!.Title.Should().Be("Invalid request");
+        body!.Detail.Should().Be("One or more validation errors occurred.");
+        body!.Errors.Should().BeEquivalentTo(new Dictionary<string, string[]> { { "From", ["Must be a valid date in the format 'yyyy-MM-dd'"] } });
     }
 }
