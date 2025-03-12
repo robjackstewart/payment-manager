@@ -36,7 +36,8 @@ internal sealed class GetAllUsersTests
         };
         context.Users.AddRange(users);
         await context.SaveChanges(cancellationToken);
-        var expectedUsersResponse = users.OrderBy(u => u.Id).Select(u => new ExpectedUserDtoResponse(u.Id, u.Name)).ToArray();
+        var expectedUsers = new[] { User.DefaultUser }.Concat(users).ToArray();
+        var expectedUsersResponse = expectedUsers.OrderBy(u => u.Id).Select(u => new ExpectedUserDtoResponse(u.Id, u.Name)).ToArray();
         var expectedResponse = new ExpectedResponse(expectedUsersResponse);
         var client = applicationFactory.CreateClient();
 

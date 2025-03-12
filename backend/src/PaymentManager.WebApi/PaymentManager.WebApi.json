@@ -106,7 +106,7 @@
         }
       }
     },
-    "/api/payments": {
+    "/api/payments/occurrences": {
       "get": {
         "tags": [
           "PaymentManager.WebApi"
@@ -133,7 +133,118 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetPaymentsResponse"
+                  "$ref": "#/components/schemas/GetPaymentOccurencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paymentsource/{id}": {
+      "get": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Get payment source",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPaymentSourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paymentsources": {
+      "get": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Get all payment sources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAllPaymentSourcesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paymentsource": {
+      "post": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Create payment source",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentSourceEndpointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePaymentSourceResponse"
                 }
               }
             }
@@ -154,6 +265,43 @@
   },
   "components": {
     "schemas": {
+      "CreatePaymentSourceEndpointRequest": {
+        "required": [
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreatePaymentSourceResponse": {
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreateUserEndpointRequest": {
         "required": [
           "name"
@@ -178,6 +326,41 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "GetAllPaymentSourcesResponse": {
+        "required": [
+          "paymentSources"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAllPaymentSourcesResponsePaymentSourceDto"
+            }
+          }
+        }
+      },
+      "GetAllPaymentSourcesResponsePaymentSourceDto": {
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -211,21 +394,21 @@
           }
         }
       },
-      "GetPaymentsResponse": {
+      "GetPaymentOccurencesResponse": {
         "required": [
-          "payments"
+          "occurrences"
         ],
         "type": "object",
         "properties": {
-          "payments": {
+          "occurrences": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GetPaymentsResponsePaymentDto"
+              "$ref": "#/components/schemas/GetPaymentOccurencesResponsePaymentOccurrenceDto"
             }
           }
         }
       },
-      "GetPaymentsResponsePaymentDto": {
+      "GetPaymentOccurencesResponsePaymentOccurrenceDto": {
         "required": [
           "id",
           "name",
@@ -257,6 +440,27 @@
           },
           "source": {
             "type": "string"
+          }
+        }
+      },
+      "GetPaymentSourceResponse": {
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

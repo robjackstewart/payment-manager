@@ -24,7 +24,6 @@ internal sealed class GetPaymentOccurrencesTests
         var context = applicationFactory.Services.GetRequiredService<IPaymentManagerContext>();
         var paymentSource = new PaymentSource
         {
-            Id = Guid.NewGuid(),
             Name = "PaymentSource1",
             Description = "PaymentSource1 Description",
             UserId = User.DefaultUser.Id,
@@ -184,7 +183,6 @@ internal sealed class GetPaymentOccurrencesTests
         var startDate = DateOnly.FromDateTime(DateTime.UtcNow);
         var paymentSource = new PaymentSource
         {
-            Id = Guid.NewGuid(),
             Name = "PaymentSource1",
             Description = "PaymentSource1 Description",
             UserId = User.DefaultUser.Id,
@@ -340,7 +338,6 @@ internal sealed class GetPaymentOccurrencesTests
         var context = applicationFactory.Services.GetRequiredService<IPaymentManagerContext>();
         var paymentSource = new PaymentSource
         {
-            Id = Guid.NewGuid(),
             Name = "PaymentSource1",
             Description = "PaymentSource1 Description",
             UserId = User.DefaultUser.Id,
@@ -492,11 +489,9 @@ internal sealed class GetPaymentOccurrencesTests
         var context = applicationFactory.Services.GetRequiredService<IPaymentManagerContext>();
         var paymentSource = new PaymentSource
         {
-            Id = Guid.NewGuid(),
             Name = "PaymentSource1",
             Description = "PaymentSource1 Description",
             UserId = User.DefaultUser.Id,
-
         };
         var oneTimePayment = new Payment
         {

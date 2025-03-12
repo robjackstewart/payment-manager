@@ -11,7 +11,7 @@ using PaymentManager.Infrastructure;
 namespace PaymentManager.Infrastructure.Migrations
 {
     [DbContext(typeof(PaymentManagerContext))]
-    [Migration("20250312155339_AddPayments")]
+    [Migration("20250312192800_AddPayments")]
     partial class AddPayments
     {
         /// <inheritdoc />
@@ -76,7 +76,6 @@ namespace PaymentManager.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")

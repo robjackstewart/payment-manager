@@ -19,10 +19,12 @@ internal static class CreateUserEndpoint
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapPost("/api/user", ([FromBody] Request request, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(request, sender, cancellationToken))
-        .WithName("Create User")
-        .Produces<CreateUser.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
-        .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
+        app.MapPost("/api/user",
+            ([FromBody] Request request, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(request, sender, cancellationToken))
+            .WithName("Create User")
+            .Accepts<Request>(MediaTypeNames.Application.Json)
+            .Produces<CreateUser.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
+            .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
         return app;
     }
 }

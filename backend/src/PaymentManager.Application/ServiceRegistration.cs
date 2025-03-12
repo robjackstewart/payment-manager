@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using PaymentManager.Application.Commands;
 using PaymentManager.Application.Common.Validation;
 
 namespace PaymentManager.Application;
@@ -16,5 +15,27 @@ public static class ServiceRegistration
         });
 
     private static IServiceCollection AddValidators(this IServiceCollection services)
-        => services.AddTransient<IValidator<CreateUser>, CreateUser.Validator>();
+    {
+        var assembly = typeof(ApplicationAssembly).Assembly;
+        var validatorType = typeof(IValidator<>);
+
+        var validators = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && (t.IsPublic || t.IsNestedPublic || t.IsNestedFamily || t.IsNestedFamORAssem || t.IsNestedAssembly))
+            .Where(t => t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == validatorType))
+            .ToList();
+
+        foreach (var validator in validators)
+        {
+            var interfaces = validator.GetInterfaces()
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IValidator<>))
+                .ToList();
+
+            foreach (var @interface in interfaces)
+            {
+                services.AddTransient(@interface, validator);
+            }
+        }
+
+        return services;
+    }
 }
