@@ -33,7 +33,7 @@ internal static class GetPaymentsEndpoint
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapGet("/payments", ([FromQuery(Name = nameof(from))] string? from, [FromQuery(Name = nameof(to))] string? to,
+        app.MapGet("/api/payments", ([FromQuery(Name = nameof(from))] string? from, [FromQuery(Name = nameof(to))] string? to,
                     [FromServices] ISender sender,
                     CancellationToken cancellationToken) => Handle(new Request(from, to), sender, cancellationToken))
                     .Produces<GetPayments.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)

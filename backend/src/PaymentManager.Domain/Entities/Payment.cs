@@ -13,6 +13,6 @@ public sealed class Payment
     public required PaymentSchedule Schedule { get; init; }
 
 
-    public User? User { get; private set; }
-    public required PaymentSource Source { get; init; }
+    public User? User { get; set; }
+    public PaymentSource? Source { get; set; }
 }

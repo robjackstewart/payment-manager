@@ -60,7 +60,7 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
             => payment.Schedule.Occurs switch
             {
                 Frequency.Unknown => Array.Empty<PaymentDto>(),
-                Frequency.Once => [new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, payment.Schedule.StartDate, payment.Source.Name)],
+                Frequency.Once => [new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, payment.Schedule.StartDate, payment.Source!.Name)],
                 Frequency.Daily => GetDailyPaymentDto(payment, from, to),
                 Frequency.Weekly => GetWeeklyPaymentDto(payment, from, to),
                 Frequency.Monthly => GetMonthlyPaymentDto(payment, from, to),
@@ -75,7 +75,7 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
 
             while (currentDate <= to)
             {
-                paymentDtos.Add(new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, currentDate, payment.Source.Name));
+                paymentDtos.Add(new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, currentDate, payment.Source!.Name));
                 currentDate = incrmementDate(currentDate);
             }
 
@@ -83,16 +83,16 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
         }
 
         private static List<PaymentDto> GetDailyPaymentDto(Payment payment, DateOnly from, DateOnly to)
-            => GetPaymentDto(payment, from, to, d => d.AddDays(1));
+            => GetPaymentDto(payment, from, to, d => d.AddDays(1 * payment.Schedule.Every));
 
         private static List<PaymentDto> GetWeeklyPaymentDto(Payment payment, DateOnly from, DateOnly to)
-            => GetPaymentDto(payment, from, to, d => d.AddDays(7));
+            => GetPaymentDto(payment, from, to, d => d.AddDays(7 * payment.Schedule.Every));
 
         private static List<PaymentDto> GetMonthlyPaymentDto(Payment payment, DateOnly from, DateOnly to)
-            => GetPaymentDto(payment, from, to, d => d.AddMonths(1));
+            => GetPaymentDto(payment, from, to, d => d.AddMonths(1 * payment.Schedule.Every));
 
         private static List<PaymentDto> GetAnnuallyPaymentDto(Payment payment, DateOnly from, DateOnly to)
-            => GetPaymentDto(payment, from, to, d => d.AddYears(1));
+            => GetPaymentDto(payment, from, to, d => d.AddYears(1 * payment.Schedule.Every));
     }
 
     public record Response(ICollection<PaymentDto> Payments)

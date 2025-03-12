@@ -106,7 +106,7 @@
         }
       }
     },
-    "/payments": {
+    "/api/payments": {
       "get": {
         "tags": [
           "PaymentManager.WebApi"

@@ -9,6 +9,6 @@ public sealed class PaymentSource
     public required string Description { get; init; }
 
     public required Guid UserId { get; init; }
-    public User? User { get; private set; }
-    public ICollection<Payment> Payments { get; private set; } = [];
+    public User? User { get; set; }
+    public ICollection<Payment> Payments { get; set; } = [];
 }
