@@ -35,7 +35,7 @@ internal sealed class ExceptionHandler : IExceptionHandler
         httpContext.Response.ContentType = "application/problem+json";
         var problemDetails = new ValidationProblemDetails
         {
-            Title = $"Invalid request",
+            Title = "Invalid request",
             Detail = "One or more validation errors occurred.",
             Errors = exception.Errors.ToDictionary(x => x.PropertyName, x => x.Errors.ToArray()),
             Type = "https://httpstatuses.com/400"

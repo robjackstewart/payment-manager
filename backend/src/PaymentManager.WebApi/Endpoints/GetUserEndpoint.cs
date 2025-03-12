@@ -7,17 +7,17 @@ using PaymentManager.Application.Queries;
 
 namespace PaymentManager.WebApi.Endpoints;
 
-public static class GetUserEndpoint
+internal static class GetUserEndpoint
 {
-    public static async Task<IResult> Handle(Guid id, ISender sender)
+    internal static async Task<IResult> Handle(Guid id, ISender sender, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetUser(id));
+        var result = await sender.Send(new GetUser(id), cancellationToken);
         return Results.Ok(result);
     }
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapGet("/api/users/{id:guid}", ([FromRoute] Guid id, [FromServices] ISender sender) => Handle(id, sender))
+        app.MapGet("/api/users/{id:guid}", ([FromRoute] Guid id, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(id, sender, cancellationToken))
         .WithName("Get User")
         .Produces<GetUser.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
         .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
