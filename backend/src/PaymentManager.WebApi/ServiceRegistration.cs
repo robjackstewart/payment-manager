@@ -49,9 +49,4 @@ public static class ServiceRegistration
 
         return services;
     }
-
-    public static WebApplication MapEndpoints(this WebApplication app)
-        => app.MapGetUserEndpoint()
-            .MapCreateUserEndpoint()
-            .MapGetAllUsersEndpoint();
 }

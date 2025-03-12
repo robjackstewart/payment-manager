@@ -1,3 +1,5 @@
+using PaymentManager.WebApi.Endpoints;
+
 namespace PaymentManager.WebApi;
 
 public static class ApplicationConfiguration
@@ -15,6 +17,14 @@ public static class ApplicationConfiguration
         }
         app.UseCors(Constants.Cors.ALLOW_UI_POLICY_NAME);
         app.UseExceptionHandler(_ => { });
+        return app;
+    }
+
+    public static WebApplication MapEndpoints(this WebApplication app)
+    {
+        GetUserEndpoint.Map(app);
+        CreateUserEndpoint.Map(app);
+        GetAllUsersEndpoint.Map(app);
         return app;
     }
 }

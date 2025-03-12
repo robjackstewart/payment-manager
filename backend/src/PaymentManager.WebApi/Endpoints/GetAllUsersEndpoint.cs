@@ -15,7 +15,7 @@ public static class GetAllUsersEndpoint
         return Results.Ok(result);
     }
 
-    public static WebApplication MapGetAllUsersEndpoint(this WebApplication app)
+    public static WebApplication Map(this WebApplication app)
     {
         app.MapGet("/api/users", ([FromServices] ISender sender) => Handle(sender))
         .WithName("Get all users")

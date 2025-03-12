@@ -15,7 +15,7 @@ public static class GetUserEndpoint
         return Results.Ok(result);
     }
 
-    public static WebApplication MapGetUserEndpoint(this WebApplication app)
+    public static WebApplication Map(this WebApplication app)
     {
         app.MapGet("/api/users/{id:guid}", ([FromRoute] Guid id, [FromServices] ISender sender) => Handle(id, sender))
         .WithName("Get User")
