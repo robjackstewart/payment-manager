@@ -11,7 +11,7 @@ using PaymentManager.Infrastructure;
 namespace PaymentManager.Infrastructure.Migrations
 {
     [DbContext(typeof(PaymentManagerContext))]
-    [Migration("20250312135700_AddPayments")]
+    [Migration("20250312155339_AddPayments")]
     partial class AddPayments
     {
         /// <inheritdoc />
@@ -36,14 +36,19 @@ namespace PaymentManager.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SourceId");
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("Payment");
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.PaymentPercentageSplit", b =>
@@ -61,7 +66,7 @@ namespace PaymentManager.Infrastructure.Migrations
 
                     b.HasIndex("PaymentSourceId");
 
-                    b.ToTable("PaymentPercentageSplit");
+                    b.ToTable("PaymentPercentageSplits");
                 });
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.PaymentSource", b =>
@@ -85,7 +90,7 @@ namespace PaymentManager.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PaymentSource");
+                    b.ToTable("PaymentSources");
                 });
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.User", b =>
@@ -112,6 +117,12 @@ namespace PaymentManager.Infrastructure.Migrations
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.Payment", b =>
                 {
+                    b.HasOne("PaymentManager.Domain.Entities.PaymentSource", "Source")
+                        .WithMany("Payments")
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PaymentManager.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -137,7 +148,7 @@ namespace PaymentManager.Infrastructure.Migrations
 
                             b1.HasKey("PaymentId");
 
-                            b1.ToTable("Payment");
+                            b1.ToTable("Payments");
 
                             b1.WithOwner()
                                 .HasForeignKey("PaymentId");
@@ -145,6 +156,8 @@ namespace PaymentManager.Infrastructure.Migrations
 
                     b.Navigation("Schedule")
                         .IsRequired();
+
+                    b.Navigation("Source");
 
                     b.Navigation("User");
                 });
@@ -177,6 +190,11 @@ namespace PaymentManager.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.PaymentSource", b =>
+                {
+                    b.Navigation("Payments");
                 });
 #pragma warning restore 612, 618
         }

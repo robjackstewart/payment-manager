@@ -14,5 +14,6 @@ internal sealed class PaymentEntityTypeConfiguration : IEntityTypeConfiguration<
         builder.Property(p => p.Amount).IsRequired();
         builder.OwnsOne(p => p.Schedule);
         builder.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId);
+        builder.HasOne(p => p.Source).WithMany(p => p.Payments).HasForeignKey(p => p.SourceId);
     }
 }

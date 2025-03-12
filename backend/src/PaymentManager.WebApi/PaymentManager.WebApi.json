@@ -105,6 +105,51 @@
           }
         }
       }
+    },
+    "/payments": {
+      "get": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPaymentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -162,6 +207,55 @@
             "format": "uuid"
           },
           "name": {
+            "type": "string"
+          }
+        }
+      },
+      "GetPaymentsResponse": {
+        "required": [
+          "payments"
+        ],
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentsResponsePaymentDto"
+            }
+          }
+        }
+      },
+      "GetPaymentsResponsePaymentDto": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "amount",
+          "date",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "source": {
             "type": "string"
           }
         }

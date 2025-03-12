@@ -9,7 +9,10 @@ public sealed class Payment
     public required string? Description { get; init; }
     public required decimal Amount { get; init; }
     public required Guid UserId { get; init; }
+    public required Guid SourceId { get; init; }
     public required PaymentSchedule Schedule { get; init; }
 
-    public User User { get; private set; }
+
+    public User? User { get; private set; }
+    public required PaymentSource Source { get; init; }
 }

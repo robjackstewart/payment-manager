@@ -8,6 +8,6 @@ public sealed class PaymentPercentageSplit
     public required Guid PaymentId { get; init; }
     public required Guid PaymentSourceId { get; init; }
 
-    public PaymentSource PaymentSource { get; private set; }
-    public Payment Payment { get; private set; }
+    public PaymentSource? PaymentSource { get; private set; }
+    public Payment? Payment { get; private set; }
 }

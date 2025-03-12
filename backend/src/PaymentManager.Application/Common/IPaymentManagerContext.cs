@@ -8,6 +8,9 @@ namespace PaymentManager.Application.Common;
 public interface IPaymentManagerContext
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<Payment> Payments { get; set; }
+    public DbSet<PaymentSource> PaymentSources { get; set; }
+    public DbSet<PaymentPercentageSplit> PaymentPercentageSplits { get; set; }
 
     public DatabaseFacade Database { get; }
 

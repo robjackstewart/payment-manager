@@ -10,6 +10,9 @@ namespace PaymentManager.Infrastructure;
 internal class PaymentManagerContext(DbContextOptions<PaymentManagerContext> options) : DbContext(options), IPaymentManagerContext
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<Payment> Payments { get; set; }
+    public DbSet<PaymentSource> PaymentSources { get; set; }
+    public DbSet<PaymentPercentageSplit> PaymentPercentageSplits { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

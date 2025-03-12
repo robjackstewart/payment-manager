@@ -25,6 +25,7 @@ public static class ApplicationConfiguration
         GetUserEndpoint.Map(app);
         CreateUserEndpoint.Map(app);
         GetAllUsersEndpoint.Map(app);
+        GetPaymentsEndpoint.Map(app);
         return app;
     }
 }
