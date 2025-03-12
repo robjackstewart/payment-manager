@@ -11,5 +11,6 @@ internal class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).IsRequired();
+        builder.HasData(User.DefaultUser);
     }
 }

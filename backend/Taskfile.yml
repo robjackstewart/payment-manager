@@ -47,11 +47,8 @@ tasks:
 
   add-migration:
     dir: ./src/PaymentManager.Infrastructure
-    preconditions:
-      - sh: test -n "$MIGRATION_NAME"
-        msg: "Please provide a name for the migration via the MIGRATION_NAME environment variable"
     cmds:
-      - dotnet ef migrations add $MIGRATION_NAME
+      - dotnet ef migrations add {{.CLI_ARGS}}
 
   update-database:
     dir: ./src/PaymentManager.Infrastructure

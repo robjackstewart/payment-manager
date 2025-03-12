@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PaymentManager.Infrastructure;
 
@@ -10,9 +11,11 @@ using PaymentManager.Infrastructure;
 namespace PaymentManager.Infrastructure.Migrations
 {
     [DbContext(typeof(PaymentManagerContext))]
-    partial class PaymentManagerContextModelSnapshot : ModelSnapshot
+    [Migration("20250312132321_AddDefaultUser")]
+    partial class AddDefaultUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
