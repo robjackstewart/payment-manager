@@ -102,7 +102,42 @@ internal sealed class GetPaymentsTests
             SourceId = paymentSource.Id
         };
 
-        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment);
+        var monthlyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across 6 consecutive months",
+            UserId = user.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.Now.AddMonths(6)),
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                Occurs = Frequency.Monthly,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+        var annualPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100,
+            Name = "Monthly Payment",
+            Description = "A payment that occurs across two consecutive years",
+            UserId = user.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.Now.AddYears(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                Occurs = Frequency.Annually,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
+
+        context.Payments.AddRange(oneTimePayment, dailyPayment, weeklyPayment, biWeeklyPayment, monthlyPayment, annualPayment);
         await context.SaveChanges(cancellationToken);
 
         var expectedPaymentDtos = new[]
@@ -116,6 +151,16 @@ internal sealed class GetPaymentsTests
             new ExpectedPaymentDto(weeklyPayment.Id, weeklyPayment.Name, weeklyPayment.Description, weeklyPayment.Amount, weeklyPayment.Schedule.StartDate.AddDays(14), weeklyPayment.Source!.Name),
             new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate, biWeeklyPayment.Source!.Name),
             new ExpectedPaymentDto(biWeeklyPayment.Id, biWeeklyPayment.Name, biWeeklyPayment.Description, biWeeklyPayment.Amount, biWeeklyPayment.Schedule.StartDate.AddDays(14), biWeeklyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate, monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(1), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(2), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(3), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(4), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(5), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(monthlyPayment.Id, monthlyPayment.Name, monthlyPayment.Description, monthlyPayment.Amount, monthlyPayment.Schedule.StartDate.AddMonths(6), monthlyPayment.Source!.Name),
+            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate, annualPayment.Source!.Name),
+            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate.AddYears(1), annualPayment.Source!.Name),
+            new ExpectedPaymentDto(annualPayment.Id, annualPayment.Name, annualPayment.Description, annualPayment.Amount, annualPayment.Schedule.StartDate.AddYears(2), annualPayment.Source!.Name),
         }.OrderBy(p => p.Date).ThenBy(p => p.Id).ToArray();
 
         var expectedResponse = new ExpectedResponse(expectedPaymentDtos);
