@@ -14,7 +14,7 @@ internal sealed class GetPaymentsTests
     internal record ExpectedResponse(ExpectedPaymentDto[] Payments);
     internal record ExpectedPaymentDto(Guid Id, string Name, string? Description, decimal Amount, DateOnly Date, string Source);
     [Test]
-    public async Task PaymentsEndpoint_Should_ReturnAllPaymentsFromFromDate_When_OnlyFromDateIsProvided()
+    public async Task PaymentsEndpoint_Should_ReturnAllPayments_When_NoDateRangeSpecified()
     {
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
@@ -33,12 +33,12 @@ internal sealed class GetPaymentsTests
             UserId = user.Id,
             User = user
         };
-        var payment = new Payment
+        var oneTimePayment = new Payment
         {
             Id = Guid.NewGuid(),
             Amount = 100,
-            Name = "Payment1",
-            Description = "Payment1 Description",
+            Name = "One time payment",
+            Description = "A payment that happens once",
             UserId = user.Id,
             Schedule = new PaymentSchedule
             {
@@ -50,13 +50,33 @@ internal sealed class GetPaymentsTests
             Source = paymentSource,
             SourceId = paymentSource.Id
         };
+        var dailyPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            Amount = 100,
+            Name = "Daily Payment",
+            Description = "A payment thsat occurs four times across four consecutive days",
+            UserId = user.Id,
+            Schedule = new PaymentSchedule
+            {
+                EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(2)),
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                Occurs = Frequency.Daily,
+                Every = 1
+            },
+            Source = paymentSource,
+            SourceId = paymentSource.Id
+        };
 
-        context.Payments.Add(payment);
+        context.Payments.AddRange(oneTimePayment, dailyPayment);
         await context.SaveChanges(cancellationToken);
 
         var expectedResponse = new ExpectedResponse(
         [
-            new ExpectedPaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, payment.Schedule.StartDate, payment.Source!.Name)
+            new ExpectedPaymentDto(oneTimePayment.Id, oneTimePayment.Name, oneTimePayment.Description, oneTimePayment.Amount, oneTimePayment.Schedule.StartDate, oneTimePayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate, dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(1), dailyPayment.Source!.Name),
+            new ExpectedPaymentDto(dailyPayment.Id, dailyPayment.Name, dailyPayment.Description, dailyPayment.Amount, dailyPayment.Schedule.StartDate.AddDays(2), dailyPayment.Source!.Name),
         ]);
 
         var client = applicationFactory.CreateClient();

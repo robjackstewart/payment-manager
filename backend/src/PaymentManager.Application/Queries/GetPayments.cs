@@ -70,10 +70,12 @@ public record GetPayments(DateOnly From, DateOnly To) : IRequest<Response>
 
         private static List<PaymentDto> GetPaymentDto(Payment payment, DateOnly from, DateOnly to, Func<DateOnly, DateOnly> incrmementDate)
         {
-            var currentDate = from;
+            var lowerBoundary = payment.Schedule.StartDate > from ? payment.Schedule.StartDate : from;
+            var currentDate = lowerBoundary;
             var paymentDtos = new List<PaymentDto>();
+            var upperBoundary = payment.Schedule.EndDate.HasValue && payment.Schedule.EndDate.Value < to ? payment.Schedule.EndDate.Value : to;
 
-            while (currentDate <= to)
+            while (currentDate <= upperBoundary)
             {
                 paymentDtos.Add(new PaymentDto(payment.Id, payment.Name, payment.Description, payment.Amount, currentDate, payment.Source!.Name));
                 currentDate = incrmementDate(currentDate);
