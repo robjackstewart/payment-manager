@@ -15,6 +15,9 @@ internal class PaymentManagerContext(DbContextOptions<PaymentManagerContext> opt
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new UserEntityTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new PaymentEntityTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new PaymentSourceEntityTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new PaymentPercentageSplitEntityTypeConfiguration());
     }
 
     public Task<int> SaveChanges(CancellationToken cancellationToken)
