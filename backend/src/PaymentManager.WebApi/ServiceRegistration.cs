@@ -21,14 +21,17 @@ public static class ServiceRegistration
             {
                 opt.CreateSchemaReferenceId = (jsonTypeInfo) =>
                 {
-                    // Normal behavior if not a nested class
-                    if (!jsonTypeInfo.Type.IsNested)
+                    // Concatenate all nested type parents' names together
+                    static string GetFullNestedTypeName(Type type)
                     {
-                        return OpenApiOptions.CreateDefaultSchemaReferenceId(jsonTypeInfo);
+                        if (type.DeclaringType == null)
+                        {
+                            return type.Name;
+                        }
+                        return $"{GetFullNestedTypeName(type.DeclaringType)}{type.Name}";
                     }
 
-                    // Concatenate nested class name with parent class name
-                    return $"{jsonTypeInfo.Type.DeclaringType!.Name}{jsonTypeInfo.Type.Name}";
+                    return jsonTypeInfo.Type.IsNested ? GetFullNestedTypeName(jsonTypeInfo.Type) : OpenApiOptions.CreateDefaultSchemaReferenceId(jsonTypeInfo); ;
                 };
             })
             .AddProblemDetails()
@@ -46,8 +49,4 @@ public static class ServiceRegistration
 
         return services;
     }
-
-    public static WebApplication MapEndpoints(this WebApplication app)
-        => app.MapGetUserEndpoint()
-            .MapCreateUserEndpoint();
 }

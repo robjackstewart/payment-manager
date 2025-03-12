@@ -1,14 +1,12 @@
-'use client';
-import { createUser } from "@/app/actions";
+'use server';
 
-async function createUserOnClick() {
-  await createUser({ name: "Test user" }).catch((error) => {
-    console.error("Failed to create user", error);
-  });
-}
+import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
   return (
-    <button onClick={createUserOnClick}>Create User</button>
+    <div className="relative overflow-x-auto">
+      <h1>Payment Manager</h1>
+      <div><Link href="/users">Users</Link></div>
+    </div>
   );
 }

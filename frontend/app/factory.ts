@@ -9,5 +9,6 @@ export function getPaymentManagerApiClient() {
     const adapter = new FetchRequestAdapter(authProvider);
     const config = getConfig();
     adapter.baseUrl = config.paymentManagerApi.baseUrl;
-    return createPaymentManagerApiClient(adapter);
+    const client = createPaymentManagerApiClient(adapter);
+    return client;
 }
