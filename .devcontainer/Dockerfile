@@ -6,12 +6,9 @@ RUN apt update \
     && apt upgrade -y
 
 # install nodejs
-RUN <<EOT bash
-set -ex
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
-source ~/.bashrc
-nvm install 22
-EOT
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash \
+    && source ~/.bashrc \
+    && nvm install 22
 
 RUN npm install -g @go-task/cli
 

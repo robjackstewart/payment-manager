@@ -10,29 +10,29 @@
           "style": "scss"
         }
       },
-      "root": "",
-      "sourceRoot": "src",
+      "root": "projects/payment-manager",
+      "sourceRoot": "projects/payment-manager/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": "dist/payment-manager",
-            "index": "src/index.html",
-            "browser": "src/main.ts",
+            "index": "projects/payment-manager/src/index.html",
+            "browser": "projects/payment-manager/src/main.ts",
             "polyfills": [
               "zone.js"
             ],
-            "tsConfig": "tsconfig.app.json",
+            "tsConfig": "projects/payment-manager/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "projects/payment-manager/public"
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "projects/payment-manager/src/styles.scss"
             ],
             "scripts": []
           },
@@ -82,18 +82,51 @@
               "zone.js",
               "zone.js/testing"
             ],
-            "tsConfig": "tsconfig.spec.json",
+            "tsConfig": "projects/payment-manager/tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "projects/payment-manager/public"
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "projects/payment-manager/src/styles.scss"
             ],
             "scripts": []
+          }
+        }
+      }
+    },
+    "api-client": {
+      "projectType": "library",
+      "root": "projects/api-client",
+      "sourceRoot": "projects/api-client/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/api-client/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/api-client/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/api-client/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/api-client/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
           }
         }
       }
