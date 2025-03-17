@@ -1,9 +1,9 @@
 'use server';
-import { getAllUsers } from "@/app/actions";
+import { getAllPaymentSources } from "@/app/actions";
 import Link from "next/link";
 
 export default async function Users() {
-    const result = await getAllUsers().catch((error) => {
+    const result = await getAllPaymentSources().catch((error) => {
         console.log(error);
     });
     return (
@@ -14,15 +14,17 @@ export default async function Users() {
                     <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
                         <th scope="col">Id</th>
                         <th scope="col">Name</th>
+                        <th scope="col">Description</th>
                         <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {result?.users?.map((user) => (
-                        <tr key={user.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
-                            <td>{user.id}</td>
-                            <td>{user.name}</td>
-                            <td><Link href={`/users/${user.id}`}>View</Link></td>
+                    {result?.paymentSources?.map((paymentSource) => (
+                        <tr key={paymentSource.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
+                            <td>{paymentSource.id}</td>
+                            <td>{paymentSource.name}</td>
+                            <td>{paymentSource.description}</td>
+                            <td><Link href={`/payments/sources/${paymentSource.id}`}>View</Link></td>
                         </tr>
                     ))}
                 </tbody>

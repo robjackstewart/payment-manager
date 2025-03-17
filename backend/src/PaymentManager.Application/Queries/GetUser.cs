@@ -15,7 +15,7 @@ public record GetUser(Guid Id) : IRequest<Response>
         public async Task<Response> Handle(GetUser request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Getting user with id '{Id}'", request.Id);
-            var user = await readOnlyPaymentManagerContext.Users.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+            var user = await readOnlyPaymentManagerContext.Users.SingleOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
             if (user is null)
             {
                 logger.LogWarning("User with Id '{Id}' was not found", request.Id);

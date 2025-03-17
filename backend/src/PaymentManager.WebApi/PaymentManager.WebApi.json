@@ -151,7 +151,7 @@
         }
       }
     },
-    "/api/paymentsource/{id}": {
+    "/api/payments/sources/{id}": {
       "get": {
         "tags": [
           "PaymentManager.WebApi"
@@ -192,7 +192,7 @@
         }
       }
     },
-    "/api/paymentsources": {
+    "/api/payments/sources": {
       "get": {
         "tags": [
           "PaymentManager.WebApi"
@@ -222,7 +222,7 @@
         }
       }
     },
-    "/api/paymentsource": {
+    "/api/payments/source": {
       "post": {
         "tags": [
           "PaymentManager.WebApi"

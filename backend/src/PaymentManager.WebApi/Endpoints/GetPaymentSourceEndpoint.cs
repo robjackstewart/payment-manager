@@ -16,7 +16,7 @@ internal static class GetPaymentSourceEndpoint
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapGet("/api/paymentsource/{id:guid}", ([FromRoute] Guid id, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(id, sender, cancellationToken))
+        app.MapGet("/api/payments/sources/{id:guid}", ([FromRoute] Guid id, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(id, sender, cancellationToken))
         .WithName("Get payment source")
         .Produces<GetPaymentSource.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
         .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);

@@ -20,7 +20,7 @@ internal static class CreatePaymentSourceEndpoint
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapPost("/api/paymentsource", ([FromBody] Request request, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(request, sender, cancellationToken))
+        app.MapPost("/api/payments/source", ([FromBody] Request request, [FromServices] ISender sender, CancellationToken cancellationToken) => Handle(request, sender, cancellationToken))
         .WithName("Create payment source")
         .Accepts<Request>(MediaTypeNames.Application.Json)
         .Produces<CreatePaymentSource.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)

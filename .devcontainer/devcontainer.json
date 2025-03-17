@@ -8,7 +8,7 @@
                 "ms-dotnettools.csharp",
                 "ms-dotnettools.csdevkit",
                 "ms-azuretools.vscode-docker",
-                "qwtel.sqlite-viewer"
+                "yy0931.vscode-sqlite3-editor"
             ],
             "settings": {
                 "terminal.integrated.shell.linux": "/bin/bash",

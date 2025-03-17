@@ -17,7 +17,7 @@ public static class GetAllPaymentSourcesEndpoint
 
     public static WebApplication Map(this WebApplication app)
     {
-        app.MapGet("/api/paymentsources",
+        app.MapGet("/api/payments/sources",
             ([FromServices] ISender sender, CancellationToken cancellationToken) => Handle(sender, cancellationToken))
             .WithName("Get all payment sources")
             .Produces<GetAllPaymentSources.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
