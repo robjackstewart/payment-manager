@@ -23,10 +23,6 @@ tasks:
     cmds:
       - npm run build
 
-  dev:
-    cmds:
-      - npm run dev
-
   lint:
     cmds:
       - npm run lint
