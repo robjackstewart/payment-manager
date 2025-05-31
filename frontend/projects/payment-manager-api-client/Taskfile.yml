@@ -9,6 +9,6 @@ tasks:
         -v "$(pwd)/../../../backend/src/PaymentManager.WebApi:/mount" \
         openapitools/openapi-generator-cli \
         generate \
-        -i /mount/PaymentManager.WebApi.json \
+        -i /mount/openapi.json \
         -g typescript-angular \
         -o /out

@@ -17,8 +17,7 @@ export class BaseService {
     public configuration: Configuration;
     public encoder: HttpParameterCodec;
 
-    constructor(basePath?: string | string[], configuration?: Configuration) {
-        console.log(configuration);
+    constructor(basePath?: string|string[], configuration?: Configuration) {
         this.configuration = configuration || new Configuration();
         if (typeof this.configuration.basePath !== 'string') {
             const firstBasePath = Array.isArray(basePath) ? basePath[0] : undefined;
