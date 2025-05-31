@@ -5,6 +5,7 @@
   "compilerOptions": {
     "paths": {
       "api-client": [
+        "./dist/api-client",
         "./dist/api-client"
       ]
     },

@@ -1,0 +1,14 @@
+version: '3'
+
+includes:
+  api-client:
+    taskfile: projects/payment-manager-api-client/Taskfile.yml
+    dir: projects/payment-manager-api-client
+  ui:
+    taskfile: projects/payment-manager/Taskfile.yml
+    dir: projects/payment-manager
+
+tasks:
+  run:
+    cmds:
+      - task: ui:run

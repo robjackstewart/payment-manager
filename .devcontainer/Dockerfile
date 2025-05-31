@@ -13,3 +13,5 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | b
 RUN npm install -g @go-task/cli
 
 RUN dotnet workload update
+
+RUN dotnet dev-certs https --trust

@@ -1,0 +1,7 @@
+version: '3'
+
+tasks:
+  run:
+    desc: Run the UI for the Payment Manager
+    cmds:
+      - npm run start

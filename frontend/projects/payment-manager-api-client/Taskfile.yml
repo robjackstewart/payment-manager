@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  generate:
+    desc: Generate the angular typescript client for the Payment Manager API 
+    cmds:
+      - |
+        docker run --rm -v "$(pwd):/out" \
+        -v "$(pwd)/../../../backend/src/PaymentManager.WebApi:/mount" \
+        openapitools/openapi-generator-cli \
+        generate \
+        -i /mount/PaymentManager.WebApi.json \
+        -g typescript-angular \
+        -o /out

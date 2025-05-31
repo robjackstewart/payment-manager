@@ -1,18 +1,18 @@
+using System.Reflection;
 using CommunityToolkit.Diagnostics;
 using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi.Models;
 using PaymentManager.Application;
 using PaymentManager.Infrastructure;
-using PaymentManager.WebApi.Endpoints;
 
 namespace PaymentManager.WebApi;
 
 public static class ServiceRegistration
 {
+    private static readonly bool IsOpenApiExecution = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
     public static IServiceCollection AddPaymentManagerWebApi(this IServiceCollection services, IConfiguration configuration)
     {
-        var uiUrl = configuration["UI:Url"];
-        Guard.IsNotNullOrWhiteSpace(uiUrl);
+        var configuredAllowedOrigins = configuration.GetSection("AllowedOrigins").Get<string[]>();
+        Guard.IsNotNull(configuredAllowedOrigins);
 
         services
             .AddPaymentManagerApplication()
@@ -41,7 +41,7 @@ public static class ServiceRegistration
                 opt.AddPolicy(Constants.Cors.ALLOW_UI_POLICY_NAME, builder =>
                 {
                     builder
-                        .WithOrigins(uiUrl)
+                        .WithOrigins(configuredAllowedOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
