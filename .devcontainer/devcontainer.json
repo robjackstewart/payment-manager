@@ -1,6 +1,7 @@
 {
     "name": "Payments Manager Dev Container",
     "dockerFile": "Dockerfile",
+    "postStartCommand": "${workspaceFolder}/.devcontainer/postStartCommand.sh",
     "customizations": {
         "vscode": {
             "extensions": [

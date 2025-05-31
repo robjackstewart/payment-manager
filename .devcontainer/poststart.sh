@@ -1,0 +1,1 @@
+dotnet workload update ; dotnet dev-certs https --trust

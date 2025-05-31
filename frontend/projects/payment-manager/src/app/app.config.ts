@@ -7,7 +7,6 @@ import { environment } from '../environments/environment';
 
 export function paymentManagerApiConfigFactory(): Configuration {
   const params: ConfigurationParameters = {
-    // set configuration parameters here.
     basePath: environment.apis.paymentManager.baseUrl,
   }
   return new Configuration(params);
