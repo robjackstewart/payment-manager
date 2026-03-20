@@ -1,0 +1,33 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/host/">
+    <Project Path="../host/PaymentManager.Host.Local.Common/PaymentManager.Host.Local.Common.csproj" />
+    <Project Path="../host/PaymentManager.Host.Local.Database.Seeder/PaymentManager.Host.Local.Database.Seeder.csproj" />
+    <Project Path="../host/PaymentManager.Host.Local.Infrastructure/PaymentManager.Host.Local.Infrastructure.csproj" />
+    <Project Path="../host/PaymentManager.Host.Local.Lib/PaymentManager.Host.Local.Lib.csproj" />
+    <Project Path="../host/PaymentManager.Host.Local/PaymentManager.Host.Local.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/PaymentManager.Application/PaymentManager.Application.csproj" />
+    <Project Path="src/PaymentManager.Common/PaymentManager.Common.csproj" />
+    <Project Path="src/PaymentManager.Domain/PaymentManager.Domain.csproj" />
+    <Project Path="src/PaymentManager.Infrastructure/PaymentManager.Infrastructure.csproj" />
+    <Project Path="src/PaymentManager.WebApi/PaymentManager.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/PaymentManager.Tests.Common/PaymentManager.Tests.Common.csproj" />
+  </Folder>
+  <Folder Name="/Tests/Integration/">
+    <Project Path="tests/integration/PaymentManager.WebApi.Tests.Integration/PaymentManager.WebApi.Tests.Integration.csproj" />
+  </Folder>
+  <Folder Name="/Tests/Unit/">
+    <Project Path="tests/unit/PaymentManager.Application.Tests.Unit/PaymentManager.Application.Tests.Unit.csproj" />
+    <Project Path="tests/unit/PaymentManager.Common.Tests.Unit/PaymentManager.Common.Tests.Unit.csproj" />
+    <Project Path="tests/unit/PaymentManager.Infrastructure.Tests.Unit/PaymentManager.Infrastructure.Tests.Unit.csproj" />
+    <Project Path="tests/unit/PaymentManager.WebApi.Tests.Unit/PaymentManager.WebApi.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
