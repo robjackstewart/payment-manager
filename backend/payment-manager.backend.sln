@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentManager.Host.Local.L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentManager.Host.Local.Database.Seeder", "..\host\PaymentManager.Host.Local.Database.Seeder\PaymentManager.Host.Local.Database.Seeder.csproj", "{56BFD463-2D21-4EE0-A38D-864E1804125B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentManager.Host.Local.Common", "..\host\PaymentManager.Host.Local.Common\PaymentManager.Host.Local.Common.csproj", "{8CDDFF93-6044-4065-8F44-8680AC764456}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -219,6 +221,18 @@ Global
 		{56BFD463-2D21-4EE0-A38D-864E1804125B}.Release|x64.Build.0 = Release|Any CPU
 		{56BFD463-2D21-4EE0-A38D-864E1804125B}.Release|x86.ActiveCfg = Release|Any CPU
 		{56BFD463-2D21-4EE0-A38D-864E1804125B}.Release|x86.Build.0 = Release|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Debug|x64.Build.0 = Debug|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Debug|x86.Build.0 = Debug|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Release|x64.ActiveCfg = Release|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Release|x64.Build.0 = Release|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Release|x86.ActiveCfg = Release|Any CPU
+		{8CDDFF93-6044-4065-8F44-8680AC764456}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -240,5 +254,6 @@ Global
 		{864CC3A1-8004-4110-8ABB-5C48106C4FE5} = {7226ABEA-787E-1D09-10EA-A2ECF996D6A6}
 		{B00FA626-A57F-4012-BBAE-110CC28B9314} = {7226ABEA-787E-1D09-10EA-A2ECF996D6A6}
 		{56BFD463-2D21-4EE0-A38D-864E1804125B} = {7226ABEA-787E-1D09-10EA-A2ECF996D6A6}
+		{8CDDFF93-6044-4065-8F44-8680AC764456} = {7226ABEA-787E-1D09-10EA-A2ECF996D6A6}
 	EndGlobalSection
 EndGlobal
