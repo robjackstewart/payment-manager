@@ -41,31 +41,31 @@ internal static class PayeeEndpoints
         return app;
     }
 
-    private static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new CreatePayee(request.UserId, request.Name), cancellationToken);
         return Results.Created($"/api/payees/{result.Id}", result);
     }
 
-    private static async Task<IResult> HandleGetAll(Guid userId, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGetAll(Guid userId, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllPayees(userId), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetPayee(id), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new UpdatePayee(id, request.UserId, request.Name), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         await sender.Send(new DeletePayee(id), cancellationToken);
         return Results.NoContent();

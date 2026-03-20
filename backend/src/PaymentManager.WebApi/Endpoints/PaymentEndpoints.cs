@@ -42,31 +42,31 @@ internal static class PaymentEndpoints
         return app;
     }
 
-    private static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new CreatePayment(request.UserId, request.PaymentSourceId, request.PayeeId, request.Amount, request.Frequency, request.StartDate, request.EndDate), cancellationToken);
         return Results.Created($"/api/payments/{result.Id}", result);
     }
 
-    private static async Task<IResult> HandleGetAll(Guid userId, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGetAll(Guid userId, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllPayments(userId), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetPayment(id), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new UpdatePayment(id, request.UserId, request.PaymentSourceId, request.PayeeId, request.Amount, request.Frequency, request.StartDate, request.EndDate), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         await sender.Send(new DeletePayment(id), cancellationToken);
         return Results.NoContent();

@@ -41,31 +41,31 @@ internal static class PaymentSourceEndpoints
         return app;
     }
 
-    private static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new CreatePaymentSource(request.UserId, request.Name), cancellationToken);
         return Results.Created($"/api/payment-sources/{result.Id}", result);
     }
 
-    private static async Task<IResult> HandleGetAll(Guid userId, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGetAll(Guid userId, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllPaymentSources(userId), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetPaymentSource(id), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new UpdatePaymentSource(id, request.UserId, request.Name), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         await sender.Send(new DeletePaymentSource(id), cancellationToken);
         return Results.NoContent();

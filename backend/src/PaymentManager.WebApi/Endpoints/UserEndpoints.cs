@@ -41,31 +41,31 @@ internal static class UserEndpoints
         return app;
     }
 
-    private static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new CreateUser(request.Name), cancellationToken);
         return Results.Created($"/api/users/{result.Id}", result);
     }
 
-    private static async Task<IResult> HandleGetAll(ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGetAll(ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllUsers(), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGet(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetUser(id), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new UpdateUser(id, request.Name), cancellationToken);
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleDelete(Guid id, ISender sender, CancellationToken cancellationToken)
     {
         await sender.Send(new DeleteUser(id), cancellationToken);
         return Results.NoContent();
