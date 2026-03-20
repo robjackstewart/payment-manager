@@ -1,6 +1,5 @@
 using CommunityToolkit.Diagnostics;
 using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi.Models;
 using PaymentManager.Application;
 using PaymentManager.Infrastructure;
 using PaymentManager.WebApi.Endpoints;
@@ -9,16 +8,17 @@ namespace PaymentManager.WebApi;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddPaymentManagerWebApi(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPaymentManagerWebApi(this IServiceCollection services, Configuration configuration)
     {
-        var uiUrl = configuration["UI:Url"];
-        Guard.IsNotNullOrWhiteSpace(uiUrl);
-
-        services
+            services
             .AddPaymentManagerApplication()
-            .AddPaymentManagerInfrastructure(configuration)
+            .AddPaymentManagerInfrastructure(new Infrastructure.Configuration
+            {
+                DatabaseConnectionString = configuration.ConnectionStrings.PaymentManager
+            })
             .AddOpenApi(opt =>
             {
+                opt.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
                 opt.CreateSchemaReferenceId = (jsonTypeInfo) =>
                 {
                     // Concatenate all nested type parents' names together
@@ -41,7 +41,7 @@ public static class ServiceRegistration
                 opt.AddPolicy(Constants.Cors.ALLOW_UI_POLICY_NAME, builder =>
                 {
                     builder
-                        .WithOrigins(uiUrl)
+                        .WithOrigins(configuration.Cors.AllowedOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });

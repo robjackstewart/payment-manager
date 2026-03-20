@@ -1,7 +1,10 @@
+using CommunityToolkit.Diagnostics;
 using PaymentManager.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddPaymentManagerWebApi(builder.Configuration);
+var configuration = builder.Configuration.Get<Configuration>();
+Guard.IsNotNull(configuration);
+builder.Services.AddPaymentManagerWebApi(configuration);
 var app = builder.Build();
 app.ConfigurePaymentManagerWebApi();
 await app.RunAsync();

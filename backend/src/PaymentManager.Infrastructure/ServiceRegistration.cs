@@ -8,9 +8,9 @@ namespace PaymentManager.Infrastructure;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddPaymentManagerInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPaymentManagerInfrastructure(this IServiceCollection services, Configuration configuration)
     {
-        var databaseConnectionString = configuration.GetConnectionString("PaymentManager");
+        var databaseConnectionString = configuration.DatabaseConnectionString;
 
         Guard.IsNotNullOrWhiteSpace(databaseConnectionString);
 
