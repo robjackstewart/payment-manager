@@ -16,5 +16,13 @@ public static class ServiceRegistration
         });
 
     private static IServiceCollection AddValidators(this IServiceCollection services)
-        => services.AddTransient<IValidator<CreateUser>, CreateUser.Validator>();
+        => services
+            .AddTransient<IValidator<CreateUser>, CreateUser.Validator>()
+            .AddTransient<IValidator<UpdateUser>, UpdateUser.Validator>()
+            .AddTransient<IValidator<CreatePaymentSource>, CreatePaymentSource.Validator>()
+            .AddTransient<IValidator<UpdatePaymentSource>, UpdatePaymentSource.Validator>()
+            .AddTransient<IValidator<CreatePayee>, CreatePayee.Validator>()
+            .AddTransient<IValidator<UpdatePayee>, UpdatePayee.Validator>()
+            .AddTransient<IValidator<CreatePayment>, CreatePayment.Validator>()
+            .AddTransient<IValidator<UpdatePayment>, UpdatePayment.Validator>();
 }

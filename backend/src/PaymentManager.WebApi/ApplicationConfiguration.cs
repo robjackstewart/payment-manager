@@ -22,9 +22,10 @@ public static class ApplicationConfiguration
 
     public static WebApplication MapEndpoints(this WebApplication app)
     {
-        GetUserEndpoint.Map(app);
-        CreateUserEndpoint.Map(app);
-        GetAllUsersEndpoint.Map(app);
+        UserEndpoints.Map(app);
+        PaymentSourceEndpoints.Map(app);
+        PayeeEndpoints.Map(app);
+        PaymentEndpoints.Map(app);
         return app;
     }
 }

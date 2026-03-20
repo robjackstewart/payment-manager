@@ -10,11 +10,14 @@ namespace PaymentManager.Infrastructure;
 internal class PaymentManagerContext(DbContextOptions<PaymentManagerContext> options) : DbContext(options), IPaymentManagerContext
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<PaymentSource> PaymentSources { get; set; }
+    public DbSet<Payee> Payees { get; set; }
+    public DbSet<Payment> Payments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new UserEntityTypeConfiguration());
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
 
     public Task<int> SaveChanges(CancellationToken cancellationToken)

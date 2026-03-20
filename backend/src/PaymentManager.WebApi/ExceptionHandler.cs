@@ -11,8 +11,7 @@ internal sealed class ExceptionHandler : IExceptionHandler
         {
             ValidationException validationException => HandleValidationException(httpContext, validationException, cancellationToken),
             NotFoundException notFoundException => HandleNotFoundException(httpContext, notFoundException, cancellationToken),
-            InvalidOperationException => new ValueTask<bool>(false),
-            _ => new ValueTask<bool>(false)
+            _ => HandleDefaultException(httpContext, exception, cancellationToken)
         };
 
     private static async ValueTask<bool> HandleNotFoundException(HttpContext httpContext, NotFoundException exception, CancellationToken cancellationToken)
@@ -39,6 +38,20 @@ internal sealed class ExceptionHandler : IExceptionHandler
             Detail = "One or more validation errors occurred.",
             Errors = exception.Errors.ToDictionary(x => x.PropertyName, x => x.Errors.ToArray()),
             Type = "https://httpstatuses.com/400"
+        };
+        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+        return true;
+    }
+
+    private static async ValueTask<bool> HandleDefaultException(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        httpContext.Response.ContentType = "application/problem+json";
+        var problemDetails = new ProblemDetails
+        {
+            Title = "An unexpected error occurred",
+            Detail = exception.Message,
+            Type = "https://httpstatuses.com/500"
         };
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
         return true;

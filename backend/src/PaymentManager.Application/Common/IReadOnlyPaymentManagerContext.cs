@@ -6,4 +6,7 @@ namespace PaymentManager.Application.Common;
 public interface IReadOnlyPaymentManagerContext
 {
     public IQueryable<User> Users { get; }
+    public IQueryable<PaymentSource> PaymentSources { get; }
+    public IQueryable<Payee> Payees { get; }
+    public IQueryable<Payment> Payments { get; }
 }
