@@ -4,7 +4,7 @@ using FluentValidation.TestHelper;
 using FakeItEasy;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
+using MockQueryable.FakeItEasy;
 using Shouldly;
 using Microsoft.Extensions.Logging.Testing;
 using static PaymentManager.Application.Common.Exceptions;
@@ -76,9 +76,8 @@ internal sealed class UpdatePaymentSourceTests
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var existingPaymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Name = "Old name" };
         var context = A.Fake<IPaymentManagerContext>();
-        var dbSet = A.Fake<DbSet<PaymentSource>>();
+        var dbSet = new[] { existingPaymentSource }.BuildMockDbSet();
         A.CallTo(() => context.PaymentSources).Returns(dbSet);
-        A.CallTo(() => dbSet.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns(existingPaymentSource);
         var logger = new FakeLogger<UpdatePaymentSource.Handler>();
         var newUserId = Guid.NewGuid();
         var request = new UpdatePaymentSource(existingPaymentSource.Id, newUserId, "New name");
@@ -102,9 +101,8 @@ internal sealed class UpdatePaymentSourceTests
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var context = A.Fake<IPaymentManagerContext>();
-        var dbSet = A.Fake<DbSet<PaymentSource>>();
+        var dbSet = Array.Empty<PaymentSource>().BuildMockDbSet();
         A.CallTo(() => context.PaymentSources).Returns(dbSet);
-        A.CallTo(() => dbSet.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns((PaymentSource?)null);
         var logger = new FakeLogger<UpdatePaymentSource.Handler>();
         var request = new UpdatePaymentSource(Guid.NewGuid(), Guid.NewGuid(), "Test source");
         var handler = new UpdatePaymentSource.Handler(context, logger);

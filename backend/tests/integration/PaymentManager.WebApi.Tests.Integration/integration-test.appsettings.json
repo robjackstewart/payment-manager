@@ -1,5 +1,0 @@
-{
-    "ConnectionStrings": {
-        "PaymentManager": "Data Source=./payment-manager.integration-tests.db"
-    }
-}

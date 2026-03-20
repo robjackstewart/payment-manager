@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
@@ -24,7 +25,9 @@ public record UpdateUser(Guid Id, string Name) : IRequest<Response>
         public async Task<Response> Handle(UpdateUser request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Updating user '{Id}'", request.Id);
-            var user = await context.Users.FindAsync([request.Id], cancellationToken);
+            var user = await context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
 
             if (user is null)
             {

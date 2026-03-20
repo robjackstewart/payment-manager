@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -21,10 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\PaymentManager.WebApi\PaymentManager.WebApi.csproj" />
     <ProjectReference Include="..\..\PaymentManager.Tests.Common\PaymentManager.Tests.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="integration-test.appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="..\..\..\..\host\PaymentManager.Host.Local.Infrastructure\PaymentManager.Host.Local.Infrastructure.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
 </Project>

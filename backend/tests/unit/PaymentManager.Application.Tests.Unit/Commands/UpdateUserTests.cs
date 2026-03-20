@@ -4,7 +4,7 @@ using FluentValidation.TestHelper;
 using FakeItEasy;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
+using MockQueryable.FakeItEasy;
 using Shouldly;
 using Microsoft.Extensions.Logging.Testing;
 using static PaymentManager.Application.Common.Exceptions;
@@ -62,9 +62,8 @@ internal sealed class UpdateUserTests
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var existingUser = new User { Id = Guid.NewGuid(), Name = "Old name" };
         var context = A.Fake<IPaymentManagerContext>();
-        var usersDbSet = A.Fake<DbSet<User>>();
+        var usersDbSet = new[] { existingUser }.BuildMockDbSet();
         A.CallTo(() => context.Users).Returns(usersDbSet);
-        A.CallTo(() => usersDbSet.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns(existingUser);
         var logger = new FakeLogger<UpdateUser.Handler>();
         var request = new UpdateUser(existingUser.Id, "New name");
         var handler = new UpdateUser.Handler(context, logger);
@@ -86,9 +85,8 @@ internal sealed class UpdateUserTests
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var context = A.Fake<IPaymentManagerContext>();
-        var usersDbSet = A.Fake<DbSet<User>>();
+        var usersDbSet = Array.Empty<User>().BuildMockDbSet();
         A.CallTo(() => context.Users).Returns(usersDbSet);
-        A.CallTo(() => usersDbSet.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns((User?)null);
         var logger = new FakeLogger<UpdateUser.Handler>();
         var request = new UpdateUser(Guid.NewGuid(), "Test name");
         var handler = new UpdateUser.Handler(context, logger);

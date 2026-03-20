@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
@@ -25,7 +26,9 @@ public record UpdatePaymentSource(Guid Id, Guid UserId, string Name) : IRequest<
         public async Task<Response> Handle(UpdatePaymentSource request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Updating payment source '{Id}'", request.Id);
-            var paymentSource = await context.PaymentSources.FindAsync([request.Id], cancellationToken);
+            var paymentSource = await context.PaymentSources
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ps => ps.Id == request.Id, cancellationToken);
 
             if (paymentSource is null)
             {

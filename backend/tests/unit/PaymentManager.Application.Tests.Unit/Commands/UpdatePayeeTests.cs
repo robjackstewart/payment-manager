@@ -1,6 +1,6 @@
 using FakeItEasy;
 using FluentValidation.TestHelper;
-using Microsoft.EntityFrameworkCore;
+using MockQueryable.FakeItEasy;
 using Microsoft.Extensions.Logging.Testing;
 using NUnit.Framework;
 using PaymentManager.Application.Commands;
@@ -75,16 +75,10 @@ internal sealed class UpdatePayeeTests
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var payeeId = Guid.NewGuid();
-        var existingPayee = new Payee
-        {
-            Id = payeeId,
-            UserId = Guid.NewGuid(),
-            Name = "Old Name"
-        };
-        var dbSet = A.Fake<DbSet<Payee>>();
+        var existingPayee = new Payee { Id = payeeId, UserId = Guid.NewGuid(), Name = "Old Name" };
+        var dbSet = new[] { existingPayee }.BuildMockDbSet();
         var context = A.Fake<IPaymentManagerContext>();
         A.CallTo(() => context.Payees).Returns(dbSet);
-        A.CallTo(() => dbSet.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns(existingPayee);
         var logger = new FakeLogger<UpdatePayee.Handler>();
         var newUserId = Guid.NewGuid();
         var request = new UpdatePayee(payeeId, newUserId, "New Name");
@@ -106,16 +100,14 @@ internal sealed class UpdatePayeeTests
     {
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
-        var dbSet = A.Fake<DbSet<Payee>>();
+        var dbSet = Array.Empty<Payee>().BuildMockDbSet();
         var context = A.Fake<IPaymentManagerContext>();
         A.CallTo(() => context.Payees).Returns(dbSet);
-        A.CallTo(() => dbSet.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns((Payee?)null);
         var logger = new FakeLogger<UpdatePayee.Handler>();
         var request = new UpdatePayee(Guid.NewGuid(), Guid.NewGuid(), "Test Payee");
         var handler = new UpdatePayee.Handler(context, logger);
-        var handle = new Func<Task>(() => handler.Handle(request, cancellationToken));
 
         // Act & Assert
-        await handle.ShouldThrowAsync<NotFoundException<Payee>>();
+        await Should.ThrowAsync<NotFoundException<Payee>>(() => handler.Handle(request, cancellationToken));
     }
 }
