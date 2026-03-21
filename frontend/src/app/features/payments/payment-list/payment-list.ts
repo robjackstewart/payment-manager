@@ -47,7 +47,7 @@ export class PaymentListComponent implements OnInit {
   readonly payees = signal<Payee[]>([]);
   readonly loading = signal(false);
 
-  readonly displayedColumns = ['payee', 'amount', 'frequency', 'startDate', 'endDate', 'actions'];
+  readonly displayedColumns = ['payee', 'description', 'amount', 'frequency', 'startDate', 'endDate', 'actions'];
 
   readonly payeesMap = computed(() => {
     const map: Record<string, string> = {};

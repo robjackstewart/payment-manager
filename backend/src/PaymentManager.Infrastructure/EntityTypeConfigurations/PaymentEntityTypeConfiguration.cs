@@ -16,6 +16,7 @@ internal class PaymentEntityTypeConfiguration : IEntityTypeConfiguration<Payment
         builder.Property(x => x.Currency).IsRequired().HasMaxLength(3);
         builder.Property(x => x.Frequency).IsRequired().HasConversion<string>();
         builder.Property(x => x.StartDate).IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(500);
         builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId);
         builder.HasOne<PaymentSource>().WithMany().HasForeignKey(x => x.PaymentSourceId);
         builder.HasOne<Payee>().WithMany().HasForeignKey(x => x.PayeeId);

@@ -17,5 +17,6 @@ export interface PaymentEndpointsUpdateRequest {
     frequency: number;
     startDate: string;
     endDate: string | null;
+    description?: string | null;
 }
 

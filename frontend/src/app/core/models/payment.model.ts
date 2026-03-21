@@ -10,6 +10,7 @@ export interface Payment {
   frequency: PaymentFrequency;
   startDate: string;
   endDate?: string;
+  description?: string;
 }
 
 export interface CreatePaymentRequest {
@@ -20,6 +21,7 @@ export interface CreatePaymentRequest {
   frequency: PaymentFrequency;
   startDate: string;
   endDate?: string;
+  description?: string;
 }
 
 export interface UpdatePaymentRequest {
@@ -30,6 +32,7 @@ export interface UpdatePaymentRequest {
   frequency: PaymentFrequency;
   startDate: string;
   endDate?: string;
+  description?: string;
 }
 
 export interface PaymentOccurrence {
@@ -42,4 +45,5 @@ export interface PaymentOccurrence {
   occurrenceDate: string;
   startDate: string;
   endDate?: string;
+  description?: string;
 }

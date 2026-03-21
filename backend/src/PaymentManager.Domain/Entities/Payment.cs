@@ -13,4 +13,5 @@ public record Payment()
     public required PaymentFrequency Frequency { get; init; }
     public required DateOnly StartDate { get; init; }
     public DateOnly? EndDate { get; init; }
+    public string? Description { get; init; }
 }

@@ -759,7 +759,8 @@
           "currency",
           "frequency",
           "startDate",
-          "endDate"
+          "endDate",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -796,6 +797,10 @@
           "endDate": {
             "type": "string",
             "format": "date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -931,7 +936,8 @@
           "currency",
           "frequency",
           "startDate",
-          "endDate"
+          "endDate",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -968,6 +974,10 @@
           "endDate": {
             "type": "string",
             "format": "date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -1047,7 +1057,8 @@
           "frequency",
           "occurrenceDate",
           "startDate",
-          "endDate"
+          "endDate",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -1085,6 +1096,10 @@
             "type": "string",
             "format": "date",
             "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -1098,7 +1113,8 @@
           "currency",
           "frequency",
           "startDate",
-          "endDate"
+          "endDate",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -1135,6 +1151,10 @@
           "endDate": {
             "type": "string",
             "format": "date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -1236,6 +1256,10 @@
             "type": "string",
             "format": "date",
             "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -1276,6 +1300,10 @@
           "endDate": {
             "type": "string",
             "format": "date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -1362,7 +1390,8 @@
           "currency",
           "frequency",
           "startDate",
-          "endDate"
+          "endDate",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -1399,6 +1428,10 @@
           "endDate": {
             "type": "string",
             "format": "date",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
             "nullable": true
           }
         }

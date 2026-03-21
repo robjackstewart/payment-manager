@@ -29,7 +29,7 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                     .Select(date => new OccurrenceDto(
                         p.Id, p.PaymentSourceId, p.PayeeId,
                         p.Amount, p.Currency, p.Frequency,
-                        date, p.StartDate, p.EndDate)))
+                        date, p.StartDate, p.EndDate, p.Description)))
                 .OrderBy(o => o.OccurrenceDate)
                 .ThenBy(o => o.PaymentId)
                 .ToArray();
@@ -53,7 +53,8 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
             PaymentFrequency Frequency,
             DateOnly OccurrenceDate,
             DateOnly StartDate,
-            DateOnly? EndDate);
+            DateOnly? EndDate,
+            string? Description);
     }
 }
 

@@ -78,6 +78,14 @@
         <mat-datepicker #endPicker />
       </mat-form-field>
     }
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description (optional)</mat-label>
+      <textarea matInput formControlName="description" rows="3" placeholder="What is this payment for?"></textarea>
+      @if (form.controls.description.hasError('maxlength')) {
+        <mat-error>Description cannot exceed 500 characters</mat-error>
+      }
+    </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
