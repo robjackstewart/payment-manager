@@ -159,7 +159,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_NotHaveValidationErrors_When_OncePaymentWithNullEndDate()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Once, new DateOnly(2025, 1, 1), null);
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 1), null);
         var validator = new CreatePayment.Validator();
 
         // Act
