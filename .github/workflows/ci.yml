@@ -15,7 +15,7 @@ jobs:
       - name: Install dev container CLI
         run: npm install -g @devcontainers/cli
       - name: Spin up dev container
-        run: devcontainer up --workspace-folder .
+        run: devcontainer up --workspace-folder . --remote-env LOCKED_DEPS=true
       - name: Install dependencies
         run: devcontainer exec --workspace-folder . -- task install-dependencies
       - name: Build

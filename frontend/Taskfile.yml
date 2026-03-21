@@ -1,0 +1,42 @@
+version: '3'
+
+tasks:
+  environment:check:
+    preconditions:
+      - sh: npm --version
+        msg: "The npm CLI is required"
+    cmds:
+      - echo "All frontend tooling is installed"
+
+  install-dependencies:
+    cmds:
+      - |
+        if [ -n "$LOCKED_DEPS" ]; then
+          npm ci
+        else
+          npm install
+        fi
+
+  build:
+    cmds:
+      - npm run build
+
+  dev:
+    cmds:
+      - npm run dev
+
+  lint:
+    cmds:
+      - npm run lint
+
+  lint:fix:
+    cmds:
+      - npm run lint -- --fix
+
+  run:
+    cmds:
+      - npm run start
+
+  api-client:generate:
+    cmds:
+      - npm run api-client:generate
