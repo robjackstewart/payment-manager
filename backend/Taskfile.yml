@@ -12,14 +12,13 @@ tasks:
     cmds:
       - dotnet build
 
+  install-locked-dependencies:
+    cmds:
+      - dotnet restore --locked-mode
+
   install-dependencies:
     cmds:
-      - |
-        if [ -n "$LOCKED_DEPS" ]; then
-          dotnet restore --locked-mode
-        else
-          dotnet restore
-        fi
+      - dotnet restore
 
   lint:
     cmds:

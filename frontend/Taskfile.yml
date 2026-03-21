@@ -8,14 +8,11 @@ tasks:
     cmds:
       - echo "All frontend tooling is installed"
 
+  install-locked-dependencies:
+    cmds: npm ci
+
   install-dependencies:
-    cmds:
-      - |
-        if [ -n "$LOCKED_DEPS" ]; then
-          npm ci
-        else
-          npm install
-        fi
+    cmds: npm install
 
   build:
     cmds:

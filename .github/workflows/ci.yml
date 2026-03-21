@@ -16,8 +16,10 @@ jobs:
         run: npm install -g @devcontainers/cli
       - name: Spin up dev container
         run: devcontainer up --workspace-folder . --remote-env LOCKED_DEPS=true
+      - name: Install tools
+        run: devcontainer exec --workspace-folder . -- task install-tools
       - name: Install dependencies
-        run: devcontainer exec --workspace-folder . -- task install-dependencies
+        run: devcontainer exec --workspace-folder . -- task install-locked-dependencies
       - name: Build
         run: devcontainer exec --workspace-folder . -- task build
       - name: Lint
