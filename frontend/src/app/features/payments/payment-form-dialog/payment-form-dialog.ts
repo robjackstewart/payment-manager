@@ -129,7 +129,7 @@ export class PaymentFormDialogComponent implements OnInit {
         startDate: (raw.startDate as Date).toISOString().split('T')[0],
         endDate: raw.endDate ? (raw.endDate as Date).toISOString().split('T')[0] : undefined,
         description: raw.description || undefined,
-        splits: (raw.splits as Array<{ contactId: string; percentage: number }>)?.map(s => ({
+        splits: (raw.splits as { contactId: string; percentage: number }[])?.map(s => ({
           contactId: s.contactId,
           contactName: this.data.contacts.find(c => c.id === s.contactId)?.name ?? '',
           percentage: Number(s.percentage)
