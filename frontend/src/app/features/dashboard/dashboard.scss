@@ -31,3 +31,40 @@
     height: 40px;
   }
 }
+
+.schedule-card {
+  margin-top: 24px;
+
+  .schedule-toolbar {
+    margin-bottom: 16px;
+  }
+
+  .month-picker-field {
+    width: 200px;
+  }
+
+  .schedule-loading {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  .schedule-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px;
+    color: rgba(0, 0, 0, 0.38);
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 8px;
+    }
+  }
+
+  .full-width {
+    width: 100%;
+  }
+}

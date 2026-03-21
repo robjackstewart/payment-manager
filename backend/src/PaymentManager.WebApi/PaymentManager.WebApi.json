@@ -573,6 +573,46 @@
         }
       }
     },
+    "/api/payments/occurrences": {
+      "get": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Get Payment Occurrences",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPaymentOccurrencesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payments/{id}": {
       "get": {
         "tags": [
@@ -980,6 +1020,71 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "GetPaymentOccurrencesResponse": {
+        "required": [
+          "occurrences"
+        ],
+        "type": "object",
+        "properties": {
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentOccurrencesResponseOccurrenceDto"
+            }
+          }
+        }
+      },
+      "GetPaymentOccurrencesResponseOccurrenceDto": {
+        "required": [
+          "paymentId",
+          "paymentSourceId",
+          "payeeId",
+          "amount",
+          "currency",
+          "frequency",
+          "occurrenceDate",
+          "startDate",
+          "endDate"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentSourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "frequency": {
+            "$ref": "#/components/schemas/PaymentFrequency"
+          },
+          "occurrenceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         }
       },

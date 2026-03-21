@@ -31,3 +31,15 @@ export interface UpdatePaymentRequest {
   startDate: string;
   endDate?: string;
 }
+
+export interface PaymentOccurrence {
+  paymentId: string;
+  paymentSourceId: string;
+  payeeId: string;
+  amount: number;
+  currency: string;
+  frequency: PaymentFrequency;
+  occurrenceDate: string;
+  startDate: string;
+  endDate?: string;
+}

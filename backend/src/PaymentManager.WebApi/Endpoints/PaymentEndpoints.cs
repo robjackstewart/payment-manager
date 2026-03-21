@@ -26,6 +26,10 @@ internal static class PaymentEndpoints
             .WithName("Get All Payments")
             .Produces<GetAllPayments.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json);
 
+        app.MapGet("/api/payments/occurrences", ([FromQuery] DateOnly from, [FromQuery] DateOnly to, [FromServices] ISender sender, [FromServices] IUserService userService, CancellationToken cancellationToken) => HandleGetOccurrences(from, to, sender, userService, cancellationToken))
+            .WithName("Get Payment Occurrences")
+            .Produces<GetPaymentOccurrences.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json);
+
         app.MapGet("/api/payments/{id:guid}", ([FromRoute] Guid id, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleGet(id, sender, cancellationToken))
             .WithName("Get Payment")
             .Produces<GetPayment.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
@@ -52,6 +56,12 @@ internal static class PaymentEndpoints
     internal static async Task<IResult> HandleGetAll(ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetAllPayments(userService.GetCurrentUserId()), cancellationToken);
+        return Results.Ok(result);
+    }
+
+    internal static async Task<IResult> HandleGetOccurrences(DateOnly from, DateOnly to, ISender sender, IUserService userService, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetPaymentOccurrences(userService.GetCurrentUserId(), from, to), cancellationToken);
         return Results.Ok(result);
     }
 
