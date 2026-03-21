@@ -41,7 +41,6 @@ const additionalProperties = [
   'stringEnums=false',
   'serviceSuffix=Service',
   'serviceFileSuffix=.service',
-  'withInterfaces=false',
   'npmName=payment-manager-api-client',
   'npmVersion=1.0.0',
 ].join(',');
