@@ -8,4 +8,7 @@ namespace PaymentManager.Infrastructure;
 internal sealed class ReadOnlyPaymentManagerContext(IPaymentManagerContext context) : IReadOnlyPaymentManagerContext
 {
     public IQueryable<User> Users => context.Users.AsNoTracking().AsQueryable();
+    public IQueryable<PaymentSource> PaymentSources => context.PaymentSources.AsNoTracking().AsQueryable();
+    public IQueryable<Payee> Payees => context.Payees.AsNoTracking().AsQueryable();
+    public IQueryable<Payment> Payments => context.Payments.AsNoTracking().AsQueryable();
 }

@@ -1,10 +1,5 @@
 version: '3'
 
-includes:
-  clients:
-    taskfile: clients/Taskfile.yml
-    dir: clients
-
 tasks:
   environment:check:
     preconditions:
@@ -13,13 +8,15 @@ tasks:
     cmds:
       - echo "All frontend tooling is installed"
 
+  install-locked-dependencies:
+    cmds:
+      - npm ci
+
   install-dependencies:
     cmds:
       - npm install
 
   build:
-    deps:
-      - task: clients:build
     cmds:
       - npm run build
 
@@ -38,3 +35,7 @@ tasks:
   run:
     cmds:
       - npm run start
+
+  api-client:generate:
+    cmds:
+      - npm run api-client:generate

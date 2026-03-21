@@ -1,6 +1,6 @@
 {
     "name": "Payments Manager Dev Container",
-    "dockerFile": "Dockerfile",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -16,12 +16,16 @@
                     "-l"
                 ],
                 "editor.formatOnSave": true,
-                "dotnet.defaultSolution": "${workspaceFolder}/backend/src/payment-manager.backend.sln"
+                "dotnet.defaultSolution": "${workspaceFolder}/backend/src/payment-manager.backend.slnx"
             }
         }
     },
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "24"
+        },
+        "ghcr.io/devcontainers-extra/features/go-task:1": {}
     },
     "forwardPorts": [
         3000,

@@ -13,11 +13,19 @@ tasks:
     deps:
       - task: backend:environment:check
 
+  install-tools:
+    cmds:
+      - task: restore-dotnet-tools
+
   install-dependencies:
     deps:
-      - task: restore-dotnet-tools
       - task: backend:install-dependencies
       - task: frontend:install-dependencies
+
+  install-locked-dependencies:
+    deps:
+      - task: backend:install-locked-dependencies
+      - task: frontend:install-locked-dependencies
 
   lint:
     deps:
