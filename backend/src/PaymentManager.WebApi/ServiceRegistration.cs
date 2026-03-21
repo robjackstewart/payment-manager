@@ -10,42 +10,42 @@ public static class ServiceRegistration
 {
     public static IServiceCollection AddPaymentManagerWebApi(this IServiceCollection services, Configuration configuration)
     {
-            services
-            .AddPaymentManagerApplication()
-            .AddPaymentManagerInfrastructure(new Infrastructure.Configuration
+        services
+        .AddPaymentManagerApplication()
+        .AddPaymentManagerInfrastructure(new Infrastructure.Configuration
+        {
+            DatabaseConnectionString = configuration.ConnectionStrings.PaymentManager
+        })
+        .AddOpenApi(opt =>
+        {
+            opt.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
+            opt.CreateSchemaReferenceId = (jsonTypeInfo) =>
             {
-                DatabaseConnectionString = configuration.ConnectionStrings.PaymentManager
-            })
-            .AddOpenApi(opt =>
-            {
-                opt.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
-                opt.CreateSchemaReferenceId = (jsonTypeInfo) =>
+                // Concatenate all nested type parents' names together
+                static string GetFullNestedTypeName(Type type)
                 {
-                    // Concatenate all nested type parents' names together
-                    static string GetFullNestedTypeName(Type type)
+                    if (type.DeclaringType == null)
                     {
-                        if (type.DeclaringType == null)
-                        {
-                            return type.Name;
-                        }
-                        return $"{GetFullNestedTypeName(type.DeclaringType)}{type.Name}";
+                        return type.Name;
                     }
+                    return $"{GetFullNestedTypeName(type.DeclaringType)}{type.Name}";
+                }
 
-                    return jsonTypeInfo.Type.IsNested ? GetFullNestedTypeName(jsonTypeInfo.Type) : OpenApiOptions.CreateDefaultSchemaReferenceId(jsonTypeInfo); ;
-                };
-            })
-            .AddProblemDetails()
-            .AddExceptionHandler<ExceptionHandler>()
-            .AddCors(opt =>
+                return jsonTypeInfo.Type.IsNested ? GetFullNestedTypeName(jsonTypeInfo.Type) : OpenApiOptions.CreateDefaultSchemaReferenceId(jsonTypeInfo); ;
+            };
+        })
+        .AddProblemDetails()
+        .AddExceptionHandler<ExceptionHandler>()
+        .AddCors(opt =>
+        {
+            opt.AddPolicy(Constants.Cors.ALLOW_UI_POLICY_NAME, builder =>
             {
-                opt.AddPolicy(Constants.Cors.ALLOW_UI_POLICY_NAME, builder =>
-                {
-                    builder
-                        .WithOrigins(configuration.Cors.AllowedOrigins)
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
-                });
+                builder
+                    .WithOrigins(configuration.Cors.AllowedOrigins)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
             });
+        });
 
         return services;
     }

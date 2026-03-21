@@ -89,8 +89,12 @@ internal sealed class PaymentTests : IntegrationTestBase
         var context = GetService<IPaymentManagerContext>();
         var payment = new Payment
         {
-            Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId,
-            PayeeId = payeeId, Amount = 15.99m, Frequency = PaymentFrequency.Monthly,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Amount = 15.99m,
+            Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1)
         };
         context.Payments.Add(payment);
@@ -129,10 +133,10 @@ internal sealed class PaymentTests : IntegrationTestBase
         var (userId, paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
         var context = GetService<IPaymentManagerContext>();
         context.Payments.AddRange(
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 10m, Frequency = PaymentFrequency.Monthly,  StartDate = new DateOnly(2025, 1, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 20m, Frequency = PaymentFrequency.Annually,   StartDate = new DateOnly(2025, 1, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 30m, Frequency = PaymentFrequency.Once,     StartDate = new DateOnly(2025, 6, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 40m, Frequency = PaymentFrequency.Monthly,  StartDate = new DateOnly(2025, 3, 1) });
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 10m, Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1) },
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 20m, Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 1, 1) },
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 30m, Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 6, 1) },
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 40m, Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1) });
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient().GetAsync($"/api/payments?userId={userId}", ct);
@@ -154,8 +158,12 @@ internal sealed class PaymentTests : IntegrationTestBase
         var context = GetService<IPaymentManagerContext>();
         var payment = new Payment
         {
-            Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId,
-            PayeeId = payeeId, Amount = 9.99m, Frequency = PaymentFrequency.Monthly,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Amount = 9.99m,
+            Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1)
         };
         context.Payments.Add(payment);
@@ -194,8 +202,12 @@ internal sealed class PaymentTests : IntegrationTestBase
         var context = GetService<IPaymentManagerContext>();
         var payment = new Payment
         {
-            Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId,
-            PayeeId = payeeId, Amount = 50m, Frequency = PaymentFrequency.Once,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Amount = 50m,
+            Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 1, 1)
         };
         context.Payments.Add(payment);
