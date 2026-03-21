@@ -4,14 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
+using PaymentManager.WebApi.Services;
 using Shouldly;
 
 namespace PaymentManager.WebApi.Tests.Integration.Endpoints;
 
 internal sealed class PayeeTests : IntegrationTestBase
 {
-    private sealed record CreateRequest(Guid UserId, string Name);
-    private sealed record UpdateRequest(Guid UserId, string Name);
+    private sealed record CreateRequest(string Name);
+    private sealed record UpdateRequest(string Name);
     private sealed record PayeeResponse(Guid Id, Guid UserId, string Name);
     private sealed record GetAllResponse(PayeeResponse[] Payees);
 
@@ -21,19 +22,15 @@ internal sealed class PayeeTests : IntegrationTestBase
     public async Task CreatePayee_Should_Return_Created_With_Payee()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
-        var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Bob" };
-        context.Users.Add(user);
-        await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payees",
-            new CreateRequest(user.Id, "New Payee"), ct);
+            new CreateRequest("New Payee"), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<PayeeResponse>(ct);
         body.ShouldNotBeNull();
         body.Id.ShouldNotBe(Guid.Empty);
-        body.UserId.ShouldBe(user.Id);
+        body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
         body.Name.ShouldBe("New Payee");
     }
 
@@ -41,13 +38,9 @@ internal sealed class PayeeTests : IntegrationTestBase
     public async Task CreatePayee_Should_Return_BadRequest_When_Name_Is_Empty()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
-        var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Bob" };
-        context.Users.Add(user);
-        await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payees",
-            new CreateRequest(user.Id, string.Empty), ct);
+            new CreateRequest(string.Empty), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var body = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(ct);
@@ -62,9 +55,7 @@ internal sealed class PayeeTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        var payee = new Payee { Id = Guid.NewGuid(), UserId = user.Id, Name = "Netflix" };
-        context.Users.Add(user);
+        var payee = new Payee { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Netflix" };
         context.Payees.Add(payee);
         await context.SaveChanges(ct);
 
@@ -97,22 +88,20 @@ internal sealed class PayeeTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        context.Users.Add(user);
         context.Payees.AddRange(
-            new Payee { Id = Guid.NewGuid(), UserId = user.Id, Name = "Netflix" },
-            new Payee { Id = Guid.NewGuid(), UserId = user.Id, Name = "Landlord" },
-            new Payee { Id = Guid.NewGuid(), UserId = user.Id, Name = "Electric" },
-            new Payee { Id = Guid.NewGuid(), UserId = user.Id, Name = "Gym" });
+            new Payee { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Netflix" },
+            new Payee { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Landlord" },
+            new Payee { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Electric" },
+            new Payee { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Gym" });
         await context.SaveChanges(ct);
 
-        var response = await CreateApiClient().GetAsync($"/api/payees?userId={user.Id}", ct);
+        var response = await CreateApiClient().GetAsync("/api/payees", ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<GetAllResponse>(ct);
         body.ShouldNotBeNull();
         body.Payees.Length.ShouldBe(4);
-        body.Payees.ShouldAllBe(p => p.UserId == user.Id);
+        body.Payees.ShouldAllBe(p => p.UserId == DefaultUserService.DefaultUserId);
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
@@ -122,14 +111,12 @@ internal sealed class PayeeTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Bob" };
-        var payee = new Payee { Id = Guid.NewGuid(), UserId = user.Id, Name = "Spotify" };
-        context.Users.Add(user);
+        var payee = new Payee { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Spotify" };
         context.Payees.Add(payee);
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payees/{payee.Id}",
-            new UpdateRequest(user.Id, "Spotify Premium"), ct);
+            new UpdateRequest("Spotify Premium"), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PayeeResponse>(ct);
@@ -143,7 +130,7 @@ internal sealed class PayeeTests : IntegrationTestBase
         var ct = TestContext.CurrentContext.CancellationToken;
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payees/{Guid.NewGuid()}",
-            new UpdateRequest(Guid.NewGuid(), "Name"), ct);
+            new UpdateRequest("Name"), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -155,9 +142,7 @@ internal sealed class PayeeTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        var payee = new Payee { Id = Guid.NewGuid(), UserId = user.Id, Name = "Dentist" };
-        context.Users.Add(user);
+        var payee = new Payee { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Dentist" };
         context.Payees.Add(payee);
         await context.SaveChanges(ct);
 

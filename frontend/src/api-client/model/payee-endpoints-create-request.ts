@@ -10,7 +10,6 @@
 
 
 export interface PayeeEndpointsCreateRequest { 
-    userId: string;
     name: string;
 }
 

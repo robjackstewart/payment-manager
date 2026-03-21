@@ -4,14 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
+using PaymentManager.WebApi.Services;
 using Shouldly;
 
 namespace PaymentManager.WebApi.Tests.Integration.Endpoints;
 
 internal sealed class PaymentSourceTests : IntegrationTestBase
 {
-    private sealed record CreateRequest(Guid UserId, string Name);
-    private sealed record UpdateRequest(Guid UserId, string Name);
+    private sealed record CreateRequest(string Name);
+    private sealed record UpdateRequest(string Name);
     private sealed record PaymentSourceResponse(Guid Id, Guid UserId, string Name);
     private sealed record GetAllResponse(PaymentSourceResponse[] PaymentSources);
 
@@ -21,19 +22,15 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
     public async Task CreatePaymentSource_Should_Return_Created_With_PaymentSource()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
-        var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        context.Users.Add(user);
-        await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payment-sources",
-            new CreateRequest(user.Id, "New Visa Card"), ct);
+            new CreateRequest("New Visa Card"), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<PaymentSourceResponse>(ct);
         body.ShouldNotBeNull();
         body.Id.ShouldNotBe(Guid.Empty);
-        body.UserId.ShouldBe(user.Id);
+        body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
         body.Name.ShouldBe("New Visa Card");
     }
 
@@ -41,13 +38,9 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
     public async Task CreatePaymentSource_Should_Return_BadRequest_When_Name_Is_Empty()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
-        var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        context.Users.Add(user);
-        await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payment-sources",
-            new CreateRequest(user.Id, string.Empty), ct);
+            new CreateRequest(string.Empty), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var body = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(ct);
@@ -62,9 +55,7 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        var paymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = user.Id, Name = "Alice Visa" };
-        context.Users.Add(user);
+        var paymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Alice Visa" };
         context.PaymentSources.Add(paymentSource);
         await context.SaveChanges(ct);
 
@@ -74,7 +65,7 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<PaymentSourceResponse>(ct);
         body.ShouldNotBeNull();
         body.Id.ShouldBe(paymentSource.Id);
-        body.UserId.ShouldBe(user.Id);
+        body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
     }
 
     [Test]
@@ -97,20 +88,18 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        context.Users.Add(user);
         context.PaymentSources.AddRange(
-            new PaymentSource { Id = Guid.NewGuid(), UserId = user.Id, Name = "Visa" },
-            new PaymentSource { Id = Guid.NewGuid(), UserId = user.Id, Name = "Debit" });
+            new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Visa" },
+            new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Debit" });
         await context.SaveChanges(ct);
 
-        var response = await CreateApiClient().GetAsync($"/api/payment-sources?userId={user.Id}", ct);
+        var response = await CreateApiClient().GetAsync("/api/payment-sources", ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<GetAllResponse>(ct);
         body.ShouldNotBeNull();
         body.PaymentSources.Length.ShouldBe(2);
-        body.PaymentSources.ShouldAllBe(ps => ps.UserId == user.Id);
+        body.PaymentSources.ShouldAllBe(ps => ps.UserId == DefaultUserService.DefaultUserId);
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
@@ -120,14 +109,12 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        var paymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = user.Id, Name = "Alice Visa" };
-        context.Users.Add(user);
+        var paymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Alice Visa" };
         context.PaymentSources.Add(paymentSource);
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payment-sources/{paymentSource.Id}",
-            new UpdateRequest(user.Id, "Updated Visa"), ct);
+            new UpdateRequest("Updated Visa"), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PaymentSourceResponse>(ct);
@@ -141,7 +128,7 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
         var ct = TestContext.CurrentContext.CancellationToken;
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payment-sources/{Guid.NewGuid()}",
-            new UpdateRequest(Guid.NewGuid(), "Name"), ct);
+            new UpdateRequest("Name"), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -153,9 +140,7 @@ internal sealed class PaymentSourceTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var context = GetService<IPaymentManagerContext>();
-        var user = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        var paymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = user.Id, Name = "Alice Debit" };
-        context.Users.Add(user);
+        var paymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Alice Debit" };
         context.PaymentSources.Add(paymentSource);
         await context.SaveChanges(ct);
 

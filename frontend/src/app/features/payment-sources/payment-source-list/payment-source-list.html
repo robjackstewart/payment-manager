@@ -1,16 +1,11 @@
 <div class="page-header">
   <h1>Payment Sources</h1>
-  <button mat-raised-button color="primary" (click)="openCreateDialog()" [disabled]="!userContext.selectedUser()">
+  <button mat-raised-button color="primary" (click)="openCreateDialog()">
     <mat-icon>add</mat-icon> New Payment Source
   </button>
 </div>
 
-@if (!userContext.selectedUser()) {
-  <div class="no-user-state">
-    <mat-icon>person_search</mat-icon>
-    <p>Select a user from the sidebar to view payment sources.</p>
-  </div>
-} @else if (loading()) {
+@if (loading()) {
   <div class="loading-container">
     <mat-spinner />
   </div>

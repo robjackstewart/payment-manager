@@ -219,17 +219,6 @@
           "PaymentManager.WebApi"
         ],
         "operationId": "Get All Payment Sources",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -400,17 +389,6 @@
           "PaymentManager.WebApi"
         ],
         "operationId": "Get All Payees",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -581,17 +559,6 @@
           "PaymentManager.WebApi"
         ],
         "operationId": "Get All Payments",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1106,15 +1073,10 @@
       },
       "PayeeEndpointsCreateRequest": {
         "required": [
-          "userId",
           "name"
         ],
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
           "name": {
             "type": "string"
           }
@@ -1122,15 +1084,10 @@
       },
       "PayeeEndpointsUpdateRequest": {
         "required": [
-          "userId",
           "name"
         ],
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
           "name": {
             "type": "string"
           }
@@ -1138,7 +1095,6 @@
       },
       "PaymentEndpointsCreateRequest": {
         "required": [
-          "userId",
           "paymentSourceId",
           "payeeId",
           "amount",
@@ -1149,10 +1105,6 @@
         ],
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
           "paymentSourceId": {
             "type": "string",
             "format": "uuid"
@@ -1184,7 +1136,6 @@
       },
       "PaymentEndpointsUpdateRequest": {
         "required": [
-          "userId",
           "paymentSourceId",
           "payeeId",
           "amount",
@@ -1195,10 +1146,6 @@
         ],
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
           "paymentSourceId": {
             "type": "string",
             "format": "uuid"
@@ -1233,15 +1180,10 @@
       },
       "PaymentSourceEndpointsCreateRequest": {
         "required": [
-          "userId",
           "name"
         ],
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
           "name": {
             "type": "string"
           }
@@ -1249,15 +1191,10 @@
       },
       "PaymentSourceEndpointsUpdateRequest": {
         "required": [
-          "userId",
           "name"
         ],
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
           "name": {
             "type": "string"
           }

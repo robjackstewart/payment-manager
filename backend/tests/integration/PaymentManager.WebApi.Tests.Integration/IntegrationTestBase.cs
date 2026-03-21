@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
+using PaymentManager.Domain.Entities;
+using PaymentManager.WebApi.Services;
 
 namespace PaymentManager.WebApi.Tests.Integration;
 
@@ -26,7 +28,8 @@ public abstract class IntegrationTestBase
         await context.Payments.ExecuteDeleteAsync();
         await context.Payees.ExecuteDeleteAsync();
         await context.PaymentSources.ExecuteDeleteAsync();
-        await context.Users.ExecuteDeleteAsync();
+        await context.Users.Where(u => u.Id != DefaultUserService.DefaultUserId).ExecuteDeleteAsync();
+        await context.SaveChanges(CancellationToken.None);
     }
 
     [TearDown]

@@ -4,12 +4,20 @@ using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using PaymentManager.Application.Queries;
 using PaymentManager.WebApi.Endpoints;
+using PaymentManager.WebApi.Services;
 using Shouldly;
 
 namespace PaymentManager.WebApi.Tests.Unit.Endpoints;
 
 internal sealed class PayeeEndpointTests
 {
+    private static IUserService CreateUserService(Guid userId)
+    {
+        var userService = A.Fake<IUserService>();
+        A.CallTo(() => userService.GetCurrentUserId()).Returns(userId);
+        return userService;
+    }
+
     [Test]
     public async Task HandleCreate_Should_Return_CreatedResponse()
     {
@@ -17,14 +25,15 @@ internal sealed class PayeeEndpointTests
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var userId = Guid.NewGuid();
         var name = TestContext.CurrentContext.Random.GetString();
-        var request = new PayeeEndpoints.CreateRequest(userId, name);
+        var request = new PayeeEndpoints.CreateRequest(name);
         var responseId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         A.CallTo(() => sender.Send(A<CreatePayee>._, A<CancellationToken>._))
             .Returns(new CreatePayee.Response(responseId, userId, name));
 
         // Act
-        var result = await PayeeEndpoints.HandleCreate(request, sender, cancellationToken);
+        var result = await PayeeEndpoints.HandleCreate(request, sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -45,6 +54,7 @@ internal sealed class PayeeEndpointTests
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var userId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         var payees = new List<GetAllPayees.Response.PayeeDto>
         {
             new(Guid.NewGuid(), userId, TestContext.CurrentContext.Random.GetString()),
@@ -54,7 +64,7 @@ internal sealed class PayeeEndpointTests
             .Returns(new GetAllPayees.Response(payees));
 
         // Act
-        var result = await PayeeEndpoints.HandleGetAll(userId, sender, cancellationToken);
+        var result = await PayeeEndpoints.HandleGetAll(sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -99,13 +109,14 @@ internal sealed class PayeeEndpointTests
         var id = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var name = TestContext.CurrentContext.Random.GetString();
-        var request = new PayeeEndpoints.UpdateRequest(userId, name);
+        var request = new PayeeEndpoints.UpdateRequest(name);
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         A.CallTo(() => sender.Send(A<UpdatePayee>._, A<CancellationToken>._))
             .Returns(new UpdatePayee.Response(id, userId, name));
 
         // Act
-        var result = await PayeeEndpoints.HandleUpdate(id, request, sender, cancellationToken);
+        var result = await PayeeEndpoints.HandleUpdate(id, request, sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();

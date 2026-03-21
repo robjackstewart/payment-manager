@@ -7,11 +7,6 @@ export const routes: Routes = [
       import('./features/dashboard/dashboard').then(m => m.DashboardComponent)
   },
   {
-    path: 'users',
-    loadComponent: () =>
-      import('./features/users/user-list/user-list').then(m => m.UserListComponent)
-  },
-  {
     path: 'payment-sources',
     loadComponent: () =>
       import('./features/payment-sources/payment-source-list/payment-source-list').then(

@@ -5,22 +5,23 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PaymentManager.Application.Commands;
 using PaymentManager.Application.Queries;
+using PaymentManager.WebApi.Services;
 
 namespace PaymentManager.WebApi.Endpoints;
 
 internal static class PayeeEndpoints
 {
-    public record CreateRequest(Guid UserId, string Name);
-    public record UpdateRequest(Guid UserId, string Name);
+    public record CreateRequest(string Name);
+    public record UpdateRequest(string Name);
 
     public static WebApplication Map(WebApplication app)
     {
-        app.MapPost("/api/payees", ([FromBody] CreateRequest request, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleCreate(request, sender, cancellationToken))
+        app.MapPost("/api/payees", ([FromBody] CreateRequest request, [FromServices] ISender sender, [FromServices] IUserService userService, CancellationToken cancellationToken) => HandleCreate(request, sender, userService, cancellationToken))
             .WithName("Create Payee")
             .Produces<CreatePayee.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
             .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
 
-        app.MapGet("/api/payees", ([FromQuery] Guid userId, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleGetAll(userId, sender, cancellationToken))
+        app.MapGet("/api/payees", ([FromServices] ISender sender, [FromServices] IUserService userService, CancellationToken cancellationToken) => HandleGetAll(sender, userService, cancellationToken))
             .WithName("Get All Payees")
             .Produces<GetAllPayees.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json);
 
@@ -29,7 +30,7 @@ internal static class PayeeEndpoints
             .Produces<GetPayee.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
             .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
 
-        app.MapPut("/api/payees/{id:guid}", ([FromRoute] Guid id, [FromBody] UpdateRequest request, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleUpdate(id, request, sender, cancellationToken))
+        app.MapPut("/api/payees/{id:guid}", ([FromRoute] Guid id, [FromBody] UpdateRequest request, [FromServices] ISender sender, [FromServices] IUserService userService, CancellationToken cancellationToken) => HandleUpdate(id, request, sender, userService, cancellationToken))
             .WithName("Update Payee")
             .Produces<UpdatePayee.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json)
             .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
@@ -41,15 +42,15 @@ internal static class PayeeEndpoints
         return app;
     }
 
-    internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreatePayee(request.UserId, request.Name), cancellationToken);
+        var result = await sender.Send(new CreatePayee(userService.GetCurrentUserId(), request.Name), cancellationToken);
         return Results.Created($"/api/payees/{result.Id}", result);
     }
 
-    internal static async Task<IResult> HandleGetAll(Guid userId, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGetAll(ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetAllPayees(userId), cancellationToken);
+        var result = await sender.Send(new GetAllPayees(userService.GetCurrentUserId()), cancellationToken);
         return Results.Ok(result);
     }
 
@@ -59,9 +60,9 @@ internal static class PayeeEndpoints
         return Results.Ok(result);
     }
 
-    internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdatePayee(id, request.UserId, request.Name), cancellationToken);
+        var result = await sender.Send(new UpdatePayee(id, userService.GetCurrentUserId(), request.Name), cancellationToken);
         return Results.Ok(result);
     }
 

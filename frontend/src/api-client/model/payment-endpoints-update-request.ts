@@ -10,7 +10,6 @@
 
 
 export interface PaymentEndpointsUpdateRequest { 
-    userId: string;
     paymentSourceId: string;
     payeeId: string;
     amount: any | null;

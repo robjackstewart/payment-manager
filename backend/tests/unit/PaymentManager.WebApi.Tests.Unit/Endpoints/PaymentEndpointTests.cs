@@ -5,12 +5,20 @@ using PaymentManager.Application.Commands;
 using PaymentManager.Application.Queries;
 using PaymentManager.Domain.Enums;
 using PaymentManager.WebApi.Endpoints;
+using PaymentManager.WebApi.Services;
 using Shouldly;
 
 namespace PaymentManager.WebApi.Tests.Unit.Endpoints;
 
 internal sealed class PaymentEndpointTests
 {
+    private static IUserService CreateUserService(Guid userId)
+    {
+        var userService = A.Fake<IUserService>();
+        A.CallTo(() => userService.GetCurrentUserId()).Returns(userId);
+        return userService;
+    }
+
     [Test]
     public async Task HandleCreate_Should_Return_CreatedResponse()
     {
@@ -24,14 +32,15 @@ internal sealed class PaymentEndpointTests
         var frequency = PaymentFrequency.Monthly;
         var startDate = new DateOnly(2025, 1, 1);
         var endDate = new DateOnly(2025, 12, 31);
-        var request = new PaymentEndpoints.CreateRequest(userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
+        var request = new PaymentEndpoints.CreateRequest(paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
         var responseId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         A.CallTo(() => sender.Send(A<CreatePayment>._, A<CancellationToken>._))
             .Returns(new CreatePayment.Response(responseId, userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate));
 
         // Act
-        var result = await PaymentEndpoints.HandleCreate(request, sender, cancellationToken);
+        var result = await PaymentEndpoints.HandleCreate(request, sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -58,6 +67,7 @@ internal sealed class PaymentEndpointTests
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var userId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         var payments = new List<GetAllPayments.Response.PaymentDto>
         {
             new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 50.00m, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 1), null),
@@ -67,7 +77,7 @@ internal sealed class PaymentEndpointTests
             .Returns(new GetAllPayments.Response(payments));
 
         // Act
-        var result = await PaymentEndpoints.HandleGetAll(userId, sender, cancellationToken);
+        var result = await PaymentEndpoints.HandleGetAll(sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -130,13 +140,14 @@ internal sealed class PaymentEndpointTests
         var frequency = PaymentFrequency.Annually;
         var startDate = new DateOnly(2025, 1, 1);
         var endDate = new DateOnly(2026, 1, 1);
-        var request = new PaymentEndpoints.UpdateRequest(userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
+        var request = new PaymentEndpoints.UpdateRequest(paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         A.CallTo(() => sender.Send(A<UpdatePayment>._, A<CancellationToken>._))
             .Returns(new UpdatePayment.Response(id, userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate));
 
         // Act
-        var result = await PaymentEndpoints.HandleUpdate(id, request, sender, cancellationToken);
+        var result = await PaymentEndpoints.HandleUpdate(id, request, sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();

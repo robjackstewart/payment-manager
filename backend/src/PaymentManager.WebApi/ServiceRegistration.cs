@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.OpenApi;
 using PaymentManager.Application;
 using PaymentManager.Infrastructure;
 using PaymentManager.WebApi.Endpoints;
+using PaymentManager.WebApi.Services;
 
 namespace PaymentManager.WebApi;
 
@@ -11,6 +12,7 @@ public static class ServiceRegistration
     public static IServiceCollection AddPaymentManagerWebApi(this IServiceCollection services, Configuration configuration)
     {
         services
+        .AddScoped<IUserService, DefaultUserService>()
         .AddPaymentManagerApplication()
         .AddPaymentManagerInfrastructure(new Infrastructure.Configuration
         {

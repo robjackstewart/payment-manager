@@ -3,10 +3,8 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Payee } from '../../../core/models/payee.model';
-import { User } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-payee-form-dialog',
@@ -16,17 +14,15 @@ import { User } from '../../../core/models/user.model';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
     ReactiveFormsModule,
   ],
   templateUrl: './payee-form-dialog.html'
 })
 export class PayeeFormDialogComponent {
   readonly dialogRef = inject(MatDialogRef<PayeeFormDialogComponent>);
-  readonly data = inject<{ payee?: Payee; users: User[] }>(MAT_DIALOG_DATA);
+  readonly data = inject<{ payee?: Payee }>(MAT_DIALOG_DATA);
 
   readonly form = new FormGroup({
-    userId: new FormControl(this.data?.payee?.userId ?? '', [Validators.required]),
     name: new FormControl(this.data?.payee?.name ?? '', [Validators.required])
   });
 

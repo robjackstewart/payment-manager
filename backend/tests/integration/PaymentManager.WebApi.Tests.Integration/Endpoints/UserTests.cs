@@ -96,7 +96,7 @@ internal sealed class UserTests : IntegrationTestBase
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<GetAllResponse>(ct);
         body.ShouldNotBeNull();
-        body.Users.Length.ShouldBe(2);
+        body.Users.Length.ShouldBe(3); // Includes the default user from IntegrationTestBase
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
