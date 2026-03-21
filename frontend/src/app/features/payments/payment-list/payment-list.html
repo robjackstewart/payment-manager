@@ -23,7 +23,7 @@
       </ng-container>
       <ng-container matColumnDef="amount">
         <th mat-header-cell *matHeaderCellDef>Amount</th>
-        <td mat-cell *matCellDef="let p">{{ p.amount | currency }}</td>
+        <td mat-cell *matCellDef="let p">{{ p.amount | currency: p.currency }}</td>
       </ng-container>
       <ng-container matColumnDef="frequency">
         <th mat-header-cell *matHeaderCellDef>Frequency</th>

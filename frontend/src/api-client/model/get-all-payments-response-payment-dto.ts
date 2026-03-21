@@ -9,12 +9,13 @@
  */
 
 
-export interface GetAllPaymentsResponsePaymentDto { 
+export interface GetAllPaymentsResponsePaymentDto {
     id: string;
     userId: string;
     paymentSourceId: string;
     payeeId: string;
     amount: any | null;
+    currency: string;
     frequency: number;
     startDate: string;
     endDate: string | null;

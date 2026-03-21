@@ -49,6 +49,18 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Currency</mat-label>
+      <mat-select formControlName="currency">
+        @for (code of currencyOptions; track code) {
+          <mat-option [value]="code">{{ code }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.currency.hasError('required')) {
+        <mat-error>Currency is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
       <mat-label>Frequency</mat-label>
       <mat-select formControlName="frequency">
         @for (opt of frequencyOptions; track opt.value) {

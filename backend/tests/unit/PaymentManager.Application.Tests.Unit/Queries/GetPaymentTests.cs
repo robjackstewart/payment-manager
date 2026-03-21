@@ -25,6 +25,7 @@ internal sealed class GetPaymentTests
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
             Amount = 250.50m,
+            Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
             EndDate = new DateOnly(2025, 12, 31)
@@ -36,6 +37,7 @@ internal sealed class GetPaymentTests
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
             Amount = 50m,
+            Currency = "USD",
             Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 6, 1),
             EndDate = null
@@ -58,6 +60,7 @@ internal sealed class GetPaymentTests
         result.PaymentSourceId.ShouldBe(matchingPayment.PaymentSourceId);
         result.PayeeId.ShouldBe(matchingPayment.PayeeId);
         result.Amount.ShouldBe(matchingPayment.Amount);
+        result.Currency.ShouldBe(matchingPayment.Currency);
         result.Frequency.ShouldBe(matchingPayment.Frequency);
         result.StartDate.ShouldBe(matchingPayment.StartDate);
         result.EndDate.ShouldBe(matchingPayment.EndDate);
@@ -75,6 +78,7 @@ internal sealed class GetPaymentTests
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
             Amount = 100m,
+            Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
             EndDate = new DateOnly(2025, 12, 31)

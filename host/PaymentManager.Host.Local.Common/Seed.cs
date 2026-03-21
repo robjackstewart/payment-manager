@@ -83,7 +83,7 @@ public static class Seed
         {
             Id = PaymentIds.AliceNetflix, UserId = UserIds.Alice,
             PaymentSourceId = PaymentSourceIds.AliceVisa, PayeeId = PayeeIds.Netflix,
-            Amount = 15.99m, Frequency = PaymentFrequency.Monthly,
+            Amount = 15.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1), EndDate = null,
         },
         // Alice — monthly rent via debit
@@ -91,7 +91,7 @@ public static class Seed
         {
             Id = PaymentIds.AliceRent, UserId = UserIds.Alice,
             PaymentSourceId = PaymentSourceIds.AliceDebit, PayeeId = PayeeIds.Landlord,
-            Amount = 1200.00m, Frequency = PaymentFrequency.Monthly,
+            Amount = 1200.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 3, 1), EndDate = new DateOnly(2026, 2, 28),
         },
         // Alice — monthly electric bill via debit
@@ -99,7 +99,7 @@ public static class Seed
         {
             Id = PaymentIds.AliceElectric, UserId = UserIds.Alice,
             PaymentSourceId = PaymentSourceIds.AliceDebit, PayeeId = PayeeIds.ElectricCompany,
-            Amount = 85.00m, Frequency = PaymentFrequency.Monthly,
+            Amount = 85.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1), EndDate = null,
         },
         // Alice — annual gym membership via Visa
@@ -107,7 +107,7 @@ public static class Seed
         {
             Id = PaymentIds.AliceGym, UserId = UserIds.Alice,
             PaymentSourceId = PaymentSourceIds.AliceVisa, PayeeId = PayeeIds.GymMembership,
-            Amount = 420.00m, Frequency = PaymentFrequency.Annually,
+            Amount = 420.00m, Currency = "USD", Frequency = PaymentFrequency.Annually,
             StartDate = new DateOnly(2025, 6, 1), EndDate = new DateOnly(2027, 6, 1),
         },
         // Bob — monthly Spotify via Amex
@@ -115,7 +115,7 @@ public static class Seed
         {
             Id = PaymentIds.BobSpotify, UserId = UserIds.Bob,
             PaymentSourceId = PaymentSourceIds.BobAmex, PayeeId = PayeeIds.Spotify,
-            Amount = 11.99m, Frequency = PaymentFrequency.Monthly,
+            Amount = 11.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 2, 1), EndDate = null,
         },
         // Bob — annual insurance via savings
@@ -123,7 +123,7 @@ public static class Seed
         {
             Id = PaymentIds.BobInsurance, UserId = UserIds.Bob,
             PaymentSourceId = PaymentSourceIds.BobSavings, PayeeId = PayeeIds.Insurance,
-            Amount = 960.00m, Frequency = PaymentFrequency.Annually,
+            Amount = 960.00m, Currency = "USD", Frequency = PaymentFrequency.Annually,
             StartDate = new DateOnly(2025, 4, 15), EndDate = null,
         },
         // Bob — one-off dentist visit via Amex
@@ -131,7 +131,7 @@ public static class Seed
         {
             Id = PaymentIds.BobDentist, UserId = UserIds.Bob,
             PaymentSourceId = PaymentSourceIds.BobAmex, PayeeId = PayeeIds.Dentist,
-            Amount = 275.00m, Frequency = PaymentFrequency.Once,
+            Amount = 275.00m, Currency = "USD", Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 7, 10), EndDate = null,
         },
         // Charlie — monthly rent via Mastercard
@@ -139,7 +139,7 @@ public static class Seed
         {
             Id = PaymentIds.CharlieRent, UserId = UserIds.Charlie,
             PaymentSourceId = PaymentSourceIds.CharlieMastercard, PayeeId = PayeeIds.Landlord,
-            Amount = 950.00m, Frequency = PaymentFrequency.Monthly,
+            Amount = 950.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1), EndDate = new DateOnly(2025, 12, 31),
         },
         // Charlie — monthly Netflix via Mastercard
@@ -147,7 +147,7 @@ public static class Seed
         {
             Id = PaymentIds.CharlieNetflix, UserId = UserIds.Charlie,
             PaymentSourceId = PaymentSourceIds.CharlieMastercard, PayeeId = PayeeIds.Netflix,
-            Amount = 15.99m, Frequency = PaymentFrequency.Monthly,
+            Amount = 15.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 3, 1), EndDate = null,
         },
         // Charlie — one-off car service via Mastercard
@@ -155,7 +155,7 @@ public static class Seed
         {
             Id = PaymentIds.CharlieCarService, UserId = UserIds.Charlie,
             PaymentSourceId = PaymentSourceIds.CharlieMastercard, PayeeId = PayeeIds.CarService,
-            Amount = 389.50m, Frequency = PaymentFrequency.Once,
+            Amount = 389.50m, Currency = "USD", Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 9, 20), EndDate = null,
         },
     ];

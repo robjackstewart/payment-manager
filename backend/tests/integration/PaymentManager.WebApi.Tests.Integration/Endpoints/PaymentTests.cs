@@ -13,17 +13,17 @@ internal sealed class PaymentTests : IntegrationTestBase
 {
     private sealed record CreateRequest(
         Guid UserId, Guid PaymentSourceId, Guid PayeeId,
-        decimal Amount, PaymentFrequency Frequency,
+        decimal Amount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate);
 
     private sealed record UpdateRequest(
         Guid UserId, Guid PaymentSourceId, Guid PayeeId,
-        decimal Amount, PaymentFrequency Frequency,
+        decimal Amount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate);
 
     private sealed record PaymentResponse(
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
-        decimal Amount, PaymentFrequency Frequency,
+        decimal Amount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate);
 
     private sealed record GetAllResponse(PaymentResponse[] Payments);
@@ -51,7 +51,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         var (userId, paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
-            userId, paymentSourceId, payeeId, 9.99m, PaymentFrequency.Monthly,
+            userId, paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
             new DateOnly(2026, 1, 1), null), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -70,7 +70,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         var (userId, paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
-            userId, paymentSourceId, payeeId, 0m, PaymentFrequency.Monthly,
+            userId, paymentSourceId, payeeId, 0m, "USD", PaymentFrequency.Monthly,
             new DateOnly(2026, 1, 1), null), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -94,6 +94,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PaymentSourceId = paymentSourceId,
             PayeeId = payeeId,
             Amount = 15.99m,
+            Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1)
         };
@@ -133,10 +134,10 @@ internal sealed class PaymentTests : IntegrationTestBase
         var (userId, paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
         var context = GetService<IPaymentManagerContext>();
         context.Payments.AddRange(
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 10m, Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 20m, Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 1, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 30m, Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 6, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 40m, Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1) });
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 10m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1) },
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 20m, Currency = "USD", Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 1, 1) },
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 30m, Currency = "USD", Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 6, 1) },
+            new Payment { Id = Guid.NewGuid(), UserId = userId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 40m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1) });
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient().GetAsync($"/api/payments?userId={userId}", ct);
@@ -163,6 +164,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PaymentSourceId = paymentSourceId,
             PayeeId = payeeId,
             Amount = 9.99m,
+            Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1)
         };
@@ -170,7 +172,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{payment.Id}", new UpdateRequest(
-            userId, paymentSourceId, payeeId, 14.99m, PaymentFrequency.Monthly,
+            userId, paymentSourceId, payeeId, 14.99m, "EUR", PaymentFrequency.Monthly,
             new DateOnly(2026, 1, 1), null), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -186,7 +188,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         var (userId, paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{Guid.NewGuid()}", new UpdateRequest(
-            userId, paymentSourceId, payeeId, 10m, PaymentFrequency.Once,
+            userId, paymentSourceId, payeeId, 10m, "USD", PaymentFrequency.Once,
             new DateOnly(2026, 1, 1), null), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -207,6 +209,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PaymentSourceId = paymentSourceId,
             PayeeId = payeeId,
             Amount = 50m,
+            Currency = "USD",
             Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 1, 1)
         };

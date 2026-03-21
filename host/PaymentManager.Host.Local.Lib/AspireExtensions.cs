@@ -13,7 +13,7 @@ public static class AspireExtensions
         this IDistributedApplicationBuilder builder, string name, PaymentManagerSqliteDatabase sqliteDatabase)
         => new(builder.AddProject<PaymentManager_WebApi>(name)
                 .WithReference(sqliteDatabase.Builder, "PaymentManager")
-                .WithEnvironment("Cors__AllowedOrigins__0", $"http://localhost:{FrontEndPort}"));
+                .WithEnvironment("Cors__AllowedOrigins__0", $"http://localhost:{FrontEndPort.ToString()}"));
 
     public static PaymentManagerDatabaseSeeder AddPaymentManagerDatabaseSeeder(
         this IDistributedApplicationBuilder builder, string name, PaymentManagerSqliteDatabase sqliteDatabase)

@@ -20,14 +20,15 @@ internal sealed class PaymentEndpointTests
         var paymentSourceId = Guid.NewGuid();
         var payeeId = Guid.NewGuid();
         var amount = 100.50m;
+        var currency = "USD";
         var frequency = PaymentFrequency.Monthly;
         var startDate = new DateOnly(2025, 1, 1);
         var endDate = new DateOnly(2025, 12, 31);
-        var request = new PaymentEndpoints.CreateRequest(userId, paymentSourceId, payeeId, amount, frequency, startDate, endDate);
+        var request = new PaymentEndpoints.CreateRequest(userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
         var responseId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
         A.CallTo(() => sender.Send(A<CreatePayment>._, A<CancellationToken>._))
-            .Returns(new CreatePayment.Response(responseId, userId, paymentSourceId, payeeId, amount, frequency, startDate, endDate));
+            .Returns(new CreatePayment.Response(responseId, userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate));
 
         // Act
         var result = await PaymentEndpoints.HandleCreate(request, sender, cancellationToken);
@@ -43,6 +44,7 @@ internal sealed class PaymentEndpointTests
         created.Value.PaymentSourceId.ShouldBe(paymentSourceId);
         created.Value.PayeeId.ShouldBe(payeeId);
         created.Value.Amount.ShouldBe(amount);
+        created.Value.Currency.ShouldBe(currency);
         created.Value.Frequency.ShouldBe(frequency);
         created.Value.StartDate.ShouldBe(startDate);
         created.Value.EndDate.ShouldBe(endDate);
@@ -58,8 +60,8 @@ internal sealed class PaymentEndpointTests
         var sender = A.Fake<ISender>();
         var payments = new List<GetAllPayments.Response.PaymentDto>
         {
-            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 50.00m, PaymentFrequency.Once, new DateOnly(2025, 1, 1), null),
-            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 200.00m, PaymentFrequency.Annually, new DateOnly(2025, 6, 1), new DateOnly(2026, 6, 1))
+            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 50.00m, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 1), null),
+            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 200.00m, "USD", PaymentFrequency.Annually, new DateOnly(2025, 6, 1), new DateOnly(2026, 6, 1))
         };
         A.CallTo(() => sender.Send(A<GetAllPayments>._, A<CancellationToken>._))
             .Returns(new GetAllPayments.Response(payments));
@@ -86,12 +88,13 @@ internal sealed class PaymentEndpointTests
         var paymentSourceId = Guid.NewGuid();
         var payeeId = Guid.NewGuid();
         var amount = 75.25m;
+        var currency = "GBP";
         var frequency = PaymentFrequency.Monthly;
         var startDate = new DateOnly(2025, 3, 1);
         var endDate = new DateOnly(2025, 9, 30);
         var sender = A.Fake<ISender>();
         A.CallTo(() => sender.Send(A<GetPayment>._, A<CancellationToken>._))
-            .Returns(new GetPayment.Response(id, userId, paymentSourceId, payeeId, amount, frequency, startDate, endDate));
+            .Returns(new GetPayment.Response(id, userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate));
 
         // Act
         var result = await PaymentEndpoints.HandleGet(id, sender, cancellationToken);
@@ -107,6 +110,7 @@ internal sealed class PaymentEndpointTests
         ok.Value.PaymentSourceId.ShouldBe(paymentSourceId);
         ok.Value.PayeeId.ShouldBe(payeeId);
         ok.Value.Amount.ShouldBe(amount);
+        ok.Value.Currency.ShouldBe(currency);
         ok.Value.Frequency.ShouldBe(frequency);
         ok.Value.StartDate.ShouldBe(startDate);
         ok.Value.EndDate.ShouldBe(endDate);
@@ -122,13 +126,14 @@ internal sealed class PaymentEndpointTests
         var paymentSourceId = Guid.NewGuid();
         var payeeId = Guid.NewGuid();
         var amount = 150.00m;
+        var currency = "EUR";
         var frequency = PaymentFrequency.Annually;
         var startDate = new DateOnly(2025, 1, 1);
         var endDate = new DateOnly(2026, 1, 1);
-        var request = new PaymentEndpoints.UpdateRequest(userId, paymentSourceId, payeeId, amount, frequency, startDate, endDate);
+        var request = new PaymentEndpoints.UpdateRequest(userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
         var sender = A.Fake<ISender>();
         A.CallTo(() => sender.Send(A<UpdatePayment>._, A<CancellationToken>._))
-            .Returns(new UpdatePayment.Response(id, userId, paymentSourceId, payeeId, amount, frequency, startDate, endDate));
+            .Returns(new UpdatePayment.Response(id, userId, paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate));
 
         // Act
         var result = await PaymentEndpoints.HandleUpdate(id, request, sender, cancellationToken);
@@ -144,6 +149,7 @@ internal sealed class PaymentEndpointTests
         ok.Value.PaymentSourceId.ShouldBe(paymentSourceId);
         ok.Value.PayeeId.ShouldBe(payeeId);
         ok.Value.Amount.ShouldBe(amount);
+        ok.Value.Currency.ShouldBe(currency);
         ok.Value.Frequency.ShouldBe(frequency);
         ok.Value.StartDate.ShouldBe(startDate);
         ok.Value.EndDate.ShouldBe(endDate);

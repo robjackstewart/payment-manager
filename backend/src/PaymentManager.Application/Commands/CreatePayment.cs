@@ -8,7 +8,7 @@ using static PaymentManager.Application.Commands.CreatePayment;
 
 namespace PaymentManager.Application.Commands;
 
-public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate) : IRequest<Response>
+public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate) : IRequest<Response>
 {
     internal sealed class Validator : AbstractValidator<CreatePayment>
     {
@@ -18,6 +18,7 @@ public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, dec
             RuleFor(x => x.PaymentSourceId).NotEmpty();
             RuleFor(x => x.PayeeId).NotEmpty();
             RuleFor(x => x.Amount).GreaterThan(0);
+            RuleFor(x => x.Currency).NotEmpty().MaximumLength(3);
             RuleFor(x => x.Frequency).IsInEnum();
             RuleFor(x => x.StartDate).NotEqual(default(DateOnly));
             RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue);
@@ -38,6 +39,7 @@ public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, dec
                 PaymentSourceId = request.PaymentSourceId,
                 PayeeId = request.PayeeId,
                 Amount = request.Amount,
+                Currency = request.Currency,
                 Frequency = request.Frequency,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate
@@ -48,9 +50,9 @@ public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, dec
 
             logger.LogInformation("Created payment '{Id}' for user: '{UserId}' with amount: '{Amount}'", payment.Id, payment.UserId, payment.Amount);
 
-            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Frequency, payment.StartDate, payment.EndDate);
+            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate);
         }
     }
 
-    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
+    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
 }

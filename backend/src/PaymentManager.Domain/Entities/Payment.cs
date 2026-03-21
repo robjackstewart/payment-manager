@@ -9,6 +9,7 @@ public record Payment()
     public required Guid PaymentSourceId { get; init; }
     public required Guid PayeeId { get; init; }
     public required decimal Amount { get; init; }
+    public required string Currency { get; init; }
     public required PaymentFrequency Frequency { get; init; }
     public required DateOnly StartDate { get; init; }
     public DateOnly? EndDate { get; init; }
