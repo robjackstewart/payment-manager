@@ -4,12 +4,20 @@ using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using PaymentManager.Application.Queries;
 using PaymentManager.WebApi.Endpoints;
+using PaymentManager.WebApi.Services;
 using Shouldly;
 
 namespace PaymentManager.WebApi.Tests.Unit.Endpoints;
 
 internal sealed class PaymentSourceEndpointTests
 {
+    private static IUserService CreateUserService(Guid userId)
+    {
+        var userService = A.Fake<IUserService>();
+        A.CallTo(() => userService.GetCurrentUserId()).Returns(userId);
+        return userService;
+    }
+
     [Test]
     public async Task HandleCreate_Should_Return_CreatedResponse()
     {
@@ -17,14 +25,15 @@ internal sealed class PaymentSourceEndpointTests
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var userId = Guid.NewGuid();
         var name = TestContext.CurrentContext.Random.GetString();
-        var request = new PaymentSourceEndpoints.CreateRequest(userId, name);
+        var request = new PaymentSourceEndpoints.CreateRequest(name);
         var responseId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         A.CallTo(() => sender.Send(A<CreatePaymentSource>._, A<CancellationToken>._))
             .Returns(new CreatePaymentSource.Response(responseId, userId, name));
 
         // Act
-        var result = await PaymentSourceEndpoints.HandleCreate(request, sender, cancellationToken);
+        var result = await PaymentSourceEndpoints.HandleCreate(request, sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -45,6 +54,7 @@ internal sealed class PaymentSourceEndpointTests
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var userId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         var paymentSources = new List<GetAllPaymentSources.Response.PaymentSourceDto>
         {
             new(Guid.NewGuid(), userId, TestContext.CurrentContext.Random.GetString()),
@@ -54,7 +64,7 @@ internal sealed class PaymentSourceEndpointTests
             .Returns(new GetAllPaymentSources.Response(paymentSources));
 
         // Act
-        var result = await PaymentSourceEndpoints.HandleGetAll(userId, sender, cancellationToken);
+        var result = await PaymentSourceEndpoints.HandleGetAll(sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();
@@ -99,13 +109,14 @@ internal sealed class PaymentSourceEndpointTests
         var id = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var name = TestContext.CurrentContext.Random.GetString();
-        var request = new PaymentSourceEndpoints.UpdateRequest(userId, name);
+        var request = new PaymentSourceEndpoints.UpdateRequest(name);
         var sender = A.Fake<ISender>();
+        var userService = CreateUserService(userId);
         A.CallTo(() => sender.Send(A<UpdatePaymentSource>._, A<CancellationToken>._))
             .Returns(new UpdatePaymentSource.Response(id, userId, name));
 
         // Act
-        var result = await PaymentSourceEndpoints.HandleUpdate(id, request, sender, cancellationToken);
+        var result = await PaymentSourceEndpoints.HandleUpdate(id, request, sender, userService, cancellationToken);
 
         // Assert
         result.ShouldNotBeNull();

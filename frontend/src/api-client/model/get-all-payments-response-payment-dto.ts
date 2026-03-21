@@ -9,7 +9,7 @@
  */
 
 
-export interface GetAllPaymentsResponsePaymentDto {
+export interface GetAllPaymentsResponsePaymentDto { 
     id: string;
     userId: string;
     paymentSourceId: string;

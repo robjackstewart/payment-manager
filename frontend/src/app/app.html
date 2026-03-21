@@ -5,28 +5,10 @@
       <span class="app-title">Payment Manager</span>
     </div>
     <mat-divider />
-    <div class="user-selector-section">
-      <mat-form-field appearance="outline" class="user-select-field">
-        <mat-label>Active User</mat-label>
-        <mat-select
-          [value]="userContext.selectedUser()"
-          (selectionChange)="userContext.select($event.value)"
-          [compareWith]="compareUsers">
-          @for (user of users(); track user.id) {
-            <mat-option [value]="user">{{ user.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </div>
-    <mat-divider />
     <mat-nav-list>
       <a mat-list-item routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }">
         <mat-icon matListItemIcon>dashboard</mat-icon>
         <span matListItemTitle>Dashboard</span>
-      </a>
-      <a mat-list-item routerLink="/users" routerLinkActive="active-link">
-        <mat-icon matListItemIcon>people</mat-icon>
-        <span matListItemTitle>Users</span>
       </a>
       <a mat-list-item routerLink="/payment-sources" routerLinkActive="active-link">
         <mat-icon matListItemIcon>credit_card</mat-icon>

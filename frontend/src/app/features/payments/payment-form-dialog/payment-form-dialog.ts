@@ -7,7 +7,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Payment } from '../../../core/models/payment.model';
-import { User } from '../../../core/models/user.model';
 import { PaymentSource } from '../../../core/models/payment-source.model';
 import { Payee } from '../../../core/models/payee.model';
 import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models/payment-frequency.enum';
@@ -30,7 +29,6 @@ export class PaymentFormDialogComponent implements OnInit {
   readonly dialogRef = inject(MatDialogRef<PaymentFormDialogComponent>);
   readonly data = inject<{
     payment?: Payment;
-    users: User[];
     paymentSources: PaymentSource[];
     payees: Payee[];
   }>(MAT_DIALOG_DATA);
@@ -44,11 +42,9 @@ export class PaymentFormDialogComponent implements OnInit {
 
   readonly currencyOptions = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'SEK', 'NOK', 'DKK', 'PLN'];
 
-  readonly filteredPaymentSources = signal<PaymentSource[]>([]);
   readonly showEndDate = signal(true);
 
   readonly form = new FormGroup({
-    userId: new FormControl(this.data?.payment?.userId ?? '', [Validators.required]),
     paymentSourceId: new FormControl(this.data?.payment?.paymentSourceId ?? '', [Validators.required]),
     payeeId: new FormControl(this.data?.payment?.payeeId ?? '', [Validators.required]),
     amount: new FormControl<number | null>(this.data?.payment?.amount ?? null, [
@@ -70,14 +66,6 @@ export class PaymentFormDialogComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Initialize filtered payment sources based on current userId
-    this.updateFilteredSources(this.form.controls.userId.value ?? '');
-
-    this.form.controls.userId.valueChanges.subscribe(userId => {
-      this.updateFilteredSources(userId ?? '');
-      this.form.controls.paymentSourceId.setValue('');
-    });
-
     this.form.controls.frequency.valueChanges.subscribe(freq => {
       this.showEndDate.set(freq !== PaymentFrequency.Once);
       if (freq === PaymentFrequency.Once) {
@@ -85,26 +73,14 @@ export class PaymentFormDialogComponent implements OnInit {
       }
     });
 
-    // Set initial showEndDate state
     const initialFreq = this.form.controls.frequency.value;
     this.showEndDate.set(initialFreq !== PaymentFrequency.Once);
-  }
-
-  private updateFilteredSources(userId: string): void {
-    if (userId) {
-      this.filteredPaymentSources.set(
-        this.data.paymentSources.filter(ps => ps.userId === userId)
-      );
-    } else {
-      this.filteredPaymentSources.set(this.data.paymentSources);
-    }
   }
 
   submit(): void {
     if (this.form.valid) {
       const raw = this.form.value;
       const result = {
-        userId: raw.userId,
         paymentSourceId: raw.paymentSourceId,
         payeeId: raw.payeeId,
         amount: raw.amount,

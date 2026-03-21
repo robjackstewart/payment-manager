@@ -13,7 +13,6 @@ export interface Payment {
 }
 
 export interface CreatePaymentRequest {
-  userId: string;
   paymentSourceId: string;
   payeeId: string;
   amount: number;
@@ -24,7 +23,6 @@ export interface CreatePaymentRequest {
 }
 
 export interface UpdatePaymentRequest {
-  userId: string;
   paymentSourceId: string;
   payeeId: string;
   amount: number;

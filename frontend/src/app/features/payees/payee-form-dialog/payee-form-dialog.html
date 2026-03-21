@@ -2,17 +2,6 @@
 <mat-dialog-content>
   <form [formGroup]="form">
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>User</mat-label>
-      <mat-select formControlName="userId">
-        @for (user of data.users; track user.id) {
-          <mat-option [value]="user.id">{{ user.name }}</mat-option>
-        }
-      </mat-select>
-      @if (form.controls.userId.hasError('required')) {
-        <mat-error>User is required</mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field appearance="outline" class="full-width">
       <mat-label>Name</mat-label>
       <input matInput formControlName="name" placeholder="Enter name" />
       @if (form.controls.name.hasError('required')) {

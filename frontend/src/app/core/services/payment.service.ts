@@ -12,8 +12,8 @@ import {
 export class PaymentService {
   private readonly api = inject(PaymentManagerWebApiService);
 
-  getAll(userId: string): Observable<Payment[]> {
-    return this.api.getAllPayments(userId).pipe(
+  getAll(): Observable<Payment[]> {
+    return this.api.getAllPayments().pipe(
       map(r => r.payments.map(p => ({ ...p, amount: Number(p.amount) } as Payment)))
     );
   }

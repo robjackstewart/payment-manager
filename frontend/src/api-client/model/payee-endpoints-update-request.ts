@@ -10,7 +10,6 @@
 
 
 export interface PayeeEndpointsUpdateRequest { 
-    userId: string;
     name: string;
 }
 

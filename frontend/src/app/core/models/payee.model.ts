@@ -5,11 +5,9 @@ export interface Payee {
 }
 
 export interface CreatePayeeRequest {
-  userId: string;
   name: string;
 }
 
 export interface UpdatePayeeRequest {
-  userId: string;
   name: string;
 }

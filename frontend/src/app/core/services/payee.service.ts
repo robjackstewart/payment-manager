@@ -8,8 +8,8 @@ import { Payee, CreatePayeeRequest, UpdatePayeeRequest } from '../models/payee.m
 export class PayeeService {
   private readonly api = inject(PaymentManagerWebApiService);
 
-  getAll(userId: string): Observable<Payee[]> {
-    return this.api.getAllPayees(userId).pipe(map(r => r.payees as Payee[]));
+  getAll(): Observable<Payee[]> {
+    return this.api.getAllPayees().pipe(map(r => r.payees as Payee[]));
   }
 
   getById(id: string): Observable<Payee> {

@@ -10,7 +10,6 @@
 
 
 export interface PaymentSourceEndpointsCreateRequest { 
-    userId: string;
     name: string;
 }
 

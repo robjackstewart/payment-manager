@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
+using PaymentManager.Domain.Entities;
+using PaymentManager.WebApi.Services;
 
 namespace PaymentManager.WebApi.Tests.Integration;
 
@@ -27,6 +29,10 @@ public abstract class IntegrationTestBase
         await context.Payees.ExecuteDeleteAsync();
         await context.PaymentSources.ExecuteDeleteAsync();
         await context.Users.ExecuteDeleteAsync();
+
+        // Re-insert the default user so the API can associate new resources with it
+        context.Users.Add(new User { Id = DefaultUserService.DefaultUserId, Name = "Default User" });
+        await context.SaveChanges(CancellationToken.None);
     }
 
     [TearDown]
