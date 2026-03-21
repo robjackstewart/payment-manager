@@ -8,6 +8,8 @@ export * from './get-all-payment-sources-response';
 export * from './get-all-payment-sources-response-payment-source-dto';
 export * from './get-all-payments-response';
 export * from './get-all-payments-response-payment-dto';
+export * from './get-payment-occurrences-response';
+export * from './get-payment-occurrences-response-occurrence-dto';
 export * from './get-all-users-response';
 export * from './get-all-users-response-user-dto';
 export * from './get-payee-response';

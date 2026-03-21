@@ -31,6 +31,8 @@ import { GetAllPaymentSourcesResponse } from '../model/get-all-payment-sources-r
 // @ts-ignore
 import { GetAllPaymentsResponse } from '../model/get-all-payments-response';
 // @ts-ignore
+import { GetPaymentOccurrencesResponse } from '../model/get-payment-occurrences-response';
+// @ts-ignore
 import { GetAllUsersResponse } from '../model/get-all-users-response';
 // @ts-ignore
 import { GetPayeeResponse } from '../model/get-payee-response';
@@ -701,6 +703,59 @@ export class PaymentManagerWebApiService extends BaseService {
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<GetAllPaymentsResponse>('get', `${basePath}${localVarPath}`,
             {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint get /api/payments/occurrences
+     * @param from start date (inclusive) in YYYY-MM-DD format
+     * @param to end date (inclusive) in YYYY-MM-DD format
+     */
+    public getPaymentOccurrences(from: string, to: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GetPaymentOccurrencesResponse>;
+    public getPaymentOccurrences(from: string, to: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GetPaymentOccurrencesResponse>>;
+    public getPaymentOccurrences(from: string, to: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GetPaymentOccurrencesResponse>>;
+    public getPaymentOccurrences(from: string, to: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+        let localVarQueryParameters = new OpenApiHttpParams();
+        localVarQueryParameters = localVarQueryParameters.append('from', from);
+        localVarQueryParameters = localVarQueryParameters.append('to', to);
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/payments/occurrences`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<GetPaymentOccurrencesResponse>('get', `${basePath}${localVarPath}`,
+            {
+                params: localVarQueryParameters.toHttpParams(),
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),

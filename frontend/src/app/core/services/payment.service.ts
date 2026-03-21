@@ -5,6 +5,7 @@ import { PaymentManagerWebApiService } from '../../../api-client';
 import {
   CreatePaymentRequest,
   Payment,
+  PaymentOccurrence,
   UpdatePaymentRequest
 } from '../models/payment.model';
 
@@ -15,6 +16,12 @@ export class PaymentService {
   getAll(): Observable<Payment[]> {
     return this.api.getAllPayments().pipe(
       map(r => r.payments.map(p => ({ ...p, amount: Number(p.amount) } as Payment)))
+    );
+  }
+
+  getOccurrences(from: string, to: string): Observable<PaymentOccurrence[]> {
+    return this.api.getPaymentOccurrences(from, to).pipe(
+      map(r => r.occurrences.map(o => ({ ...o, amount: Number(o.amount) } as PaymentOccurrence)))
     );
   }
 
