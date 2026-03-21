@@ -9,7 +9,7 @@ import { PaymentSourceService } from '../../core/services/payment-source.service
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserContextService } from '../../core/services/user-context.service';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
