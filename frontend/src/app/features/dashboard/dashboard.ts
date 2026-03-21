@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { PaymentSourceService } from '../../core/services/payment-source.service';
@@ -99,7 +99,7 @@ export class DashboardComponent implements OnInit {
     this.loadOccurrences(new Date());
   }
 
-  onMonthSelected(date: Date, picker: any): void {
+  onMonthSelected(date: Date, picker: MatDatepicker<Date>): void {
     this.monthControl.setValue(date);
     picker.close();
     this.loadOccurrences(date);

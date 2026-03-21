@@ -155,16 +155,24 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         context.Payments.AddRange(
             new Payment
             {
-                Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId,
-                PaymentSourceId = psId, PayeeId = payeeId,
-                Amount = 20m, Currency = "USD", Frequency = PaymentFrequency.Once,
+                Id = Guid.NewGuid(),
+                UserId = DefaultUserService.DefaultUserId,
+                PaymentSourceId = psId,
+                PayeeId = payeeId,
+                Amount = 20m,
+                Currency = "USD",
+                Frequency = PaymentFrequency.Once,
                 StartDate = new DateOnly(2025, 1, 20)
             },
             new Payment
             {
-                Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId,
-                PaymentSourceId = psId, PayeeId = payeeId,
-                Amount = 10m, Currency = "USD", Frequency = PaymentFrequency.Once,
+                Id = Guid.NewGuid(),
+                UserId = DefaultUserService.DefaultUserId,
+                PaymentSourceId = psId,
+                PayeeId = payeeId,
+                Amount = 10m,
+                Currency = "USD",
+                Frequency = PaymentFrequency.Once,
                 StartDate = new DateOnly(2025, 1, 5)
             });
         await context.SaveChanges(ct);
