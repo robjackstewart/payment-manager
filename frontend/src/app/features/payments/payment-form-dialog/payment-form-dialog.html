@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ data?.payment ? 'Edit Payment' : 'New Payment' }}</h2>
+<h2 mat-dialog-title>{{ data.payment ? 'Edit Payment' : 'New Payment' }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="form-grid">
     <mat-form-field appearance="outline" class="full-width">
@@ -95,6 +95,6 @@
 <mat-dialog-actions align="end">
   <button mat-button [mat-dialog-close]="null">Cancel</button>
   <button mat-raised-button color="primary" (click)="submit()" [disabled]="form.invalid">
-    {{ data?.payment ? 'Save' : 'Create' }}
+    {{ data.payment ? 'Save' : 'Create' }}
   </button>
 </mat-dialog-actions>
