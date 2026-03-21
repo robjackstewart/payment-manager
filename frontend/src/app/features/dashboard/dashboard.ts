@@ -16,6 +16,7 @@ import { PayeeService } from '../../core/services/payee.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaymentOccurrence } from '../../core/models/payment.model';
 import { Payee } from '../../core/models/payee.model';
+import { PaymentSource } from '../../core/models/payment-source.model';
 import { PAYMENT_FREQUENCY_LABELS, PaymentFrequency } from '../../core/models/payment-frequency.enum';
 import { forkJoin } from 'rxjs';
 
@@ -60,7 +61,15 @@ export class DashboardComponent implements OnInit {
     return map;
   });
 
-  readonly occurrenceColumns = ['date', 'payee', 'amount', 'currency'];
+  readonly paymentSources = signal<PaymentSource[]>([]);
+
+  readonly paymentSourcesMap = computed(() => {
+    const map: Record<string, string> = {};
+    for (const ps of this.paymentSources()) map[ps.id] = ps.name;
+    return map;
+  });
+
+  readonly occurrenceColumns = ['date', 'source', 'payee', 'amount', 'currency'];
 
   // Month picker — defaults to current month
   readonly monthControl = new FormControl<Date>(new Date());
@@ -81,6 +90,7 @@ export class DashboardComponent implements OnInit {
         this.payeeCount.set(payees.length);
         this.paymentCount.set(payments.length);
         this.payees.set(payees);
+        this.paymentSources.set(paymentSources);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)

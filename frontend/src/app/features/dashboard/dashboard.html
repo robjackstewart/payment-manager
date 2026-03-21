@@ -87,6 +87,10 @@
           <th mat-header-cell *matHeaderCellDef>Date</th>
           <td mat-cell *matCellDef="let o">{{ o.occurrenceDate | date:'d MMM yyyy' }}</td>
         </ng-container>
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef>Payment Source</th>
+          <td mat-cell *matCellDef="let o">{{ paymentSourcesMap()[o.paymentSourceId] ?? o.paymentSourceId }}</td>
+        </ng-container>
         <ng-container matColumnDef="payee">
           <th mat-header-cell *matHeaderCellDef>Payee</th>
           <td mat-cell *matCellDef="let o">{{ payeesMap()[o.payeeId] ?? o.payeeId }}</td>
