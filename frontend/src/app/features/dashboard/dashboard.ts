@@ -69,7 +69,7 @@ export class DashboardComponent implements OnInit {
     return map;
   });
 
-  readonly occurrenceColumns = ['date', 'source', 'payee', 'amount', 'currency'];
+  readonly occurrenceColumns = ['date', 'source', 'payee', 'description', 'amount', 'currency'];
 
   // Month picker — defaults to current month
   readonly monthControl = new FormControl<Date>(new Date());

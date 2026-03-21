@@ -237,4 +237,50 @@ internal sealed class UpdatePaymentTests
         // Act & Assert
         await Should.ThrowAsync<NotFoundException<Payment>>(() => handler.Handle(request, cancellationToken));
     }
+
+    [Test]
+    public void Validator_Should_HaveValidationErrorForDescription_When_Over500Chars()
+    {
+        // Arrange
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31), new string('a', 501));
+        var validator = new UpdatePayment.Validator();
+
+        // Act
+        var result = validator.TestValidate(request);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.Description);
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_UpdateDescription()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var existingPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            Amount = 100m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            Description = "Old description"
+        };
+        var context = A.Fake<IPaymentManagerContext>();
+        var paymentsDbSet = new[] { existingPayment }.BuildMockDbSet();
+        A.CallTo(() => context.Payments).Returns(paymentsDbSet);
+        var logger = new FakeLogger<UpdatePayment.Handler>();
+        var request = new UpdatePayment(existingPayment.Id, existingPayment.UserId, existingPayment.PaymentSourceId, existingPayment.PayeeId, 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, "Updated description");
+        var handler = new UpdatePayment.Handler(context, logger);
+
+        // Act
+        var response = await handler.Handle(request, cancellationToken);
+
+        // Assert
+        A.CallTo(() => paymentsDbSet.Update(A<Payment>.That.Matches(p => p.Description == "Updated description"))).MustHaveHappenedOnceExactly();
+        response.Description.ShouldBe("Updated description");
+    }
 }

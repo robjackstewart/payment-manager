@@ -63,7 +63,7 @@ internal sealed class GetAllPaymentsTests
         var expectedPayments = payments
             .Where(p => p.UserId == targetUserId)
             .OrderBy(p => p.Id)
-            .Select(p => new PaymentDto(p.Id, p.UserId, p.PaymentSourceId, p.PayeeId, p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate))
+            .Select(p => new PaymentDto(p.Id, p.UserId, p.PaymentSourceId, p.PayeeId, p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description))
             .ToArray();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);

@@ -8,4 +8,5 @@ export interface GetPaymentOccurrencesResponseOccurrenceDto {
     occurrenceDate: string;
     startDate: string;
     endDate: string | null;
+    description: string | null;
 }

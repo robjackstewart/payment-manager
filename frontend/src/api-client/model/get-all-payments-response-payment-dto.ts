@@ -19,5 +19,6 @@ export interface GetAllPaymentsResponsePaymentDto {
     frequency: number;
     startDate: string;
     endDate: string | null;
+    description: string | null;
 }
 

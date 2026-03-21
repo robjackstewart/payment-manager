@@ -208,4 +208,40 @@ internal sealed class CreatePaymentTests
         response.StartDate.ShouldBe(request.StartDate);
         response.EndDate.ShouldBe(request.EndDate);
     }
+
+    [Test]
+    public void Validator_Should_HaveValidationErrorForDescription_When_Over500Chars()
+    {
+        // Arrange
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31), new string('a', 501));
+        var validator = new CreatePayment.Validator();
+
+        // Act
+        var result = validator.TestValidate(request);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.Description);
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_StoreDescription()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var payments = Array.Empty<Payment>();
+        var paymentsDbSet = payments.BuildMockDbSet();
+        A.CallTo(() => paymentsDbSet.Add(A<Payment>._)).Invokes((Payment p) => payments = payments.Append(p).ToArray());
+        var context = A.Fake<IPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(paymentsDbSet);
+        var logger = new FakeLogger<CreatePayment.Handler>();
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 9.99m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, "My monthly subscription");
+        var handler = new CreatePayment.Handler(context, logger);
+
+        // Act
+        var response = await handler.Handle(request, cancellationToken);
+
+        // Assert
+        payments.First().Description.ShouldBe("My monthly subscription");
+        response.Description.ShouldBe("My monthly subscription");
+    }
 }

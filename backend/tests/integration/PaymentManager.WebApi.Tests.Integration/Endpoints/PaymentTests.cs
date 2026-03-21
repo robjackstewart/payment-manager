@@ -15,17 +15,17 @@ internal sealed class PaymentTests : IntegrationTestBase
     private sealed record CreateRequest(
         Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly StartDate, DateOnly? EndDate);
+        DateOnly StartDate, DateOnly? EndDate, string? Description = null);
 
     private sealed record UpdateRequest(
         Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly StartDate, DateOnly? EndDate);
+        DateOnly StartDate, DateOnly? EndDate, string? Description = null);
 
     private sealed record PaymentResponse(
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly StartDate, DateOnly? EndDate);
+        DateOnly StartDate, DateOnly? EndDate, string? Description);
 
     private sealed record GetAllResponse(PaymentResponse[] Payments);
 
@@ -218,5 +218,52 @@ internal sealed class PaymentTests : IntegrationTestBase
         var response = await CreateApiClient().DeleteAsync($"/api/payments/{payment.Id}", ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Test]
+    public async Task CreatePayment_Should_Return_Description_When_Provided()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, "My streaming service"), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Description.ShouldBe("My streaming service");
+    }
+
+    [Test]
+    public async Task UpdatePayment_Should_Return_Updated_Description()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Amount = 9.99m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            Description = "Original description"
+        };
+        context.Payments.Add(payment);
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{payment.Id}", new UpdateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null, "Updated description"), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Description.ShouldBe("Updated description");
     }
 }

@@ -62,7 +62,8 @@ export class PaymentFormDialogComponent implements OnInit {
     ),
     endDate: new FormControl<Date | null>(
       this.data?.payment?.endDate ? new Date(this.data.payment.endDate) : null
-    )
+    ),
+    description: new FormControl(this.data?.payment?.description ?? '', [Validators.maxLength(500)])
   });
 
   ngOnInit(): void {
@@ -87,7 +88,8 @@ export class PaymentFormDialogComponent implements OnInit {
         currency: raw.currency,
         frequency: raw.frequency,
         startDate: (raw.startDate as Date).toISOString().split('T')[0],
-        endDate: raw.endDate ? (raw.endDate as Date).toISOString().split('T')[0] : undefined
+        endDate: raw.endDate ? (raw.endDate as Date).toISOString().split('T')[0] : undefined,
+        description: raw.description || undefined
       };
       this.dialogRef.close(result);
     }
