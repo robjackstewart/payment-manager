@@ -10,7 +10,7 @@ using static PaymentManager.Application.Common.Exceptions;
 
 namespace PaymentManager.Application.Commands;
 
-public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate) : IRequest<Response>
+public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate) : IRequest<Response>
 {
     internal sealed class Validator : AbstractValidator<UpdatePayment>
     {
@@ -21,6 +21,7 @@ public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid Pay
             RuleFor(x => x.PaymentSourceId).NotEmpty();
             RuleFor(x => x.PayeeId).NotEmpty();
             RuleFor(x => x.Amount).GreaterThan(0);
+            RuleFor(x => x.Currency).NotEmpty().MaximumLength(3);
             RuleFor(x => x.Frequency).IsInEnum();
             RuleFor(x => x.StartDate).NotEqual(default(DateOnly));
             RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue);
@@ -49,6 +50,7 @@ public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid Pay
                 PaymentSourceId = request.PaymentSourceId,
                 PayeeId = request.PayeeId,
                 Amount = request.Amount,
+                Currency = request.Currency,
                 Frequency = request.Frequency,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate
@@ -59,9 +61,9 @@ public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid Pay
 
             logger.LogInformation("Updated payment '{Id}' for user: '{UserId}' with amount: '{Amount}'", payment.Id, payment.UserId, payment.Amount);
 
-            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Frequency, payment.StartDate, payment.EndDate);
+            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate);
         }
     }
 
-    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
+    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
 }

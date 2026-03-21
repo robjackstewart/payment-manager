@@ -18,7 +18,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForId_When_Empty()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.Empty, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.Empty, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -32,7 +32,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForUserId_When_Empty()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.Empty, Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.Empty, Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -46,7 +46,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForPaymentSourceId_When_Empty()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -60,7 +60,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForPayeeId_When_Empty()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -76,7 +76,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForAmount_When_ZeroOrNegative(decimal amount)
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), amount, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), amount, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -90,7 +90,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForFrequency_When_Invalid()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -104,7 +104,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForStartDate_When_Default()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, default, new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, default, new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -118,7 +118,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForEndDate_When_BeforeStartDate()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 6, 1), new DateOnly(2025, 1, 1));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 6, 1), new DateOnly(2025, 1, 1));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -132,7 +132,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForEndDate_When_FrequencyIsOnceAndEndDateIsSet()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Once, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -143,10 +143,24 @@ internal sealed class UpdatePaymentTests
     }
 
     [Test]
+    public void Validator_Should_HaveValidationErrorForCurrency_When_Empty()
+    {
+        // Arrange
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var validator = new UpdatePayment.Validator();
+
+        // Act
+        var result = validator.TestValidate(request);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.Currency);
+    }
+
+    [Test]
     public void Validator_Should_NotHaveValidationErrors_When_RequestIsValid()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -168,6 +182,7 @@ internal sealed class UpdatePaymentTests
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
             Amount = 100m,
+            Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
             EndDate = new DateOnly(2025, 6, 1)
@@ -179,7 +194,7 @@ internal sealed class UpdatePaymentTests
         var newUserId = Guid.NewGuid();
         var newPaymentSourceId = Guid.NewGuid();
         var newPayeeId = Guid.NewGuid();
-        var request = new UpdatePayment(existingPayment.Id, newUserId, newPaymentSourceId, newPayeeId, 500m, PaymentFrequency.Annually, new DateOnly(2025, 3, 1), new DateOnly(2026, 3, 1));
+        var request = new UpdatePayment(existingPayment.Id, newUserId, newPaymentSourceId, newPayeeId, 500m, "EUR", PaymentFrequency.Annually, new DateOnly(2025, 3, 1), new DateOnly(2026, 3, 1));
         var handler = new UpdatePayment.Handler(context, logger);
 
         // Act
@@ -191,6 +206,7 @@ internal sealed class UpdatePaymentTests
             p.PaymentSourceId == newPaymentSourceId &&
             p.PayeeId == newPayeeId &&
             p.Amount == 500m &&
+            p.Currency == "EUR" &&
             p.Frequency == PaymentFrequency.Annually
         ))).MustHaveHappenedOnceExactly();
         A.CallTo(() => context.SaveChanges(cancellationToken)).MustHaveHappenedOnceExactly();
@@ -200,6 +216,7 @@ internal sealed class UpdatePaymentTests
         response.PaymentSourceId.ShouldBe(newPaymentSourceId);
         response.PayeeId.ShouldBe(newPayeeId);
         response.Amount.ShouldBe(500m);
+        response.Currency.ShouldBe("EUR");
         response.Frequency.ShouldBe(PaymentFrequency.Annually);
         response.StartDate.ShouldBe(new DateOnly(2025, 3, 1));
         response.EndDate.ShouldBe(new DateOnly(2026, 3, 1));
@@ -214,7 +231,7 @@ internal sealed class UpdatePaymentTests
         var paymentsDbSet = Array.Empty<Payment>().BuildMockDbSet();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         var logger = new FakeLogger<UpdatePayment.Handler>();
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var handler = new UpdatePayment.Handler(context, logger);
 
         // Act & Assert

@@ -749,6 +749,7 @@
           "paymentSourceId",
           "payeeId",
           "amount",
+          "currency",
           "frequency",
           "startDate",
           "endDate"
@@ -774,6 +775,9 @@
           "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "currency": {
+            "type": "string"
           },
           "frequency": {
             "$ref": "#/components/schemas/PaymentFrequency"
@@ -917,6 +921,7 @@
           "paymentSourceId",
           "payeeId",
           "amount",
+          "currency",
           "frequency",
           "startDate",
           "endDate"
@@ -942,6 +947,9 @@
           "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "currency": {
+            "type": "string"
           },
           "frequency": {
             "$ref": "#/components/schemas/PaymentFrequency"
@@ -1015,6 +1023,7 @@
           "paymentSourceId",
           "payeeId",
           "amount",
+          "currency",
           "frequency",
           "startDate",
           "endDate"
@@ -1040,6 +1049,9 @@
           "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "currency": {
+            "type": "string"
           },
           "frequency": {
             "$ref": "#/components/schemas/PaymentFrequency"
@@ -1130,6 +1142,7 @@
           "paymentSourceId",
           "payeeId",
           "amount",
+          "currency",
           "frequency",
           "startDate",
           "endDate"
@@ -1151,6 +1164,9 @@
           "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "currency": {
+            "type": "string"
           },
           "frequency": {
             "$ref": "#/components/schemas/PaymentFrequency"
@@ -1172,6 +1188,7 @@
           "paymentSourceId",
           "payeeId",
           "amount",
+          "currency",
           "frequency",
           "startDate",
           "endDate"
@@ -1193,6 +1210,9 @@
           "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "currency": {
+            "type": "string"
           },
           "frequency": {
             "$ref": "#/components/schemas/PaymentFrequency"
@@ -1297,6 +1317,7 @@
           "paymentSourceId",
           "payeeId",
           "amount",
+          "currency",
           "frequency",
           "startDate",
           "endDate"
@@ -1322,6 +1343,9 @@
           "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "currency": {
+            "type": "string"
           },
           "frequency": {
             "$ref": "#/components/schemas/PaymentFrequency"

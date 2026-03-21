@@ -17,7 +17,7 @@ public record GetAllPayments(Guid UserId) : IRequest<Response>
             logger.LogInformation("Fetching all payments for user: '{UserId}'...", request.UserId);
             var payments = await context.Payments
                 .Where(x => x.UserId == request.UserId)
-                .Select(x => new PaymentDto(x.Id, x.UserId, x.PaymentSourceId, x.PayeeId, x.Amount, x.Frequency, x.StartDate, x.EndDate))
+                .Select(x => new PaymentDto(x.Id, x.UserId, x.PaymentSourceId, x.PayeeId, x.Amount, x.Currency, x.Frequency, x.StartDate, x.EndDate))
                 .ToArrayAsync(cancellationToken);
             logger.LogInformation("Successfully fetched {count} payments for user: '{UserId}'", payments.Length, request.UserId);
             return new Response([.. payments.OrderBy(p => p.Id)]);
@@ -26,6 +26,6 @@ public record GetAllPayments(Guid UserId) : IRequest<Response>
 
     public record Response(ICollection<PaymentDto> Payments)
     {
-        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
+        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
     };
 }

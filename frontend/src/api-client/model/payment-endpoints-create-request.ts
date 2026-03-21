@@ -14,6 +14,7 @@ export interface PaymentEndpointsCreateRequest {
     paymentSourceId: string;
     payeeId: string;
     amount: any | null;
+    currency: string;
     frequency: number;
     startDate: string;
     endDate: string | null;

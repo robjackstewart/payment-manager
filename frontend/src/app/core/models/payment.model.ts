@@ -6,6 +6,7 @@ export interface Payment {
   paymentSourceId: string;
   payeeId: string;
   amount: number;
+  currency: string;
   frequency: PaymentFrequency;
   startDate: string;
   endDate?: string;
@@ -16,6 +17,7 @@ export interface CreatePaymentRequest {
   paymentSourceId: string;
   payeeId: string;
   amount: number;
+  currency: string;
   frequency: PaymentFrequency;
   startDate: string;
   endDate?: string;
@@ -26,6 +28,7 @@ export interface UpdatePaymentRequest {
   paymentSourceId: string;
   payeeId: string;
   amount: number;
+  currency: string;
   frequency: PaymentFrequency;
   startDate: string;
   endDate?: string;

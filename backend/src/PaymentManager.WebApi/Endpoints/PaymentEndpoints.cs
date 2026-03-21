@@ -11,8 +11,8 @@ namespace PaymentManager.WebApi.Endpoints;
 
 internal static class PaymentEndpoints
 {
-    public record CreateRequest(Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
-    public record UpdateRequest(Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
+    public record CreateRequest(Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
+    public record UpdateRequest(Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate);
 
     public static WebApplication Map(WebApplication app)
     {
@@ -44,7 +44,7 @@ internal static class PaymentEndpoints
 
     internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreatePayment(request.UserId, request.PaymentSourceId, request.PayeeId, request.Amount, request.Frequency, request.StartDate, request.EndDate), cancellationToken);
+        var result = await sender.Send(new CreatePayment(request.UserId, request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate), cancellationToken);
         return Results.Created($"/api/payments/{result.Id}", result);
     }
 
@@ -62,7 +62,7 @@ internal static class PaymentEndpoints
 
     internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdatePayment(id, request.UserId, request.PaymentSourceId, request.PayeeId, request.Amount, request.Frequency, request.StartDate, request.EndDate), cancellationToken);
+        var result = await sender.Send(new UpdatePayment(id, request.UserId, request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate), cancellationToken);
         return Results.Ok(result);
     }
 

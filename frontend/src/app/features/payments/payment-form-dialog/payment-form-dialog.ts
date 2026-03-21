@@ -42,6 +42,8 @@ export class PaymentFormDialogComponent implements OnInit {
     { value: PaymentFrequency.Annually, label: PAYMENT_FREQUENCY_LABELS[PaymentFrequency.Annually] }
   ];
 
+  readonly currencyOptions = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'SEK', 'NOK', 'DKK', 'PLN'];
+
   readonly filteredPaymentSources = signal<PaymentSource[]>([]);
   readonly showEndDate = signal(true);
 
@@ -53,6 +55,7 @@ export class PaymentFormDialogComponent implements OnInit {
       Validators.required,
       Validators.min(0.01)
     ]),
+    currency: new FormControl(this.data?.payment?.currency ?? 'USD', [Validators.required]),
     frequency: new FormControl<PaymentFrequency | null>(
       this.data?.payment?.frequency ?? null,
       [Validators.required]
@@ -105,6 +108,7 @@ export class PaymentFormDialogComponent implements OnInit {
         paymentSourceId: raw.paymentSourceId,
         payeeId: raw.payeeId,
         amount: raw.amount,
+        currency: raw.currency,
         frequency: raw.frequency,
         startDate: (raw.startDate as Date).toISOString().split('T')[0],
         endDate: raw.endDate ? (raw.endDate as Date).toISOString().split('T')[0] : undefined

@@ -17,7 +17,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForUserId_When_Empty()
     {
         // Arrange
-        var request = new CreatePayment(Guid.Empty, Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.Empty, Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -31,7 +31,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForPaymentSourceId_When_Empty()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.Empty, Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.Empty, Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -45,7 +45,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForPayeeId_When_Empty()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.Empty, 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -61,7 +61,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForAmount_When_ZeroOrNegative(decimal amount)
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), amount, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), amount, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -75,7 +75,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForFrequency_When_Invalid()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -89,7 +89,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForStartDate_When_Default()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, default, new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, default, new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -103,7 +103,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForEndDate_When_BeforeStartDate()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 6, 1), new DateOnly(2025, 1, 1));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 6, 1), new DateOnly(2025, 1, 1));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -117,7 +117,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_HaveValidationErrorForEndDate_When_FrequencyIsOnceAndEndDateIsSet()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Once, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -128,10 +128,24 @@ internal sealed class CreatePaymentTests
     }
 
     [Test]
+    public void Validator_Should_HaveValidationErrorForCurrency_When_Empty()
+    {
+        // Arrange
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var validator = new CreatePayment.Validator();
+
+        // Act
+        var result = validator.TestValidate(request);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.Currency);
+    }
+
+    [Test]
     public void Validator_Should_NotHaveValidationErrors_When_RequestIsValid()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -145,7 +159,7 @@ internal sealed class CreatePaymentTests
     public void Validator_Should_NotHaveValidationErrors_When_OncePaymentWithNullEndDate()
     {
         // Arrange
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, PaymentFrequency.Once, new DateOnly(2025, 1, 1), null);
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 1), null);
         var validator = new CreatePayment.Validator();
 
         // Act
@@ -166,7 +180,7 @@ internal sealed class CreatePaymentTests
         var context = A.Fake<IPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         var logger = new FakeLogger<CreatePayment.Handler>();
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 250.50m, PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 250.50m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var handler = new CreatePayment.Handler(context, logger);
 
         // Act
@@ -179,6 +193,7 @@ internal sealed class CreatePaymentTests
         payments.First().PaymentSourceId.ShouldBe(request.PaymentSourceId);
         payments.First().PayeeId.ShouldBe(request.PayeeId);
         payments.First().Amount.ShouldBe(request.Amount);
+        payments.First().Currency.ShouldBe(request.Currency);
         payments.First().Frequency.ShouldBe(request.Frequency);
         payments.First().StartDate.ShouldBe(request.StartDate);
         payments.First().EndDate.ShouldBe(request.EndDate);
@@ -188,6 +203,7 @@ internal sealed class CreatePaymentTests
         response.PaymentSourceId.ShouldBe(request.PaymentSourceId);
         response.PayeeId.ShouldBe(request.PayeeId);
         response.Amount.ShouldBe(request.Amount);
+        response.Currency.ShouldBe(request.Currency);
         response.Frequency.ShouldBe(request.Frequency);
         response.StartDate.ShouldBe(request.StartDate);
         response.EndDate.ShouldBe(request.EndDate);

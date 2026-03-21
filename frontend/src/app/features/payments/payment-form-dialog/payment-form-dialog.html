@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ data?.payment ? 'Edit Payment' : 'New Payment' }}</h2>
+<h2 mat-dialog-title>{{ data.payment ? 'Edit Payment' : 'New Payment' }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="form-grid">
     <mat-form-field appearance="outline" class="full-width">
@@ -49,6 +49,18 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Currency</mat-label>
+      <mat-select formControlName="currency">
+        @for (code of currencyOptions; track code) {
+          <mat-option [value]="code">{{ code }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.currency.hasError('required')) {
+        <mat-error>Currency is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
       <mat-label>Frequency</mat-label>
       <mat-select formControlName="frequency">
         @for (opt of frequencyOptions; track opt.value) {
@@ -83,6 +95,6 @@
 <mat-dialog-actions align="end">
   <button mat-button [mat-dialog-close]="null">Cancel</button>
   <button mat-raised-button color="primary" (click)="submit()" [disabled]="form.invalid">
-    {{ data?.payment ? 'Save' : 'Create' }}
+    {{ data.payment ? 'Save' : 'Create' }}
   </button>
 </mat-dialog-actions>
