@@ -4,6 +4,7 @@ namespace PaymentManager.Host.Local.Lib;
 
 public static class AspireExtensions
 {
+    public const int FrontEndPort = 4200;
     public static PaymentManagerSqliteDatabase AddPaymentManagerSqliteDatabase(
         this IDistributedApplicationBuilder builder, string name)
         => new(builder.AddSqlite(name));
@@ -11,7 +12,8 @@ public static class AspireExtensions
     public static PaymentManagerWebApi AddPaymentManagerWebApi(
         this IDistributedApplicationBuilder builder, string name, PaymentManagerSqliteDatabase sqliteDatabase)
         => new(builder.AddProject<PaymentManager_WebApi>(name)
-                .WithReference(sqliteDatabase.Builder, "PaymentManager"));
+                .WithReference(sqliteDatabase.Builder, "PaymentManager")
+                .WithEnvironment("Cors__AllowedOrigins__0", $"http://localhost:{FrontEndPort.ToString()}"));
 
     public static PaymentManagerDatabaseSeeder AddPaymentManagerDatabaseSeeder(
         this IDistributedApplicationBuilder builder, string name, PaymentManagerSqliteDatabase sqliteDatabase)
@@ -23,7 +25,7 @@ public static class AspireExtensions
         string workingDirectory = "../../frontend")
         => new(builder.AddNpmApp(name, workingDirectory, "start:aspire")
                 .WithReference(webApi.Builder)
-                .WithHttpEndpoint(env: "PORT", targetPort: 4200, isProxied: false));
+                .WithHttpEndpoint(env: "PORT", targetPort: FrontEndPort, isProxied: false));
 
     public record PaymentManagerSqliteDatabase(IResourceBuilder<SqliteResource> Builder);
     public record PaymentManagerWebApi(IResourceBuilder<ProjectResource> Builder);
