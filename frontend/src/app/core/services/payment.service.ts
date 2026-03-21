@@ -33,6 +33,7 @@ export class PaymentService {
     return this.api.createPayment({
       ...req,
       endDate: req.endDate ?? null,
+      splits: req.splits?.map(s => ({ contactId: s.contactId, percentage: s.percentage })) ?? null,
     }) as Observable<Payment>;
   }
 
@@ -40,6 +41,7 @@ export class PaymentService {
     return this.api.updatePayment(id, {
       ...req,
       endDate: req.endDate ?? null,
+      splits: req.splits?.map(s => ({ contactId: s.contactId, percentage: s.percentage })) ?? null,
     }) as Observable<Payment>;
   }
 

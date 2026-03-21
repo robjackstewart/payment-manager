@@ -60,13 +60,17 @@ internal sealed class GetAllPaymentsTests
             }
         };
         var paymentsDbSet = payments.BuildMockDbSet();
+        var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
+        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         var expectedPayments = payments
             .Where(p => p.UserId == targetUserId)
             .OrderBy(p => p.Id)
-            .Select(p => new PaymentDto(p.Id, p.UserId, p.PaymentSourceId, p.PayeeId, p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description))
+            .Select(p => new PaymentDto(p.Id, p.UserId, p.PaymentSourceId, p.PayeeId, p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description, []))
             .ToArray();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
+        A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<GetAllPayments.Handler>();
         var request = new GetAllPayments(targetUserId);
         var handler = new GetAllPayments.Handler(context, logger);
@@ -77,6 +81,10 @@ internal sealed class GetAllPaymentsTests
         // Assert
         result.ShouldNotBeNull();
         result.Payments.Count.ShouldBe(2);
-        result.Payments.ShouldBe(expectedPayments);
+        var resultIds = result.Payments.Select(p => p.Id).OrderBy(id => id).ToArray();
+        var expectedIds = expectedPayments.Select(p => p.Id).OrderBy(id => id).ToArray();
+        resultIds.ShouldBe(expectedIds);
+        result.Payments.All(p => p.UserId == targetUserId).ShouldBeTrue();
+        result.Payments.All(p => p.Splits.Count == 0).ShouldBeTrue();
     }
 }

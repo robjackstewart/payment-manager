@@ -15,17 +15,43 @@ public record GetAllPayments(Guid UserId) : IRequest<Response>
         public async Task<Response> Handle(GetAllPayments request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Fetching all payments for user: '{UserId}'...", request.UserId);
+
             var payments = await context.Payments
                 .Where(x => x.UserId == request.UserId)
-                .Select(x => new PaymentDto(x.Id, x.UserId, x.PaymentSourceId, x.PayeeId, x.Amount, x.Currency, x.Frequency, x.StartDate, x.EndDate, x.Description))
                 .ToArrayAsync(cancellationToken);
-            logger.LogInformation("Successfully fetched {count} payments for user: '{UserId}'", payments.Length, request.UserId);
-            return new Response([.. payments.OrderBy(p => p.Id)]);
+
+            var paymentIds = payments.Select(p => p.Id).ToHashSet();
+
+            var splitRows = await context.PaymentSplits
+                .Where(s => paymentIds.Contains(s.PaymentId))
+                .Join(context.Contacts, s => s.ContactId, c => c.Id,
+                    (s, c) => new { s.PaymentId, s.ContactId, c.Name, s.Percentage })
+                .ToListAsync(cancellationToken);
+
+            var splitsByPayment = splitRows
+                .GroupBy(s => s.PaymentId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (ICollection<PaymentDto.SplitDto>)g.Select(s => new PaymentDto.SplitDto(s.ContactId, s.Name, s.Percentage)).ToList());
+
+            var paymentDtos = payments
+                .OrderBy(p => p.Id)
+                .Select(p => new PaymentDto(
+                    p.Id, p.UserId, p.PaymentSourceId, p.PayeeId,
+                    p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description,
+                    splitsByPayment.GetValueOrDefault(p.Id) ?? []))
+                .ToArray();
+
+            logger.LogInformation("Successfully fetched {count} payments for user: '{UserId}'", paymentDtos.Length, request.UserId);
+            return new Response([.. paymentDtos]);
         }
     }
 
     public record Response(ICollection<PaymentDto> Payments)
     {
-        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description);
-    };
+        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, ICollection<PaymentDto.SplitDto> Splits)
+        {
+            public record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+        }
+    }
 }

@@ -11,6 +11,8 @@ public interface IPaymentManagerContext
     public DbSet<PaymentSource> PaymentSources { get; set; }
     public DbSet<Payee> Payees { get; set; }
     public DbSet<Payment> Payments { get; set; }
+    public DbSet<Contact> Contacts { get; set; }
+    public DbSet<PaymentSplit> PaymentSplits { get; set; }
 
     public DatabaseFacade Database { get; }
 

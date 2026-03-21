@@ -44,8 +44,12 @@ internal sealed class GetPaymentTests
         };
         var payments = new[] { matchingPayment, nonMatchingPayment };
         var paymentsDbSet = payments.BuildMockDbSet();
+        var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
+        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
+        A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(matchingPayment.Id);
         var handler = new GetPayment.Handler(context, logger);
@@ -85,8 +89,12 @@ internal sealed class GetPaymentTests
         };
         var payments = new[] { nonMatchingPayment };
         var paymentsDbSet = payments.BuildMockDbSet();
+        var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
+        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
+        A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(Guid.NewGuid());
         var handler = new GetPayment.Handler(context, logger);

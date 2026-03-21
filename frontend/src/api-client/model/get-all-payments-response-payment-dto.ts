@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { GetAllPaymentsResponsePaymentDtoSplitDto } from './get-all-payments-response-payment-dto-split-dto';
 
 
 export interface GetAllPaymentsResponsePaymentDto { 
@@ -20,5 +21,6 @@ export interface GetAllPaymentsResponsePaymentDto {
     startDate: string;
     endDate: string | null;
     description: string | null;
+    splits: Array<GetAllPaymentsResponsePaymentDtoSplitDto>;
 }
 

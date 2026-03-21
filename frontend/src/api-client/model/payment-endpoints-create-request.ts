@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { PaymentEndpointsSplitRequest } from './payment-endpoints-split-request';
 
 
 export interface PaymentEndpointsCreateRequest { 
@@ -18,5 +19,6 @@ export interface PaymentEndpointsCreateRequest {
     startDate: string;
     endDate: string | null;
     description?: string | null;
+    splits?: Array<PaymentEndpointsSplitRequest> | null;
 }
 

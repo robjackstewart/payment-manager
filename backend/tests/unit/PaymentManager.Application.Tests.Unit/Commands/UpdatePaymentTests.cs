@@ -189,7 +189,11 @@ internal sealed class UpdatePaymentTests
         };
         var context = A.Fake<IPaymentManagerContext>();
         var paymentsDbSet = new[] { existingPayment }.BuildMockDbSet();
+        var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
+        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
+        A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<UpdatePayment.Handler>();
         var newUserId = Guid.NewGuid();
         var newPaymentSourceId = Guid.NewGuid();
@@ -271,7 +275,11 @@ internal sealed class UpdatePaymentTests
         };
         var context = A.Fake<IPaymentManagerContext>();
         var paymentsDbSet = new[] { existingPayment }.BuildMockDbSet();
+        var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
+        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
+        A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<UpdatePayment.Handler>();
         var request = new UpdatePayment(existingPayment.Id, existingPayment.UserId, existingPayment.PaymentSourceId, existingPayment.PayeeId, 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, "Updated description");
         var handler = new UpdatePayment.Handler(context, logger);

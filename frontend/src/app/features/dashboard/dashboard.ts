@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,6 +27,7 @@ import { forkJoin } from 'rxjs';
     RouterLink,
     CurrencyPipe,
     DatePipe,
+    DecimalPipe,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -69,7 +70,12 @@ export class DashboardComponent implements OnInit {
     return map;
   });
 
-  readonly occurrenceColumns = ['date', 'source', 'payee', 'description', 'amount', 'currency'];
+  readonly occurrenceColumns = ['date', 'source', 'payee', 'description', 'amount', 'currency', 'yourShare'];
+
+  getYourShare(occurrence: PaymentOccurrence): number {
+    const total = occurrence.splits.reduce((sum, s) => sum + s.percentage, 0);
+    return Math.max(0, 100 - total);
+  }
 
   // Month picker — defaults to current month
   readonly monthControl = new FormControl<Date>(new Date());
