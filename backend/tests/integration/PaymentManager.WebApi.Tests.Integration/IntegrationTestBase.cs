@@ -28,10 +28,7 @@ public abstract class IntegrationTestBase
         await context.Payments.ExecuteDeleteAsync();
         await context.Payees.ExecuteDeleteAsync();
         await context.PaymentSources.ExecuteDeleteAsync();
-        await context.Users.ExecuteDeleteAsync();
-
-        // Re-insert the default user so the API can associate new resources with it
-        context.Users.Add(new User { Id = DefaultUserService.DefaultUserId, Name = "Default User" });
+        await context.Users.Where(u => u.Id != DefaultUserService.DefaultUserId).ExecuteDeleteAsync();
         await context.SaveChanges(CancellationToken.None);
     }
 
