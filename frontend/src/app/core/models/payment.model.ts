@@ -1,5 +1,11 @@
 import { PaymentFrequency } from './payment-frequency.enum';
 
+export interface PaymentSplit {
+  contactId: string;
+  contactName: string;
+  percentage: number;
+}
+
 export interface Payment {
   id: string;
   userId: string;
@@ -11,6 +17,7 @@ export interface Payment {
   startDate: string;
   endDate?: string;
   description?: string;
+  splits: PaymentSplit[];
 }
 
 export interface CreatePaymentRequest {
@@ -22,6 +29,7 @@ export interface CreatePaymentRequest {
   startDate: string;
   endDate?: string;
   description?: string;
+  splits?: PaymentSplit[];
 }
 
 export interface UpdatePaymentRequest {
@@ -33,6 +41,7 @@ export interface UpdatePaymentRequest {
   startDate: string;
   endDate?: string;
   description?: string;
+  splits?: PaymentSplit[];
 }
 
 export interface PaymentOccurrence {
@@ -46,4 +55,5 @@ export interface PaymentOccurrence {
   startDate: string;
   endDate?: string;
   description?: string;
+  splits: PaymentSplit[];
 }

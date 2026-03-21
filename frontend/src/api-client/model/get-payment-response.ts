@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { GetPaymentResponseSplitDto } from './get-payment-response-split-dto';
 
 
 export interface GetPaymentResponse { 
@@ -19,5 +20,7 @@ export interface GetPaymentResponse {
     frequency: number;
     startDate: string;
     endDate: string | null;
+    description: string | null;
+    splits: Array<GetPaymentResponseSplitDto>;
 }
 

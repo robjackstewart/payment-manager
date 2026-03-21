@@ -244,4 +244,31 @@ internal sealed class CreatePaymentTests
         payments.First().Description.ShouldBe("My monthly subscription");
         response.Description.ShouldBe("My monthly subscription");
     }
+
+    [Test]
+    public void Validator_Should_HaveValidationError_When_SplitPercentageExceeds100()
+    {
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, null,
+            [new CreatePayment.SplitRequest(Guid.NewGuid(), 60m), new CreatePayment.SplitRequest(Guid.NewGuid(), 50m)]);
+        var result = new CreatePayment.Validator().TestValidate(request);
+        result.ShouldHaveValidationErrorFor(x => x.Splits);
+    }
+
+    [Test]
+    public void Validator_Should_HaveValidationError_When_SplitPercentageIsZero()
+    {
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, null,
+            [new CreatePayment.SplitRequest(Guid.NewGuid(), 0m)]);
+        var result = new CreatePayment.Validator().TestValidate(request);
+        result.IsValid.ShouldBeFalse();
+    }
+
+    [Test]
+    public void Validator_Should_NotHaveValidationErrors_When_SplitsAreValid()
+    {
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, null,
+            [new CreatePayment.SplitRequest(Guid.NewGuid(), 30m), new CreatePayment.SplitRequest(Guid.NewGuid(), 20m)]);
+        var result = new CreatePayment.Validator().TestValidate(request);
+        result.ShouldNotHaveAnyValidationErrors();
+    }
 }

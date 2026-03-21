@@ -35,8 +35,12 @@ internal sealed class GetPaymentOccurrencesTests
         CancellationToken ct = default)
     {
         var dbSet = payments.BuildMockDbSet();
+        var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
+        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(dbSet);
+        A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<GetPaymentOccurrences.Handler>();
         return await new GetPaymentOccurrences.Handler(context, logger)
             .Handle(new GetPaymentOccurrences(UserId, from, to), ct);

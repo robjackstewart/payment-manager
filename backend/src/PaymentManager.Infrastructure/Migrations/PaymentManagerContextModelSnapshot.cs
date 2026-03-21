@@ -17,6 +17,27 @@ namespace PaymentManager.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
 
+            modelBuilder.Entity("PaymentManager.Domain.Entities.Contact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Contacts");
+                });
+
             modelBuilder.Entity("PaymentManager.Domain.Entities.Payee", b =>
                 {
                     b.Property<Guid>("Id")
@@ -106,6 +127,25 @@ namespace PaymentManager.Infrastructure.Migrations
                     b.ToTable("PaymentSources");
                 });
 
+            modelBuilder.Entity("PaymentManager.Domain.Entities.PaymentSplit", b =>
+                {
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ContactId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Percentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PaymentId", "ContactId");
+
+                    b.HasIndex("ContactId");
+
+                    b.ToTable("PaymentSplits");
+                });
+
             modelBuilder.Entity("PaymentManager.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -126,6 +166,15 @@ namespace PaymentManager.Infrastructure.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             Name = "Default User"
                         });
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.Contact", b =>
+                {
+                    b.HasOne("PaymentManager.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.Payee", b =>
@@ -163,6 +212,21 @@ namespace PaymentManager.Infrastructure.Migrations
                     b.HasOne("PaymentManager.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.PaymentSplit", b =>
+                {
+                    b.HasOne("PaymentManager.Domain.Entities.Contact", null)
+                        .WithMany()
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PaymentManager.Domain.Entities.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

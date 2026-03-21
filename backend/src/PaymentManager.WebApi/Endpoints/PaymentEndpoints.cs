@@ -12,8 +12,9 @@ namespace PaymentManager.WebApi.Endpoints;
 
 internal static class PaymentEndpoints
 {
-    public record CreateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null);
-    public record UpdateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null);
+    public record CreateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null, IReadOnlyList<SplitRequest>? Splits = null);
+    public record UpdateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null, IReadOnlyList<SplitRequest>? Splits = null);
+    public record SplitRequest(Guid ContactId, decimal Percentage);
 
     public static WebApplication Map(WebApplication app)
     {
@@ -49,7 +50,7 @@ internal static class PaymentEndpoints
 
     internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreatePayment(userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description), cancellationToken);
+        var result = await sender.Send(new CreatePayment(userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description, request.Splits?.Select(s => new CreatePayment.SplitRequest(s.ContactId, s.Percentage)).ToList()), cancellationToken);
         return Results.Created($"/api/payments/{result.Id}", result);
     }
 
@@ -73,7 +74,7 @@ internal static class PaymentEndpoints
 
     internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdatePayment(id, userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description), cancellationToken);
+        var result = await sender.Send(new UpdatePayment(id, userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description, request.Splits?.Select(s => new UpdatePayment.SplitRequest(s.ContactId, s.Percentage)).ToList()), cancellationToken);
         return Results.Ok(result);
     }
 
