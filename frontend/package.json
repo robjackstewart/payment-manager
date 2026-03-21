@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:aspire": "tsx scripts/generate-aspire-environment.ts && ng serve --configuration aspire",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

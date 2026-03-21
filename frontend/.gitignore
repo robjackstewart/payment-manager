@@ -42,3 +42,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Generated Aspire environment file
+src/environments/environment.aspire.ts

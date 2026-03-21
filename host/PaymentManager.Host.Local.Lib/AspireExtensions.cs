@@ -21,7 +21,7 @@ public static class AspireExtensions
     public static PaymentManagerFrontend AddPaymentManagerFrontend(
         this IDistributedApplicationBuilder builder, string name, PaymentManagerWebApi webApi,
         string workingDirectory = "../../frontend")
-        => new(builder.AddNpmApp(name, workingDirectory)
+        => new(builder.AddNpmApp(name, workingDirectory, "start:aspire")
                 .WithReference(webApi.Builder)
                 .WithHttpEndpoint(env: "PORT", targetPort: 4200, isProxied: false));
 
