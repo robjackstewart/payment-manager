@@ -7,7 +7,7 @@ env:
   tag: ${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
 
 jobs:
-  build:
+  backend:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -17,12 +17,38 @@ jobs:
       - name: Spin up dev container
         run: devcontainer up --workspace-folder . --remote-env LOCKED_DEPS=true
       - name: Install tools
-        run: devcontainer exec --workspace-folder . -- task install-tools
+        run: devcontainer exec --workspace-folder . -- task backend:install-tools
       - name: Install dependencies
-        run: devcontainer exec --workspace-folder . -- task install-locked-dependencies
+        run: devcontainer exec --workspace-folder . -- task backend:install-locked-dependencies
       - name: Build
-        run: devcontainer exec --workspace-folder . -- task build
+        run: devcontainer exec --workspace-folder . -- task backend:build
       - name: Lint
-        run: devcontainer exec --workspace-folder . -- task lint
+        run: devcontainer exec --workspace-folder . -- task backend:lint
       - name: Test
-        run: devcontainer exec --workspace-folder . -- task test
+        run: devcontainer exec --workspace-folder . -- task backend:test
+
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install dev container CLI
+        run: npm install -g @devcontainers/cli
+      - name: Spin up dev container
+        run: devcontainer up --workspace-folder . --remote-env LOCKED_DEPS=true
+      - name: Install dependencies
+        run: devcontainer exec --workspace-folder . -- task frontend:install-locked-dependencies
+      - name: Build
+        run: devcontainer exec --workspace-folder . -- task frontend:build
+      - name: Lint
+        run: devcontainer exec --workspace-folder . -- task frontend:lint
+      - name: Test
+        run: devcontainer exec --workspace-folder . -- task frontend:test
+
+  image:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Build Docker image
+        run: task image:build

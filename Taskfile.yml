@@ -54,3 +54,7 @@ tasks:
   restore-dotnet-tools:
     cmds:
       - dotnet tool restore
+
+  image:build:
+    cmds:
+      - docker build -t payment-manager:latest .
