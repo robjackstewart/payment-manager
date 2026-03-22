@@ -10,6 +10,7 @@ import { MatTable, MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatCell, MatCe
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatDatepicker, MatDatepickerInput, MatDatepickerToggle } from '@angular/material/datepicker';
+import { MatDivider } from '@angular/material/divider';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { PaymentSourceService } from '../../core/services/payment-source.service';
 import { PayeeService } from '../../core/services/payee.service';
@@ -84,6 +85,7 @@ interface SummaryViewModel {
     MatDatepicker,
     MatDatepickerInput,
     MatDatepickerToggle,
+    MatDivider,
     ReactiveFormsModule,
   ],
   templateUrl: './dashboard.html',

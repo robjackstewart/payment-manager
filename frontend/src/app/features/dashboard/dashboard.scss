@@ -73,52 +73,115 @@
   margin-top: 24px;
 
   .summary-section {
-    margin-bottom: 16px;
+    margin: 16px 0;
   }
 
   .summary-section-title {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0 0 8px;
-    color: rgba(0, 0, 0, 0.6);
+    font-size: 11px;
+    font-weight: 600;
+    margin: 0 0 10px;
+    color: rgba(0, 0, 0, 0.45);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
   }
 
-  .summary-table {
-    width: 100%;
-    border-collapse: collapse;
+  // ── Person rows ───────────────────────────────────────────────────────────
 
-    tr:not(:last-child) td {
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    }
+  .summary-person-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
 
-    td {
-      padding: 6px 0;
-    }
-
-    .summary-name {
-      width: 50%;
-    }
-
-    .summary-amount {
-      text-align: right;
-      font-weight: 500;
+    &--inset {
+      border-color: rgba(0, 0, 0, 0.08);
     }
   }
 
-  .summary-source {
-    margin-bottom: 12px;
+  .summary-person-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #fff;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    }
+
+    &--you {
+      background: rgba(var(--mat-sys-primary-rgb, 63, 81, 181), 0.06);
+    }
+  }
+
+  .summary-person-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: rgba(0, 0, 0, 0.38);
+    flex-shrink: 0;
+  }
+
+  .summary-person-name {
+    flex: 1;
+    font-size: 14px;
+  }
+
+  .summary-person-row--you .summary-person-name {
+    font-weight: 500;
+  }
+
+  .summary-person-amount {
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // ── Payment source panels ─────────────────────────────────────────────────
+
+  .summary-source-panel {
+    border-left: 3px solid rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 12px 12px;
+    margin-bottom: 10px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .summary-source-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .summary-source-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: rgba(0, 0, 0, 0.54);
+    flex-shrink: 0;
   }
 
   .summary-source-name {
+    flex: 1;
     font-size: 13px;
-    font-weight: 500;
-    margin: 0 0 4px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.75);
   }
 
   .summary-source-total {
-    font-weight: 400;
+    font-size: 13px;
+    font-weight: 500;
     color: rgba(0, 0, 0, 0.54);
+    font-variant-numeric: tabular-nums;
+  }
+
+  mat-divider {
+    margin: 4px 0;
   }
 }

@@ -129,39 +129,48 @@
       </mat-card-header>
       <mat-card-content>
         <div class="summary-section">
-          <h4 class="summary-section-title">Overall</h4>
-          <table class="summary-table">
-            <tr>
-              <td class="summary-name">You</td>
-              <td class="summary-amount">{{ summary.userTotal }}</td>
-            </tr>
+          <p class="summary-section-title">Overall</p>
+          <div class="summary-person-list">
+            <div class="summary-person-row summary-person-row--you">
+              <mat-icon class="summary-person-icon">person</mat-icon>
+              <span class="summary-person-name">You</span>
+              <span class="summary-person-amount">{{ summary.userTotal }}</span>
+            </div>
             @for (contact of summary.contacts; track contact.name) {
-              <tr>
-                <td class="summary-name">{{ contact.name }}</td>
-                <td class="summary-amount">{{ contact.amount }}</td>
-              </tr>
+              <div class="summary-person-row">
+                <mat-icon class="summary-person-icon">person_outline</mat-icon>
+                <span class="summary-person-name">{{ contact.name }}</span>
+                <span class="summary-person-amount">{{ contact.amount }}</span>
+              </div>
             }
-          </table>
+          </div>
         </div>
 
         @if (summary.byPaymentSource.length > 1) {
+          <mat-divider />
           <div class="summary-section">
-            <h4 class="summary-section-title">By Payment Source</h4>
+            <p class="summary-section-title">By Payment Source</p>
             @for (ps of summary.byPaymentSource; track ps.sourceName) {
-              <div class="summary-source">
-                <h5 class="summary-source-name">{{ ps.sourceName }} <span class="summary-source-total">({{ ps.totalAmount }})</span></h5>
-                <table class="summary-table">
-                  <tr>
-                    <td class="summary-name">You</td>
-                    <td class="summary-amount">{{ ps.userTotal }}</td>
-                  </tr>
+              <div class="summary-source-panel">
+                <div class="summary-source-header">
+                  <mat-icon class="summary-source-icon">credit_card</mat-icon>
+                  <span class="summary-source-name">{{ ps.sourceName }}</span>
+                  <span class="summary-source-total">{{ ps.totalAmount }}</span>
+                </div>
+                <div class="summary-person-list summary-person-list--inset">
+                  <div class="summary-person-row summary-person-row--you">
+                    <mat-icon class="summary-person-icon">person</mat-icon>
+                    <span class="summary-person-name">You</span>
+                    <span class="summary-person-amount">{{ ps.userTotal }}</span>
+                  </div>
                   @for (contact of ps.contacts; track contact.name) {
-                    <tr>
-                      <td class="summary-name">{{ contact.name }}</td>
-                      <td class="summary-amount">{{ contact.amount }}</td>
-                    </tr>
+                    <div class="summary-person-row">
+                      <mat-icon class="summary-person-icon">person_outline</mat-icon>
+                      <span class="summary-person-name">{{ contact.name }}</span>
+                      <span class="summary-person-amount">{{ contact.amount }}</span>
+                    </div>
                   }
-                </table>
+                </div>
               </div>
             }
           </div>
