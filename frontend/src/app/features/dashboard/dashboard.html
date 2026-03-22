@@ -53,67 +53,135 @@
   </mat-card>
 </div>
 
-<!-- Payment Schedule Section -->
-<mat-card class="schedule-card">
-  <mat-card-header>
-    <mat-icon mat-card-avatar>event</mat-icon>
-    <mat-card-title>Payment Schedule</mat-card-title>
-    <mat-card-subtitle>Occurrences within selected month</mat-card-subtitle>
-  </mat-card-header>
-  <mat-card-content>
-    <div class="schedule-toolbar">
-      <mat-form-field appearance="outline" class="month-picker-field">
-        <mat-label>Month</mat-label>
-        <input matInput [matDatepicker]="picker" [formControl]="monthControl" readonly />
-        <mat-datepicker-toggle matIconSuffix [for]="picker" />
-        <mat-datepicker #picker
-          startView="year"
-          (monthSelected)="onMonthSelected($event, picker)" />
-      </mat-form-field>
-    </div>
+<!-- Month filter bar -->
+<div class="month-filter-bar">
+  <mat-icon class="month-filter-icon">calendar_month</mat-icon>
+  <span class="month-filter-label">Showing</span>
+  <mat-form-field appearance="outline" class="month-picker-field">
+    <mat-label>Month</mat-label>
+    <input matInput [matDatepicker]="picker" [formControl]="monthControl" readonly />
+    <mat-datepicker-toggle matIconSuffix [for]="picker" />
+    <mat-datepicker #picker
+      startView="year"
+      (monthSelected)="onMonthSelected($event, picker)" />
+  </mat-form-field>
+</div>
 
-    @if (occurrencesLoading()) {
-      <div class="schedule-loading">
-        <mat-spinner diameter="40" />
-      </div>
-    } @else if (occurrencesViewModel().length === 0) {
-      <div class="schedule-empty">
-        <mat-icon>event_busy</mat-icon>
-        <p>No payments scheduled for this month.</p>
-      </div>
-    } @else {
-      <table mat-table [dataSource]="occurrencesViewModel()" class="full-width">
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef>Date</th>
-          <td mat-cell *matCellDef="let vm">{{ vm.formattedDate }}</td>
-        </ng-container>
-        <ng-container matColumnDef="source">
-          <th mat-header-cell *matHeaderCellDef>Payment Source</th>
-          <td mat-cell *matCellDef="let vm">{{ vm.sourceName }}</td>
-        </ng-container>
-        <ng-container matColumnDef="payee">
-          <th mat-header-cell *matHeaderCellDef>Payee</th>
-          <td mat-cell *matCellDef="let vm">{{ vm.payeeName }}</td>
-        </ng-container>
-        <ng-container matColumnDef="description">
-          <th mat-header-cell *matHeaderCellDef>Description</th>
-          <td mat-cell *matCellDef="let vm">{{ vm.descriptionDisplay }}</td>
-        </ng-container>
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef>Amount</th>
-          <td mat-cell *matCellDef="let vm">{{ vm.formattedAmount }}</td>
-        </ng-container>
-        <ng-container matColumnDef="currency">
-          <th mat-header-cell *matHeaderCellDef>Currency</th>
-          <td mat-cell *matCellDef="let vm">{{ vm.currency }}</td>
-        </ng-container>
-        <ng-container matColumnDef="yourShare">
-          <th mat-header-cell *matHeaderCellDef>Your Share</th>
-          <td mat-cell *matCellDef="let vm">{{ vm.yourShareDisplay }}</td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="occurrenceColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: occurrenceColumns;"></tr>
-      </table>
+<!-- Cost Breakdown Summary -->
+@if (occurrencesLoading()) {
+  <div class="content-loading">
+    <mat-spinner diameter="40" />
+  </div>
+} @else {
+  @if (summaryViewModel().length > 0) {
+    @for (summary of summaryViewModel(); track summary.currency) {
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>pie_chart</mat-icon>
+          <mat-card-title>Cost Breakdown — {{ summary.currency }}</mat-card-title>
+          <mat-card-subtitle>Total {{ summary.totalAmount }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-section">
+            <p class="summary-section-title">Overall</p>
+            <div class="summary-person-list">
+              <div class="summary-person-row summary-person-row--you">
+                <mat-icon class="summary-person-icon">person</mat-icon>
+                <span class="summary-person-name">You</span>
+                <span class="summary-person-amount">{{ summary.userTotal }}</span>
+              </div>
+              @for (contact of summary.contacts; track contact.name) {
+                <div class="summary-person-row">
+                  <mat-icon class="summary-person-icon">person_outline</mat-icon>
+                  <span class="summary-person-name">{{ contact.name }}</span>
+                  <span class="summary-person-amount">{{ contact.amount }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (summary.byPaymentSource.length > 1) {
+            <mat-divider />
+            <div class="summary-section">
+              <p class="summary-section-title">By Payment Source</p>
+              @for (ps of summary.byPaymentSource; track ps.sourceName) {
+                <div class="summary-source-panel">
+                  <div class="summary-source-header">
+                    <mat-icon class="summary-source-icon">credit_card</mat-icon>
+                    <span class="summary-source-name">{{ ps.sourceName }}</span>
+                    <span class="summary-source-total">{{ ps.totalAmount }}</span>
+                  </div>
+                  <div class="summary-person-list summary-person-list--inset">
+                    <div class="summary-person-row summary-person-row--you">
+                      <mat-icon class="summary-person-icon">person</mat-icon>
+                      <span class="summary-person-name">You</span>
+                      <span class="summary-person-amount">{{ ps.userTotal }}</span>
+                    </div>
+                    @for (contact of ps.contacts; track contact.name) {
+                      <div class="summary-person-row">
+                        <mat-icon class="summary-person-icon">person_outline</mat-icon>
+                        <span class="summary-person-name">{{ contact.name }}</span>
+                        <span class="summary-person-amount">{{ contact.amount }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
     }
-  </mat-card-content>
-</mat-card>
+  }
+
+  <!-- Payment Schedule -->
+  <mat-card class="schedule-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>event</mat-icon>
+      <mat-card-title>Payment Schedule</mat-card-title>
+      <mat-card-subtitle>{{ selectedMonthLabel() }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (occurrencesViewModel().length === 0) {
+        <div class="schedule-empty">
+          <mat-icon>event_busy</mat-icon>
+          <p>No payments scheduled for this month.</p>
+        </div>
+      } @else {
+        <table mat-table [dataSource]="occurrencesViewModel()" class="full-width">
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.formattedDate }}</td>
+          </ng-container>
+          <ng-container matColumnDef="source">
+            <th mat-header-cell *matHeaderCellDef>Payment Source</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.sourceName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="payee">
+            <th mat-header-cell *matHeaderCellDef>Payee</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.payeeName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.descriptionDisplay }}</td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Amount</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.formattedAmount }}</td>
+          </ng-container>
+          <ng-container matColumnDef="currency">
+            <th mat-header-cell *matHeaderCellDef>Currency</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.currency }}</td>
+          </ng-container>
+          <ng-container matColumnDef="yourShare">
+            <th mat-header-cell *matHeaderCellDef>Your Share</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.yourShareDisplay }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="occurrenceColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: occurrenceColumns;"></tr>
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+}
+

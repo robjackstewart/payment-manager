@@ -56,15 +56,41 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 .ThenBy(o => o.PaymentId)
                 .ToArray();
 
+            var summary = occurrences
+                .GroupBy(o => o.Currency)
+                .Select(currencyGroup => new SummaryDto(
+                    currencyGroup.Key,
+                    currencyGroup.Sum(o => o.Amount),
+                    currencyGroup.Sum(o => o.UserShare.Value),
+                    [.. currencyGroup
+                        .SelectMany(o => o.Splits)
+                        .GroupBy(s => s.ContactId)
+                        .Select(g => new ContactAmountDto(g.Key, g.Sum(s => s.Value)))
+                        .OrderBy(c => c.ContactId)],
+                    [.. currencyGroup
+                        .GroupBy(o => o.PaymentSourceId)
+                        .Select(psGroup => new PaymentSourceBreakdownDto(
+                            psGroup.Key,
+                            psGroup.Sum(o => o.Amount),
+                            psGroup.Sum(o => o.UserShare.Value),
+                            [.. psGroup
+                                .SelectMany(o => o.Splits)
+                                .GroupBy(s => s.ContactId)
+                                .Select(g => new ContactAmountDto(g.Key, g.Sum(s => s.Value)))
+                                .OrderBy(c => c.ContactId)]))
+                        .OrderBy(ps => ps.PaymentSourceId)]))
+                .OrderBy(s => s.Currency)
+                .ToArray();
+
             logger.LogInformation(
                 "Found {Count} occurrences for user '{UserId}' between {From} and {To}",
                 occurrences.Length, request.UserId, request.From, request.To);
 
-            return new Response([.. occurrences]);
+            return new Response([.. occurrences], [.. summary]);
         }
     }
 
-    public record Response(ICollection<OccurrenceDto> Occurrences)
+    public record Response(ICollection<OccurrenceDto> Occurrences, ICollection<SummaryDto> Summary)
     {
         public record OccurrenceDto(
             Guid PaymentId,
@@ -82,6 +108,21 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
         {
             public record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
         }
+
+        public record SummaryDto(
+            string Currency,
+            decimal TotalAmount,
+            decimal UserTotal,
+            ICollection<ContactAmountDto> ContactTotals,
+            ICollection<PaymentSourceBreakdownDto> ByPaymentSource);
+
+        public record ContactAmountDto(Guid ContactId, decimal Amount);
+
+        public record PaymentSourceBreakdownDto(
+            Guid PaymentSourceId,
+            decimal TotalAmount,
+            decimal UserTotal,
+            ICollection<ContactAmountDto> ContactTotals);
     }
 }
 
