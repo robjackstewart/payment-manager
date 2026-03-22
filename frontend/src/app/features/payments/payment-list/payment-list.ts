@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { MatTable, MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatCell, MatCellDef, MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef } from '@angular/material/table';
 import { MatButton, MatIconButton } from '@angular/material/button';
@@ -21,13 +21,22 @@ import { PaymentFormDialogComponent } from '../payment-form-dialog/payment-form-
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog';
 import { forkJoin } from 'rxjs';
 
+interface PaymentViewModel {
+  payeeName: string;
+  descriptionDisplay: string;
+  formattedAmount: string;
+  yourShareDisplay: string;
+  frequencyLabel: string;
+  formattedStartDate: string;
+  formattedEndDate: string;
+  _raw: Payment;
+}
+
 @Component({
   selector: 'app-payment-list',
   standalone: true,
+  providers: [CurrencyPipe, DatePipe, DecimalPipe],
   imports: [
-    CurrencyPipe,
-    DatePipe,
-    DecimalPipe,
     MatTable,
     MatColumnDef,
     MatHeaderCell,
@@ -55,6 +64,8 @@ export class PaymentListComponent implements OnInit {
   private readonly contactService = inject(ContactService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly currencyPipe = inject(CurrencyPipe);
+  private readonly datePipe = inject(DatePipe);
 
   readonly payments = signal<Payment[]>([]);
   readonly paymentSources = signal<PaymentSource[]>([]);
@@ -64,23 +75,30 @@ export class PaymentListComponent implements OnInit {
 
   readonly displayedColumns = ['payee', 'description', 'amount', 'yourShare', 'frequency', 'startDate', 'endDate', 'actions'];
 
-  readonly payeesMap = computed(() => {
+  private readonly payeesMap = computed(() => {
     const map: Record<string, string> = {};
     for (const p of this.payees()) map[p.id] = p.name;
     return map;
   });
 
+  public readonly paymentsViewModel = computed<PaymentViewModel[]>(() =>
+    this.payments().map(p => {
+      const yourSharePct = Math.max(0, 100 - p.splits.reduce((s, x) => s + x.percentage, 0));
+      return {
+        payeeName: this.payeesMap()[p.payeeId] ?? p.payeeId,
+        descriptionDisplay: p.description || '—',
+        formattedAmount: this.currencyPipe.transform(p.amount, p.currency) ?? String(p.amount),
+        yourShareDisplay: `${yourSharePct % 1 === 0 ? yourSharePct.toFixed(0) : yourSharePct.toFixed(2)}%`,
+        frequencyLabel: PAYMENT_FREQUENCY_LABELS[p.frequency as PaymentFrequency] ?? String(p.frequency),
+        formattedStartDate: this.datePipe.transform(p.startDate, 'mediumDate') ?? p.startDate,
+        formattedEndDate: p.endDate ? (this.datePipe.transform(p.endDate, 'mediumDate') ?? p.endDate) : '—',
+        _raw: p,
+      };
+    })
+  );
+
   ngOnInit(): void {
     this.load();
-  }
-
-  getFrequencyLabel(freq: number): string {
-    return PAYMENT_FREQUENCY_LABELS[freq as PaymentFrequency] ?? String(freq);
-  }
-
-  getYourShare(payment: Payment): number {
-    const total = payment.splits.reduce((sum, s) => sum + s.percentage, 0);
-    return Math.max(0, 100 - total);
   }
 
   private load(): void {

@@ -27,6 +27,9 @@ export class ContactFormDialogComponent {
   readonly dialogRef = inject(MatDialogRef<ContactFormDialogComponent>);
   readonly data = inject<{ contact?: Contact }>(MAT_DIALOG_DATA);
 
+  readonly title = this.data?.contact ? 'Edit Contact' : 'New Contact';
+  readonly submitLabel = this.data?.contact ? 'Save' : 'Create';
+
   readonly form = new FormGroup({
     name: new FormControl(this.data?.contact?.name ?? '', [Validators.required])
   });

@@ -27,6 +27,9 @@ export class PayeeFormDialogComponent {
   readonly dialogRef = inject(MatDialogRef<PayeeFormDialogComponent>);
   readonly data = inject<{ payee?: Payee }>(MAT_DIALOG_DATA);
 
+  readonly title = this.data?.payee ? 'Edit Payee' : 'New Payee';
+  readonly submitLabel = this.data?.payee ? 'Save' : 'Create';
+
   readonly form = new FormGroup({
     name: new FormControl(this.data?.payee?.name ?? '', [Validators.required])
   });

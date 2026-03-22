@@ -16,17 +16,24 @@ import { PaymentService } from '../../core/services/payment.service';
 import { PaymentOccurrence } from '../../core/models/payment.model';
 import { Payee } from '../../core/models/payee.model';
 import { PaymentSource } from '../../core/models/payment-source.model';
-import { PAYMENT_FREQUENCY_LABELS, PaymentFrequency } from '../../core/models/payment-frequency.enum';
 import { forkJoin } from 'rxjs';
+
+interface OccurrenceViewModel {
+  formattedDate: string;
+  sourceName: string;
+  payeeName: string;
+  descriptionDisplay: string;
+  formattedAmount: string;
+  currency: string;
+  yourShareDisplay: string;
+}
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
+  providers: [CurrencyPipe, DatePipe],
   imports: [
     RouterLink,
-    CurrencyPipe,
-    DatePipe,
-    DecimalPipe,
     MatCard,
     MatCardHeader,
     MatCardAvatar,
@@ -63,6 +70,8 @@ export class DashboardComponent implements OnInit {
   private readonly paymentSourceService = inject(PaymentSourceService);
   private readonly payeeService = inject(PayeeService);
   private readonly paymentService = inject(PaymentService);
+  private readonly currencyPipe = inject(CurrencyPipe);
+  private readonly datePipe = inject(DatePipe);
 
   readonly loading = signal(false);
   readonly paymentSourceCount = signal(0);
@@ -73,7 +82,7 @@ export class DashboardComponent implements OnInit {
   readonly occurrencesLoading = signal(false);
   readonly payees = signal<Payee[]>([]);
 
-  readonly payeesMap = computed(() => {
+  private readonly payeesMap = computed(() => {
     const map: Record<string, string> = {};
     for (const p of this.payees()) map[p.id] = p.name;
     return map;
@@ -81,7 +90,7 @@ export class DashboardComponent implements OnInit {
 
   readonly paymentSources = signal<PaymentSource[]>([]);
 
-  readonly paymentSourcesMap = computed(() => {
+  private readonly paymentSourcesMap = computed(() => {
     const map: Record<string, string> = {};
     for (const ps of this.paymentSources()) map[ps.id] = ps.name;
     return map;
@@ -89,17 +98,23 @@ export class DashboardComponent implements OnInit {
 
   readonly occurrenceColumns = ['date', 'source', 'payee', 'description', 'amount', 'currency', 'yourShare'];
 
-  getYourShare(occurrence: PaymentOccurrence): number {
-    const total = occurrence.splits.reduce((sum, s) => sum + s.percentage, 0);
-    return Math.max(0, 100 - total);
-  }
+  readonly occurrencesViewModel = computed<OccurrenceViewModel[]>(() =>
+    this.occurrences().map(o => {
+      const yourSharePct = Math.max(0, 100 - o.splits.reduce((s, x) => s + x.percentage, 0));
+      return {
+        formattedDate: this.datePipe.transform(o.occurrenceDate, 'd MMM yyyy') ?? o.occurrenceDate,
+        sourceName: this.paymentSourcesMap()[o.paymentSourceId] ?? o.paymentSourceId,
+        payeeName: this.payeesMap()[o.payeeId] ?? o.payeeId,
+        descriptionDisplay: o.description || '—',
+        formattedAmount: this.currencyPipe.transform(o.amount, o.currency) ?? String(o.amount),
+        currency: o.currency,
+        yourShareDisplay: `${yourSharePct % 1 === 0 ? yourSharePct.toFixed(0) : yourSharePct.toFixed(2)}%`,
+      };
+    })
+  );
 
   // Month picker — defaults to current month
   readonly monthControl = new FormControl<Date>(new Date());
-
-  getFrequencyLabel(freq: number): string {
-    return PAYMENT_FREQUENCY_LABELS[freq as PaymentFrequency] ?? String(freq);
-  }
 
   ngOnInit(): void {
     this.loading.set(true);

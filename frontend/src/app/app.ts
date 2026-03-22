@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { MatToolbar } from '@angular/material/toolbar';
@@ -31,6 +31,8 @@ import { MatDivider } from '@angular/material/divider';
 })
 export class AppComponent {
   readonly isMobile = signal(window.innerWidth < 768);
+  readonly sidenavMode = computed(() => this.isMobile() ? 'over' : 'side');
+  readonly sidenavOpened = computed(() => !this.isMobile());
 
   constructor() {
     window.addEventListener('resize', () => this.isMobile.set(window.innerWidth < 768));

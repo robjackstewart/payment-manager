@@ -27,6 +27,9 @@ export class PaymentSourceFormDialogComponent {
   readonly dialogRef = inject(MatDialogRef<PaymentSourceFormDialogComponent>);
   readonly data = inject<{ paymentSource?: PaymentSource }>(MAT_DIALOG_DATA);
 
+  readonly title = this.data?.paymentSource ? 'Edit Payment Source' : 'New Payment Source';
+  readonly submitLabel = this.data?.paymentSource ? 'Save' : 'Create';
+
   readonly form = new FormGroup({
     name: new FormControl(this.data?.paymentSource?.name ?? '', [Validators.required])
   });

@@ -7,7 +7,6 @@ import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
 import { MatDatepicker, MatDatepickerInput, MatDatepickerToggle } from '@angular/material/datepicker';
 import { MatIcon } from '@angular/material/icon';
-import { DecimalPipe } from '@angular/common';
 import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Payment } from '../../../core/models/payment.model';
 import { PaymentSource } from '../../../core/models/payment-source.model';
@@ -36,7 +35,6 @@ import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models
     MatDatepickerInput,
     MatDatepickerToggle,
     MatIcon,
-    DecimalPipe,
     ReactiveFormsModule,
   ],
   templateUrl: './payment-form-dialog.html'
@@ -49,6 +47,9 @@ export class PaymentFormDialogComponent implements OnInit {
     payees: Payee[];
     contacts: Contact[];
   }>(MAT_DIALOG_DATA);
+
+  readonly title = this.data.payment ? 'Edit Payment' : 'New Payment';
+  readonly submitLabel = this.data.payment ? 'Save' : 'Create';
 
   readonly PaymentFrequency = PaymentFrequency;
   readonly frequencyOptions = [
@@ -91,6 +92,11 @@ export class PaymentFormDialogComponent implements OnInit {
       return sum + (Number(ctrl.get('percentage')?.value) || 0);
     }, 0);
     return Math.max(0, 100 - total);
+  });
+
+  readonly yourShareDisplay = computed(() => {
+    const value = this.yourShare();
+    return `${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}%`;
   });
 
   get splits(): FormArray {

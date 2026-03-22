@@ -76,40 +76,40 @@
       <div class="schedule-loading">
         <mat-spinner diameter="40" />
       </div>
-    } @else if (occurrences().length === 0) {
+    } @else if (occurrencesViewModel().length === 0) {
       <div class="schedule-empty">
         <mat-icon>event_busy</mat-icon>
         <p>No payments scheduled for this month.</p>
       </div>
     } @else {
-      <table mat-table [dataSource]="occurrences()" class="full-width">
+      <table mat-table [dataSource]="occurrencesViewModel()" class="full-width">
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Date</th>
-          <td mat-cell *matCellDef="let o">{{ o.occurrenceDate | date:'d MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let vm">{{ vm.formattedDate }}</td>
         </ng-container>
         <ng-container matColumnDef="source">
           <th mat-header-cell *matHeaderCellDef>Payment Source</th>
-          <td mat-cell *matCellDef="let o">{{ paymentSourcesMap()[o.paymentSourceId] ? paymentSourcesMap()[o.paymentSourceId] : o.paymentSourceId }}</td>
+          <td mat-cell *matCellDef="let vm">{{ vm.sourceName }}</td>
         </ng-container>
         <ng-container matColumnDef="payee">
           <th mat-header-cell *matHeaderCellDef>Payee</th>
-          <td mat-cell *matCellDef="let o">{{ payeesMap()[o.payeeId] ? payeesMap()[o.payeeId] : o.payeeId }}</td>
+          <td mat-cell *matCellDef="let vm">{{ vm.payeeName }}</td>
         </ng-container>
         <ng-container matColumnDef="description">
           <th mat-header-cell *matHeaderCellDef>Description</th>
-          <td mat-cell *matCellDef="let o">{{ o.description || '—' }}</td>
+          <td mat-cell *matCellDef="let vm">{{ vm.descriptionDisplay }}</td>
         </ng-container>
         <ng-container matColumnDef="amount">
           <th mat-header-cell *matHeaderCellDef>Amount</th>
-          <td mat-cell *matCellDef="let o">{{ o.amount | currency:o.currency }}</td>
+          <td mat-cell *matCellDef="let vm">{{ vm.formattedAmount }}</td>
         </ng-container>
         <ng-container matColumnDef="currency">
           <th mat-header-cell *matHeaderCellDef>Currency</th>
-          <td mat-cell *matCellDef="let o">{{ o.currency }}</td>
+          <td mat-cell *matCellDef="let vm">{{ vm.currency }}</td>
         </ng-container>
         <ng-container matColumnDef="yourShare">
           <th mat-header-cell *matHeaderCellDef>Your Share</th>
-          <td mat-cell *matCellDef="let o">{{ getYourShare(o) | number:'1.0-2' }}%</td>
+          <td mat-cell *matCellDef="let vm">{{ vm.yourShareDisplay }}</td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="occurrenceColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: occurrenceColumns;"></tr>
