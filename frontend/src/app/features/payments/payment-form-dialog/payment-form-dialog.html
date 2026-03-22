@@ -86,6 +86,43 @@
         <mat-error>Description cannot exceed 500 characters</mat-error>
       }
     </mat-form-field>
+
+    <!-- Bill Split Section -->
+    <div class="split-section">
+      <div class="split-header">
+        <span class="split-title">Bill Split</span>
+        <span class="your-share">Your share: <strong>{{ yourShare() | number:'1.0-2' }}%</strong></span>
+      </div>
+
+      @if (data.contacts.length === 0) {
+        <p class="split-hint">Add contacts first in the Contacts page to split bills.</p>
+      } @else {
+        <div formArrayName="splits">
+          @for (ctrl of splitControls; track $index) {
+            <div [formGroupName]="$index" class="split-row">
+              <mat-form-field appearance="outline" class="split-contact">
+                <mat-label>Contact</mat-label>
+                <mat-select formControlName="contactId">
+                  @for (c of data.contacts; track c.id) {
+                    <mat-option [value]="c.id">{{ c.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="split-pct">
+                <mat-label>%</mat-label>
+                <input matInput type="number" formControlName="percentage" min="0.01" max="100" step="0.01" />
+              </mat-form-field>
+              <button mat-icon-button color="warn" type="button" (click)="removeSplit($index)">
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+        <button mat-stroked-button type="button" (click)="addSplit()" class="add-split-btn">
+          <mat-icon>add</mat-icon> Add person
+        </button>
+      }
+    </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
@@ -94,3 +131,4 @@
     {{ data.payment ? 'Save' : 'Create' }}
   </button>
 </mat-dialog-actions>
+

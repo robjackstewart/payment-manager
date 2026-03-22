@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +15,19 @@ function toDockerPath(p: string): string {
   return p.replace(/\\/g, '/').replace(/^([A-Za-z]):/, '/$1');
 }
 
+/** Recursively delete all .ts files under a directory. */
+function deleteTsFiles(dir: string): void {
+  for (const entry of readdirSync(dir)) {
+    const full = resolve(dir, entry);
+    if (statSync(full).isDirectory()) {
+      deleteTsFiles(full);
+    } else if (entry.endsWith('.ts')) {
+      rmSync(full);
+      console.log(`  deleted: ${full}`);
+    }
+  }
+}
+
 const inputMount = toDockerPath(inputDir);
 const outputMount = toDockerPath(outputDir);
 
@@ -28,7 +41,6 @@ const additionalProperties = [
   'stringEnums=false',
   'serviceSuffix=Service',
   'serviceFileSuffix=.service',
-  'withInterfaces=false',
   'npmName=payment-manager-api-client',
   'npmVersion=1.0.0',
 ].join(',');
@@ -38,6 +50,10 @@ console.log(`→ Output dir : ${outputDir}`);
 console.log('');
 
 mkdirSync(outputDir, { recursive: true });
+
+console.log('→ Removing existing .ts files from output directory...');
+deleteTsFiles(outputDir);
+console.log('');
 
 const command = [
   'docker run --rm',

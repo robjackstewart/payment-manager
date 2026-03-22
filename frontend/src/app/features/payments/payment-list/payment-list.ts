@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,9 +11,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { PaymentService } from '../../../core/services/payment.service';
 import { PaymentSourceService } from '../../../core/services/payment-source.service';
 import { PayeeService } from '../../../core/services/payee.service';
+import { ContactService } from '../../../core/services/contact.service';
 import { Payment } from '../../../core/models/payment.model';
 import { PaymentSource } from '../../../core/models/payment-source.model';
 import { Payee } from '../../../core/models/payee.model';
+import { Contact } from '../../../core/models/contact.model';
 import { PAYMENT_FREQUENCY_LABELS, PaymentFrequency } from '../../../core/models/payment-frequency.enum';
 import { PaymentFormDialogComponent } from '../payment-form-dialog/payment-form-dialog';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog';
@@ -25,6 +27,7 @@ import { forkJoin } from 'rxjs';
   imports: [
     CurrencyPipe,
     DatePipe,
+    DecimalPipe,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -39,15 +42,17 @@ export class PaymentListComponent implements OnInit {
   private readonly paymentService = inject(PaymentService);
   private readonly paymentSourceService = inject(PaymentSourceService);
   private readonly payeeService = inject(PayeeService);
+  private readonly contactService = inject(ContactService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly payments = signal<Payment[]>([]);
   readonly paymentSources = signal<PaymentSource[]>([]);
   readonly payees = signal<Payee[]>([]);
+  readonly contacts = signal<Contact[]>([]);
   readonly loading = signal(false);
 
-  readonly displayedColumns = ['payee', 'description', 'amount', 'frequency', 'startDate', 'endDate', 'actions'];
+  readonly displayedColumns = ['payee', 'description', 'amount', 'yourShare', 'frequency', 'startDate', 'endDate', 'actions'];
 
   readonly payeesMap = computed(() => {
     const map: Record<string, string> = {};
@@ -63,17 +68,24 @@ export class PaymentListComponent implements OnInit {
     return PAYMENT_FREQUENCY_LABELS[freq as PaymentFrequency] ?? String(freq);
   }
 
+  getYourShare(payment: Payment): number {
+    const total = payment.splits.reduce((sum, s) => sum + s.percentage, 0);
+    return Math.max(0, 100 - total);
+  }
+
   private load(): void {
     this.loading.set(true);
     forkJoin({
       payments: this.paymentService.getAll(),
       paymentSources: this.paymentSourceService.getAll(),
       payees: this.payeeService.getAll(),
+      contacts: this.contactService.getAll(),
     }).subscribe({
-      next: ({ payments, paymentSources, payees }) => {
+      next: ({ payments, paymentSources, payees, contacts }) => {
         this.payments.set(payments);
         this.paymentSources.set(paymentSources);
         this.payees.set(payees);
+        this.contacts.set(contacts);
         this.loading.set(false);
       },
       error: () => {
@@ -85,8 +97,8 @@ export class PaymentListComponent implements OnInit {
 
   openCreateDialog(): void {
     const ref = this.dialog.open(PaymentFormDialogComponent, {
-      width: '500px',
-      data: { paymentSources: this.paymentSources(), payees: this.payees() }
+      width: '520px',
+      data: { paymentSources: this.paymentSources(), payees: this.payees(), contacts: this.contacts() }
     });
     ref.afterClosed().subscribe(result => {
       if (result) {
@@ -103,8 +115,8 @@ export class PaymentListComponent implements OnInit {
 
   openEditDialog(payment: Payment): void {
     const ref = this.dialog.open(PaymentFormDialogComponent, {
-      width: '500px',
-      data: { payment, paymentSources: this.paymentSources(), payees: this.payees() }
+      width: '520px',
+      data: { payment, paymentSources: this.paymentSources(), payees: this.payees(), contacts: this.contacts() }
     });
     ref.afterClosed().subscribe(result => {
       if (result) {

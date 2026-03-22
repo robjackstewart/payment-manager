@@ -23,13 +23,31 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 .Where(x => x.UserId == request.UserId)
                 .ToArrayAsync(cancellationToken);
 
+            var paymentIds = payments.Select(p => p.Id).ToHashSet();
+
+            var splitRows = await context.PaymentSplits
+                .Where(s => paymentIds.Contains(s.PaymentId))
+                .Join(context.Contacts, s => s.ContactId, c => c.Id,
+                    (s, c) => new { s.PaymentId, s.ContactId, c.Name, s.Percentage })
+                .ToListAsync(cancellationToken);
+
+            var splitsByPayment = splitRows
+                .GroupBy(s => s.PaymentId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (ICollection<OccurrenceDto.SplitDto>)g.Select(s => new OccurrenceDto.SplitDto(s.ContactId, s.Name, s.Percentage)).ToList());
+
             var occurrences = payments
-                .SelectMany(p => PaymentOccurrenceCalculator
-                    .GetOccurrences(p.Frequency, p.StartDate, p.EndDate, request.From, request.To)
-                    .Select(date => new OccurrenceDto(
-                        p.Id, p.PaymentSourceId, p.PayeeId,
-                        p.Amount, p.Currency, p.Frequency,
-                        date, p.StartDate, p.EndDate, p.Description)))
+                .SelectMany(p =>
+                {
+                    var splits = splitsByPayment.GetValueOrDefault(p.Id) ?? [];
+                    return PaymentOccurrenceCalculator
+                        .GetOccurrences(p.Frequency, p.StartDate, p.EndDate, request.From, request.To)
+                        .Select(date => new OccurrenceDto(
+                            p.Id, p.PaymentSourceId, p.PayeeId,
+                            p.Amount, p.Currency, p.Frequency,
+                            date, p.StartDate, p.EndDate, p.Description, splits));
+                })
                 .OrderBy(o => o.OccurrenceDate)
                 .ThenBy(o => o.PaymentId)
                 .ToArray();
@@ -54,7 +72,11 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
             DateOnly OccurrenceDate,
             DateOnly StartDate,
             DateOnly? EndDate,
-            string? Description);
+            string? Description,
+            ICollection<OccurrenceDto.SplitDto> Splits)
+        {
+            public record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+        }
     }
 }
 
@@ -94,13 +116,11 @@ internal static class PaymentOccurrenceCalculator
             var monthStart = current;
             var monthEnd = new DateOnly(current.Year, current.Month, daysInMonth);
 
-            // Payment must be active during this month
             if (startDate <= monthEnd && (endDate == null || endDate >= monthStart))
             {
                 var day = Math.Min(startDate.Day, daysInMonth);
                 var occurrenceDate = new DateOnly(current.Year, current.Month, day);
 
-                // Occurrence must fall within the query range and not be before the payment started
                 if (occurrenceDate >= from && occurrenceDate <= to && occurrenceDate >= startDate)
                     yield return occurrenceDate;
             }

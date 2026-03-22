@@ -23,5 +23,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/payments/payment-list/payment-list').then(m => m.PaymentListComponent)
   },
+  {
+    path: 'contacts',
+    loadComponent: () =>
+      import('./features/contacts/contact-list/contact-list').then(m => m.ContactListComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

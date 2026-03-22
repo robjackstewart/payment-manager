@@ -9,4 +9,6 @@ public interface IReadOnlyPaymentManagerContext
     public IQueryable<PaymentSource> PaymentSources { get; }
     public IQueryable<Payee> Payees { get; }
     public IQueryable<Payment> Payments { get; }
+    public IQueryable<Contact> Contacts { get; }
+    public IQueryable<PaymentSplit> PaymentSplits { get; }
 }

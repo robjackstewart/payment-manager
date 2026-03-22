@@ -515,6 +515,137 @@
         }
       }
     },
+    "/api/contacts": {
+      "post": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Create Contact",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactEndpointsCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateContactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Get All Contacts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAllContactsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/contacts/{id}": {
+      "put": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Update Contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactEndpointsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateContactResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Delete Contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/payments": {
       "post": {
         "tags": [
@@ -728,6 +859,49 @@
   },
   "components": {
     "schemas": {
+      "ContactEndpointsCreateRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ContactEndpointsUpdateRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateContactResponse": {
+        "required": [
+          "id",
+          "userId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "CreatePayeeResponse": {
         "required": [
           "id",
@@ -760,7 +934,8 @@
           "frequency",
           "startDate",
           "endDate",
-          "description"
+          "description",
+          "splits"
         ],
         "type": "object",
         "properties": {
@@ -802,6 +977,33 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePaymentResponseSplitDto"
+            }
+          }
+        }
+      },
+      "CreatePaymentResponseSplitDto": {
+        "required": [
+          "contactId",
+          "contactName",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contactName": {
+            "type": "string"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       },
@@ -834,6 +1036,41 @@
         "type": "object",
         "properties": {
           "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "GetAllContactsResponse": {
+        "required": [
+          "contacts"
+        ],
+        "type": "object",
+        "properties": {
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAllContactsResponseContactDto"
+            }
+          }
+        }
+      },
+      "GetAllContactsResponseContactDto": {
+        "required": [
+          "id",
+          "userId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
             "type": "string",
             "format": "uuid"
           },
@@ -937,7 +1174,8 @@
           "frequency",
           "startDate",
           "endDate",
-          "description"
+          "description",
+          "splits"
         ],
         "type": "object",
         "properties": {
@@ -979,6 +1217,33 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAllPaymentsResponsePaymentDtoSplitDto"
+            }
+          }
+        }
+      },
+      "GetAllPaymentsResponsePaymentDtoSplitDto": {
+        "required": [
+          "contactId",
+          "contactName",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contactName": {
+            "type": "string"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       },
@@ -1058,7 +1323,8 @@
           "occurrenceDate",
           "startDate",
           "endDate",
-          "description"
+          "description",
+          "splits"
         ],
         "type": "object",
         "properties": {
@@ -1100,6 +1366,33 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentOccurrencesResponseOccurrenceDtoSplitDto"
+            }
+          }
+        }
+      },
+      "GetPaymentOccurrencesResponseOccurrenceDtoSplitDto": {
+        "required": [
+          "contactId",
+          "contactName",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contactName": {
+            "type": "string"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       },
@@ -1114,7 +1407,8 @@
           "frequency",
           "startDate",
           "endDate",
-          "description"
+          "description",
+          "splits"
         ],
         "type": "object",
         "properties": {
@@ -1156,6 +1450,33 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentResponseSplitDto"
+            }
+          }
+        }
+      },
+      "GetPaymentResponseSplitDto": {
+        "required": [
+          "contactId",
+          "contactName",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contactName": {
+            "type": "string"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       },
@@ -1260,6 +1581,30 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentEndpointsSplitRequest"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "PaymentEndpointsSplitRequest": {
+        "required": [
+          "contactId",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       },
@@ -1304,6 +1649,13 @@
           },
           "description": {
             "type": "string",
+            "nullable": true
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentEndpointsSplitRequest"
+            },
             "nullable": true
           }
         }
@@ -1359,6 +1711,27 @@
           }
         }
       },
+      "UpdateContactResponse": {
+        "required": [
+          "id",
+          "userId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "UpdatePayeeResponse": {
         "required": [
           "id",
@@ -1391,7 +1764,8 @@
           "frequency",
           "startDate",
           "endDate",
-          "description"
+          "description",
+          "splits"
         ],
         "type": "object",
         "properties": {
@@ -1433,6 +1807,33 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdatePaymentResponseSplitDto"
+            }
+          }
+        }
+      },
+      "UpdatePaymentResponseSplitDto": {
+        "required": [
+          "contactId",
+          "contactName",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contactName": {
+            "type": "string"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       },

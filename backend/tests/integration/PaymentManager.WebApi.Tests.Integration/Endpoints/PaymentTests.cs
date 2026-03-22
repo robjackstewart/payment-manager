@@ -15,17 +15,24 @@ internal sealed class PaymentTests : IntegrationTestBase
     private sealed record CreateRequest(
         Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly StartDate, DateOnly? EndDate, string? Description = null);
+        DateOnly StartDate, DateOnly? EndDate, string? Description = null,
+        IReadOnlyList<SplitRequest>? Splits = null);
 
     private sealed record UpdateRequest(
         Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly StartDate, DateOnly? EndDate, string? Description = null);
+        DateOnly StartDate, DateOnly? EndDate, string? Description = null,
+        IReadOnlyList<SplitRequest>? Splits = null);
+
+    private sealed record SplitRequest(Guid ContactId, decimal Percentage);
 
     private sealed record PaymentResponse(
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly StartDate, DateOnly? EndDate, string? Description);
+        DateOnly StartDate, DateOnly? EndDate, string? Description,
+        SplitDto[] Splits);
+
+    private sealed record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
 
     private sealed record GetAllResponse(PaymentResponse[] Payments);
 
@@ -39,6 +46,15 @@ internal sealed class PaymentTests : IntegrationTestBase
         context.Payees.Add(payee);
         await context.SaveChanges(ct);
         return (paymentSource.Id, payee.Id);
+    }
+
+    private async Task<Guid> SetupContactAsync(string name, CancellationToken ct)
+    {
+        var context = GetService<IPaymentManagerContext>();
+        var contact = new Contact { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = name };
+        context.Contacts.Add(contact);
+        await context.SaveChanges(ct);
+        return contact.Id;
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -265,5 +281,108 @@ internal sealed class PaymentTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.Description.ShouldBe("Updated description");
+    }
+
+    // ── Splits ────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task CreatePayment_Should_Return_Splits_When_Provided()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var contactId = await SetupContactAsync("Derek", ct);
+
+        var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, null,
+            [new SplitRequest(contactId, 30m)]), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Splits.Length.ShouldBe(1);
+        body.Splits[0].ContactId.ShouldBe(contactId);
+        body.Splits[0].Percentage.ShouldBe(30m);
+    }
+
+    [Test]
+    public async Task CreatePayment_Should_Return_BadRequest_When_Splits_Exceed_100_Percent()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var contactId1 = await SetupContactAsync("Alice", ct);
+        var contactId2 = await SetupContactAsync("Bob", ct);
+
+        var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, null,
+            [new SplitRequest(contactId1, 60m), new SplitRequest(contactId2, 50m)]), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task CreatePayment_Should_Return_NotFound_When_ContactId_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, null,
+            [new SplitRequest(Guid.NewGuid(), 30m)]), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task UpdatePayment_Should_Replace_Splits()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var contactId1 = await SetupContactAsync("Liz", ct);
+        var contactId2 = await SetupContactAsync("Sam", ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, null,
+            [new SplitRequest(contactId1, 25m)]), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+        created.Splits.Length.ShouldBe(1);
+
+        var updateResponse = await CreateApiClient().PutAsJsonAsync($"/api/payments/{created.Id}", new UpdateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, null,
+            [new SplitRequest(contactId2, 40m)]), ct);
+
+        updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await updateResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Splits.Length.ShouldBe(1);
+        body.Splits[0].ContactId.ShouldBe(contactId2);
+        body.Splits[0].Percentage.ShouldBe(40m);
+    }
+
+    [Test]
+    public async Task GetAllPayments_Should_Include_Splits_With_Contact_Names()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var contactId = await SetupContactAsync("Frank", ct);
+        await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 50m, "USD", PaymentFrequency.Once,
+            new DateOnly(2026, 1, 1), null, null,
+            [new SplitRequest(contactId, 50m)]), ct);
+
+        var response = await CreateApiClient().GetAsync("/api/payments", ct);
+        var body = await response.Content.ReadFromJsonAsync<GetAllResponse>(ct);
+
+        body.ShouldNotBeNull();
+        body.Payments.Length.ShouldBe(1);
+        body.Payments[0].Splits.Length.ShouldBe(1);
+        body.Payments[0].Splits[0].ContactId.ShouldBe(contactId);
+        body.Payments[0].Splits[0].ContactName.ShouldBe("Frank");
+        body.Payments[0].Splits[0].Percentage.ShouldBe(50m);
     }
 }

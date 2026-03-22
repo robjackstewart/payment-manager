@@ -1,14 +1,17 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
+import { DecimalPipe } from '@angular/common';
+import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Payment } from '../../../core/models/payment.model';
 import { PaymentSource } from '../../../core/models/payment-source.model';
 import { Payee } from '../../../core/models/payee.model';
+import { Contact } from '../../../core/models/contact.model';
 import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models/payment-frequency.enum';
 
 @Component({
@@ -21,6 +24,8 @@ import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
+    MatIconModule,
+    DecimalPipe,
     ReactiveFormsModule,
   ],
   templateUrl: './payment-form-dialog.html'
@@ -31,6 +36,7 @@ export class PaymentFormDialogComponent implements OnInit {
     payment?: Payment;
     paymentSources: PaymentSource[];
     payees: Payee[];
+    contacts: Contact[];
   }>(MAT_DIALOG_DATA);
 
   readonly PaymentFrequency = PaymentFrequency;
@@ -63,8 +69,26 @@ export class PaymentFormDialogComponent implements OnInit {
     endDate: new FormControl<Date | null>(
       this.data?.payment?.endDate ? new Date(this.data.payment.endDate) : null
     ),
-    description: new FormControl(this.data?.payment?.description ?? '', [Validators.maxLength(500)])
+    description: new FormControl(this.data?.payment?.description ?? '', [Validators.maxLength(500)]),
+    splits: new FormArray(
+      (this.data?.payment?.splits ?? []).map(s => this.createSplitRow(s.contactId, s.percentage))
+    )
   });
+
+  readonly yourShare = computed(() => {
+    const total = this.splits.controls.reduce((sum, ctrl) => {
+      return sum + (Number(ctrl.get('percentage')?.value) || 0);
+    }, 0);
+    return Math.max(0, 100 - total);
+  });
+
+  get splits(): FormArray {
+    return this.form.get('splits') as FormArray;
+  }
+
+  get splitControls(): AbstractControl[] {
+    return this.splits.controls;
+  }
 
   ngOnInit(): void {
     this.form.controls.frequency.valueChanges.subscribe(freq => {
@@ -78,6 +102,21 @@ export class PaymentFormDialogComponent implements OnInit {
     this.showEndDate.set(initialFreq !== PaymentFrequency.Once);
   }
 
+  private createSplitRow(contactId = '', percentage: number | null = null): FormGroup {
+    return new FormGroup({
+      contactId: new FormControl(contactId, [Validators.required]),
+      percentage: new FormControl<number | null>(percentage, [Validators.required, Validators.min(0.01), Validators.max(100)])
+    });
+  }
+
+  addSplit(): void {
+    this.splits.push(this.createSplitRow());
+  }
+
+  removeSplit(index: number): void {
+    this.splits.removeAt(index);
+  }
+
   submit(): void {
     if (this.form.valid) {
       const raw = this.form.value;
@@ -89,7 +128,12 @@ export class PaymentFormDialogComponent implements OnInit {
         frequency: raw.frequency,
         startDate: (raw.startDate as Date).toISOString().split('T')[0],
         endDate: raw.endDate ? (raw.endDate as Date).toISOString().split('T')[0] : undefined,
-        description: raw.description || undefined
+        description: raw.description || undefined,
+        splits: (raw.splits as { contactId: string; percentage: number }[])?.map(s => ({
+          contactId: s.contactId,
+          contactName: this.data.contacts.find(c => c.id === s.contactId)?.name ?? '',
+          percentage: Number(s.percentage)
+        })) ?? []
       };
       this.dialogRef.close(result);
     }
