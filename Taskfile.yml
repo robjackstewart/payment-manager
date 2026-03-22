@@ -32,6 +32,11 @@ tasks:
       - task: backend:lint
       - task: frontend:lint
 
+  lint:fix:
+    deps:
+      - task: backend:lint:fix
+      - task: frontend:lint:fix
+
   build:
     deps:
       - task: backend:build

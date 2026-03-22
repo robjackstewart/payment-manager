@@ -28,6 +28,10 @@ tasks:
     cmds:
       - dotnet format
 
+  lint:fix:
+    cmds:
+      - dotnet format
+
   test:
     cmds:
       - dotnet test
