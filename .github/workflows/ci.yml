@@ -17,15 +17,17 @@ jobs:
       - name: Spin up dev container
         run: devcontainer up --workspace-folder . --remote-env LOCKED_DEPS=true
       - name: Install tools
-        run: devcontainer exec --workspace-folder . -- task backend:install-tools
+        run: devcontainer exec --workspace-folder . -- task install-tools
       - name: Install dependencies
         run: devcontainer exec --workspace-folder . -- task backend:install-locked-dependencies
       - name: Build
         run: devcontainer exec --workspace-folder . -- task backend:build
       - name: Lint
         run: devcontainer exec --workspace-folder . -- task backend:lint
-      - name: Test
-        run: devcontainer exec --workspace-folder . -- task backend:test
+      - name: Unit Test
+        run: devcontainer exec --workspace-folder . -- task backend:test:unit
+      - name: Integration Test
+        run: devcontainer exec --workspace-folder . -- task backend:test:integration
 
   frontend:
     runs-on: ubuntu-24.04

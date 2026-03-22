@@ -28,6 +28,10 @@ tasks:
     cmds:
       - npm run lint
 
+  test:
+    cmds:
+      - npm run test
+
   lint:fix:
     cmds:
       - npm run lint -- --fix
