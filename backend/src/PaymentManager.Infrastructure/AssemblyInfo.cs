@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("PaymentManager.Infrastructure.Tests.Unit")]
+[assembly: InternalsVisibleTo("PaymentManager.Infrastructure.Sqlite.Tests.Unit")]
