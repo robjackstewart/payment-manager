@@ -23,19 +23,26 @@ public record GetPayment(Guid Id) : IRequest<Response>
                 throw new NotFoundException<Payment>($"Id: {request.Id}");
             }
 
-            var splits = await context.PaymentSplits
+            var splitRows = await context.PaymentSplits
                 .Where(s => s.PaymentId == request.Id)
-                .Join(context.Contacts, s => s.ContactId, c => c.Id,
-                    (s, c) => new Response.SplitDto(s.ContactId, c.Name, s.Percentage))
-                .ToListAsync(cancellationToken);
+                .Select(s => new { s.ContactId, s.Percentage })
+                .ToArrayAsync(cancellationToken);
+
+            var splits = splitRows
+                .Select(s => new Response.SplitDto(s.ContactId, s.Percentage,
+                    SplitPaymentCalculator.CalculateValue(payment.Amount, s.Percentage)))
+                .ToArray();
+
+            var userSharePct = SplitPaymentCalculator.UserSharePercentage(splits.Select(s => s.Percentage));
+            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(payment.Amount, userSharePct));
 
             logger.LogInformation("Successfully fetched payment '{Id}'", payment.Id);
-            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, splits);
+            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, userShare, splits);
         }
     }
 
-    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, ICollection<Response.SplitDto> Splits)
+    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, UserShareDto UserShare, ICollection<Response.SplitDto> Splits)
     {
-        public record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+        public record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
     }
 }

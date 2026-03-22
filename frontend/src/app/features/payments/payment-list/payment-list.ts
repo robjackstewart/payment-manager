@@ -81,12 +81,12 @@ export class PaymentListComponent implements OnInit {
 
   public readonly paymentsViewModel = computed<PaymentViewModel[]>(() =>
     this.payments().map(p => {
-      const yourSharePct = Math.max(0, 100 - p.splits.reduce((s, x) => s + x.percentage, 0));
+      const pct = p.userShare.percentage;
       return {
         payeeName: this.payeesMap()[p.payeeId] ?? p.payeeId,
         descriptionDisplay: p.description || '—',
         formattedAmount: this.currencyPipe.transform(p.amount, p.currency) ?? String(p.amount),
-        yourShareDisplay: `${yourSharePct % 1 === 0 ? yourSharePct.toFixed(0) : yourSharePct.toFixed(2)}%`,
+        yourShareDisplay: `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(2)}%`,
         frequencyLabel: PAYMENT_FREQUENCY_LABELS[p.frequency as PaymentFrequency] ?? String(p.frequency),
         formattedStartDate: this.datePipe.transform(p.startDate, 'mediumDate') ?? p.startDate,
         formattedEndDate: p.endDate ? (this.datePipe.transform(p.endDate, 'mediumDate') ?? p.endDate) : '—',

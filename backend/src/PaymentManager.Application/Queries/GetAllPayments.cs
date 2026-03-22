@@ -24,22 +24,29 @@ public record GetAllPayments(Guid UserId) : IRequest<Response>
 
             var splitRows = await context.PaymentSplits
                 .Where(s => paymentIds.Contains(s.PaymentId))
-                .Join(context.Contacts, s => s.ContactId, c => c.Id,
-                    (s, c) => new { s.PaymentId, s.ContactId, c.Name, s.Percentage })
-                .ToListAsync(cancellationToken);
+                .Select(s => new { s.PaymentId, s.ContactId, s.Percentage })
+                .ToArrayAsync(cancellationToken);
 
-            var splitsByPayment = splitRows
+            var splitRowsByPayment = splitRows
                 .GroupBy(s => s.PaymentId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => (ICollection<PaymentDto.SplitDto>)g.Select(s => new PaymentDto.SplitDto(s.ContactId, s.Name, s.Percentage)).ToList());
+                .ToDictionary(g => g.Key, g => g.ToArray());
 
             var paymentDtos = payments
                 .OrderBy(p => p.Id)
-                .Select(p => new PaymentDto(
-                    p.Id, p.UserId, p.PaymentSourceId, p.PayeeId,
-                    p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description,
-                    splitsByPayment.GetValueOrDefault(p.Id) ?? []))
+                .Select(p =>
+                {
+                    var rows = splitRowsByPayment.GetValueOrDefault(p.Id) ?? [];
+                    var splitDtos = rows
+                        .Select(s => new PaymentDto.SplitDto(s.ContactId, s.Percentage,
+                            SplitPaymentCalculator.CalculateValue(p.Amount, s.Percentage)))
+                        .ToArray();
+                    var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
+                    var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(p.Amount, userSharePct));
+                    return new PaymentDto(
+                        p.Id, p.UserId, p.PaymentSourceId, p.PayeeId,
+                        p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description,
+                        userShare, splitDtos);
+                })
                 .ToArray();
 
             logger.LogInformation("Successfully fetched {count} payments for user: '{UserId}'", paymentDtos.Length, request.UserId);
@@ -49,9 +56,9 @@ public record GetAllPayments(Guid UserId) : IRequest<Response>
 
     public record Response(ICollection<PaymentDto> Payments)
     {
-        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, ICollection<PaymentDto.SplitDto> Splits)
+        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, UserShareDto UserShare, ICollection<PaymentDto.SplitDto> Splits)
         {
-            public record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+            public record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
         }
     }
 }

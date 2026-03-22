@@ -15,13 +15,21 @@ export class PaymentService {
 
   getAll(): Observable<Payment[]> {
     return this.api.getAllPayments().pipe(
-      map(r => r.payments.map(p => ({ ...p, amount: Number(p.amount) } as Payment)))
+      map(r => r.payments.map(p => ({
+        ...p,
+        amount: Number(p.amount),
+        userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
+      } as Payment)))
     );
   }
 
   getOccurrences(from: string, to: string): Observable<PaymentOccurrence[]> {
     return this.api.getPaymentOccurrences(from, to).pipe(
-      map(r => r.occurrences.map(o => ({ ...o, amount: Number(o.amount) } as PaymentOccurrence)))
+      map(r => r.occurrences.map(o => ({
+        ...o,
+        amount: Number(o.amount),
+        userShare: { percentage: Number(o.userShare.percentage), value: Number(o.userShare.value) },
+      } as PaymentOccurrence)))
     );
   }
 

@@ -30,9 +30,9 @@ internal sealed class PaymentTests : IntegrationTestBase
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate, string? Description,
-        SplitDto[] Splits);
+        UserShareDto UserShare, SplitDto[] Splits);
 
-    private sealed record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+    private sealed record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
 
     private sealed record GetAllResponse(PaymentResponse[] Payments);
 
@@ -76,6 +76,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
         body.Amount.ShouldBe(9.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
+        body.UserShare.Percentage.ShouldBe(100m);
+        body.UserShare.Value.ShouldBe(9.99m);
     }
 
     [Test]
@@ -125,6 +127,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
         body.Amount.ShouldBe(15.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
+        body.UserShare.Percentage.ShouldBe(100m);
+        body.UserShare.Value.ShouldBe(15.99m);
     }
 
     [Test]
@@ -194,6 +198,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.Amount.ShouldBe(14.99m);
+        body.UserShare.Percentage.ShouldBe(100m);
+        body.UserShare.Value.ShouldBe(14.99m);
     }
 
     [Test]
@@ -250,6 +256,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.Description.ShouldBe("My streaming service");
+        body.UserShare.Percentage.ShouldBe(100m);
+        body.UserShare.Value.ShouldBe(9.99m);
     }
 
     [Test]
@@ -281,6 +289,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.Description.ShouldBe("Updated description");
+        body.UserShare.Percentage.ShouldBe(100m);
+        body.UserShare.Value.ShouldBe(9.99m);
     }
 
     // ── Splits ────────────────────────────────────────────────────────────────
@@ -303,6 +313,9 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Splits.Length.ShouldBe(1);
         body.Splits[0].ContactId.ShouldBe(contactId);
         body.Splits[0].Percentage.ShouldBe(30m);
+        body.Splits[0].Value.ShouldBe(30m);          // 100 * 30 / 100
+        body.UserShare.Percentage.ShouldBe(70m);      // 100 - 30
+        body.UserShare.Value.ShouldBe(70m);            // 100 * 70 / 100
     }
 
     [Test]
@@ -362,10 +375,13 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Splits.Length.ShouldBe(1);
         body.Splits[0].ContactId.ShouldBe(contactId2);
         body.Splits[0].Percentage.ShouldBe(40m);
+        body.Splits[0].Value.ShouldBe(40m);          // 100 * 40 / 100
+        body.UserShare.Percentage.ShouldBe(60m);      // 100 - 40
+        body.UserShare.Value.ShouldBe(60m);            // 100 * 60 / 100
     }
 
     [Test]
-    public async Task GetAllPayments_Should_Include_Splits_With_Contact_Names()
+    public async Task GetAllPayments_Should_Include_Splits()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
@@ -382,7 +398,9 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Payments.Length.ShouldBe(1);
         body.Payments[0].Splits.Length.ShouldBe(1);
         body.Payments[0].Splits[0].ContactId.ShouldBe(contactId);
-        body.Payments[0].Splits[0].ContactName.ShouldBe("Frank");
         body.Payments[0].Splits[0].Percentage.ShouldBe(50m);
+        body.Payments[0].Splits[0].Value.ShouldBe(25m);    // 50 * 50 / 100
+        body.Payments[0].UserShare.Percentage.ShouldBe(50m); // 100 - 50
+        body.Payments[0].UserShare.Value.ShouldBe(25m);      // 50 * 50 / 100
     }
 }

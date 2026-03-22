@@ -129,3 +129,66 @@ public class PaymentsEndpointTests
 ## Package Management
 
 All NuGet package versions are managed centrally in `Directory.Packages.props` at the repository root. Do not specify versions in individual `.csproj` files — add new packages to `Directory.Packages.props` first, then reference them without a version in the project file.
+
+## Collection Materialisation
+
+Use `ToArray` / `ToArrayAsync` when materialising a LINQ query or EF Core query whose result will only be **read**. Use `ToList` / `ToListAsync` only when the materialised collection will be **mutated** afterwards (e.g. items added or removed via `Add`, `Remove`, `RemoveRange`).
+
+```csharp
+// ✅ Correct — result is only iterated / projected
+var payments = await context.Payments.Where(...).ToArrayAsync(ct);
+
+// ✅ Correct — result is mutated (RemoveRange requires a mutable list)
+var splits = await context.PaymentSplits.Where(...).ToListAsync(ct);
+context.PaymentSplits.RemoveRange(splits);
+
+// ❌ Wrong — ToList used but the collection is never mutated
+var payments = await context.Payments.Where(...).ToListAsync(ct);
+```
+
+## Collection Expressions
+
+Use C# 12 collection expressions (`[...]`) in preference to any older construction syntax. The compiler infers the target type from context, so the same syntax works for arrays, `List<T>`, `IEnumerable<T>`, `IReadOnlyList<T>`, and other collection interfaces.
+
+| Instead of | Use |
+|---|---|
+| `Array.Empty<T>()` / `Enumerable.Empty<T>()` | `[]` |
+| `new T[] { x, y }` / `new[] { x, y }` | `[x, y]` |
+| `new List<T> { x, y }` | `[x, y]` |
+| `a.Concat(b).ToArray()` | `[.. a, .. b]` |
+
+```csharp
+// ❌ Old-style
+PaymentSplit[] empty = Array.Empty<PaymentSplit>();
+var ids = new[] { id1, id2 };
+List<string> names = new List<string> { "Alice", "Bob" };
+var all = existing.Concat(newItems).ToArray();
+
+// ✅ Collection expression
+PaymentSplit[] empty = [];
+var ids = (Guid[])[id1, id2];
+List<string> names = ["Alice", "Bob"];
+var all = [.. existing, .. newItems];
+```
+
+## Property Grouping
+
+When two or more properties on a class share a common prefix, extract them into a nested `record` named after the prefix. This reduces noise in constructor signatures and call sites, and makes the relationship between the values explicit.
+
+```csharp
+// ❌ Wrong — flat properties with a shared prefix
+public record PaymentDto(decimal UserSharePercentage, decimal UserShareValue, ...);
+
+// ✅ Correct — grouped into a nested record
+public record PaymentDto(ShareInfo UserShare, ...)
+{
+    public record ShareInfo(decimal Percentage, decimal Value);
+}
+
+// Usage
+var dto = new PaymentDto(new ShareInfo(50m, 100m), ...);
+var pct = dto.UserShare.Percentage;
+```
+
+Apply this rule at any layer — DTOs, response records, domain value objects, and view models.
+

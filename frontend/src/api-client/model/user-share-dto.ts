@@ -9,8 +9,7 @@
  */
 
 
-export interface CreatePaymentResponseSplitDto { 
-    contactId: string;
+export interface UserShareDto { 
     percentage: any | null;
     value: any | null;
 }

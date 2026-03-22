@@ -102,7 +102,8 @@ public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid Pay
                         ContactId = split.ContactId,
                         Percentage = split.Percentage
                     });
-                    splitDtos.Add(new Response.SplitDto(split.ContactId, string.Empty, split.Percentage));
+                    splitDtos.Add(new Response.SplitDto(split.ContactId, split.Percentage,
+                        SplitPaymentCalculator.CalculateValue(request.Amount, split.Percentage)));
                 }
             }
 
@@ -110,12 +111,14 @@ public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid Pay
 
             logger.LogInformation("Updated payment '{Id}' for user: '{UserId}' with amount: '{Amount}'", payment.Id, payment.UserId, payment.Amount);
 
-            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, splitDtos);
+            var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
+            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(request.Amount, userSharePct));
+            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, userShare, splitDtos);
         }
     }
 
-    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, ICollection<Response.SplitDto> Splits)
+    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, UserShareDto UserShare, ICollection<Response.SplitDto> Splits)
     {
-        public record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+        public record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
     }
 }

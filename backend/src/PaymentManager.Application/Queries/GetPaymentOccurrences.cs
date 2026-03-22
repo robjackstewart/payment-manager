@@ -27,26 +27,30 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
 
             var splitRows = await context.PaymentSplits
                 .Where(s => paymentIds.Contains(s.PaymentId))
-                .Join(context.Contacts, s => s.ContactId, c => c.Id,
-                    (s, c) => new { s.PaymentId, s.ContactId, c.Name, s.Percentage })
-                .ToListAsync(cancellationToken);
+                .Select(s => new { s.PaymentId, s.ContactId, s.Percentage })
+                .ToArrayAsync(cancellationToken);
 
-            var splitsByPayment = splitRows
+            var splitRowsByPayment = splitRows
                 .GroupBy(s => s.PaymentId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => (ICollection<OccurrenceDto.SplitDto>)g.Select(s => new OccurrenceDto.SplitDto(s.ContactId, s.Name, s.Percentage)).ToList());
+                .ToDictionary(g => g.Key, g => g.ToArray());
 
             var occurrences = payments
                 .SelectMany(p =>
                 {
-                    var splits = splitsByPayment.GetValueOrDefault(p.Id) ?? [];
+                    var rows = splitRowsByPayment.GetValueOrDefault(p.Id) ?? [];
+                    var splitDtos = (ICollection<OccurrenceDto.SplitDto>)rows
+                        .Select(s => new OccurrenceDto.SplitDto(s.ContactId, s.Percentage,
+                            SplitPaymentCalculator.CalculateValue(p.Amount, s.Percentage)))
+                        .ToArray();
+                    var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
+                    var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(p.Amount, userSharePct));
                     return PaymentOccurrenceCalculator
                         .GetOccurrences(p.Frequency, p.StartDate, p.EndDate, request.From, request.To)
                         .Select(date => new OccurrenceDto(
                             p.Id, p.PaymentSourceId, p.PayeeId,
                             p.Amount, p.Currency, p.Frequency,
-                            date, p.StartDate, p.EndDate, p.Description, splits));
+                            date, p.StartDate, p.EndDate, p.Description,
+                            userShare, splitDtos));
                 })
                 .OrderBy(o => o.OccurrenceDate)
                 .ThenBy(o => o.PaymentId)
@@ -73,9 +77,10 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
             DateOnly StartDate,
             DateOnly? EndDate,
             string? Description,
+            UserShareDto UserShare,
             ICollection<OccurrenceDto.SplitDto> Splits)
         {
-            public record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+            public record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
         }
     }
 }

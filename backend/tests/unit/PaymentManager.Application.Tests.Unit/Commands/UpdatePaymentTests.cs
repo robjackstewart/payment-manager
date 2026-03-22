@@ -224,6 +224,8 @@ internal sealed class UpdatePaymentTests
         response.Frequency.ShouldBe(PaymentFrequency.Annually);
         response.StartDate.ShouldBe(new DateOnly(2025, 3, 1));
         response.EndDate.ShouldBe(new DateOnly(2026, 3, 1));
+        response.UserShare.Percentage.ShouldBe(100m);     // no splits → user owns 100%
+        response.UserShare.Value.ShouldBe(500m);           // 500 * 100 / 100
     }
 
     [Test]
@@ -290,5 +292,46 @@ internal sealed class UpdatePaymentTests
         // Assert
         A.CallTo(() => paymentsDbSet.Update(A<Payment>.That.Matches(p => p.Description == "Updated description"))).MustHaveHappenedOnceExactly();
         response.Description.ShouldBe("Updated description");
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_Compute_UserShareAndSplitValues_When_RequestHasSplits()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var contactId = Guid.NewGuid();
+        var existingPayment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            Amount = 100m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+        };
+        var context = A.Fake<IPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(new[] { existingPayment }.BuildMockDbSet());
+        A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.Contacts).Returns(new[]
+        {
+            new Contact { Id = contactId, UserId = existingPayment.UserId, Name = "Alice" }
+        }.BuildMockDbSet());
+        var logger = new FakeLogger<UpdatePayment.Handler>();
+        var request = new UpdatePayment(
+            existingPayment.Id, existingPayment.UserId, existingPayment.PaymentSourceId, existingPayment.PayeeId,
+            400m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, null,
+            [new UpdatePayment.SplitRequest(contactId, 50m)]);
+        var handler = new UpdatePayment.Handler(context, logger);
+
+        // Act
+        var response = await handler.Handle(request, cancellationToken);
+
+        // Assert
+        response.UserShare.Percentage.ShouldBe(50m);       // 100 - 50
+        response.UserShare.Value.ShouldBe(200m);            // 400 * 50 / 100
+        response.Splits.Single().Percentage.ShouldBe(50m);
+        response.Splits.Single().Value.ShouldBe(200m);     // 400 * 50 / 100
     }
 }

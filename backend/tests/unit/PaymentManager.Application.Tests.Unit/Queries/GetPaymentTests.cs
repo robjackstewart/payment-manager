@@ -45,11 +45,9 @@ internal sealed class GetPaymentTests
         var payments = new[] { matchingPayment, nonMatchingPayment };
         var paymentsDbSet = payments.BuildMockDbSet();
         var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
-        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
-        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(matchingPayment.Id);
         var handler = new GetPayment.Handler(context, logger);
@@ -68,6 +66,9 @@ internal sealed class GetPaymentTests
         result.Frequency.ShouldBe(matchingPayment.Frequency);
         result.StartDate.ShouldBe(matchingPayment.StartDate);
         result.EndDate.ShouldBe(matchingPayment.EndDate);
+        result.UserShare.Percentage.ShouldBe(100m);   // no splits → user owns 100%
+        result.UserShare.Value.ShouldBe(matchingPayment.Amount);
+        result.Splits.ShouldBeEmpty();
     }
 
     [Test]
@@ -90,11 +91,9 @@ internal sealed class GetPaymentTests
         var payments = new[] { nonMatchingPayment };
         var paymentsDbSet = payments.BuildMockDbSet();
         var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
-        var contactsDbSet = Array.Empty<Contact>().BuildMockDbSet();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
-        A.CallTo(() => context.Contacts).Returns(contactsDbSet);
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(Guid.NewGuid());
         var handler = new GetPayment.Handler(context, logger);
@@ -102,5 +101,38 @@ internal sealed class GetPaymentTests
 
         // Act & Assert
         await handle.ShouldThrowAsync<NotFoundException<Payment>>();
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_Compute_UserShareAndSplitValues_For_PaymentWithSplits()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var contactId = Guid.NewGuid();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            Amount = 100m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+        };
+        var splits = new[] { new PaymentSplit { PaymentId = payment.Id, ContactId = contactId, Percentage = 40m } };
+        var context = A.Fake<IReadOnlyPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
+        A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
+        var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
+
+        // Act
+        var result = await handler.Handle(new GetPayment(payment.Id), cancellationToken);
+
+        // Assert
+        result.UserShare.Percentage.ShouldBe(60m);    // 100 - 40
+        result.UserShare.Value.ShouldBe(60m);          // 100 * 60 / 100
+        result.Splits.Single().Percentage.ShouldBe(40m);
+        result.Splits.Single().Value.ShouldBe(40m);   // 100 * 40 / 100
     }
 }
