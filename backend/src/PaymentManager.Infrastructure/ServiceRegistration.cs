@@ -1,6 +1,5 @@
 using CommunityToolkit.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentManager.Application.Common;
 
