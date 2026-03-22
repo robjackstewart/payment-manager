@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { provideNativeDateAdapter } from '@angular/material/core';
+import { MAT_DATE_FORMATS, provideNativeDateAdapter } from '@angular/material/core';
 import { MatCard, MatCardHeader, MatCardAvatar, MatCardTitle, MatCardSubtitle, MatCardContent, MatCardActions } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -55,7 +55,23 @@ interface SummaryViewModel {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  providers: [CurrencyPipe, DatePipe, provideNativeDateAdapter()],
+  providers: [
+    CurrencyPipe,
+    DatePipe,
+    provideNativeDateAdapter(),
+    {
+      provide: MAT_DATE_FORMATS,
+      useValue: {
+        parse: { dateInput: { month: 'long', year: 'numeric' } },
+        display: {
+          dateInput: { month: 'long', year: 'numeric' },
+          monthYearLabel: { month: 'short', year: 'numeric' },
+          dateA11yLabel: { year: 'numeric', month: 'long', day: 'numeric' },
+          monthYearA11yLabel: { year: 'numeric', month: 'long' },
+        },
+      },
+    },
+  ],
   imports: [
     RouterLink,
     MatCard,
@@ -173,6 +189,11 @@ export class DashboardComponent implements OnInit {
 
   // Month picker — defaults to current month
   readonly monthControl = new FormControl<Date>(new Date());
+  private readonly selectedMonth = signal<Date>(new Date());
+
+  readonly selectedMonthLabel = computed(() =>
+    this.datePipe.transform(this.selectedMonth(), 'MMMM yyyy') ?? ''
+  );
 
   ngOnInit(): void {
     this.loading.set(true);
@@ -199,6 +220,7 @@ export class DashboardComponent implements OnInit {
 
   onMonthSelected(date: Date, picker: MatDatepicker<Date>): void {
     this.monthControl.setValue(date);
+    this.selectedMonth.set(date);
     picker.close();
     this.loadOccurrences(date);
   }
