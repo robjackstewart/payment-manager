@@ -41,7 +41,7 @@ public record GetAllPayments(Guid UserId) : IRequest<Response>
                             SplitPaymentCalculator.CalculateValue(p.Amount, s.Percentage)))
                         .ToArray();
                     var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
-                    var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(p.Amount, userSharePct));
+                    var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(p.Amount, splitDtos.Select(s => s.Value)));
                     return new PaymentDto(
                         p.Id, p.UserId, p.PaymentSourceId, p.PayeeId,
                         p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description,

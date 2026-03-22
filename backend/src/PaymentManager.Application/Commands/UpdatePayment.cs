@@ -112,7 +112,7 @@ public record UpdatePayment(Guid Id, Guid UserId, Guid PaymentSourceId, Guid Pay
             logger.LogInformation("Updated payment '{Id}' for user: '{UserId}' with amount: '{Amount}'", payment.Id, payment.UserId, payment.Amount);
 
             var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
-            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(request.Amount, userSharePct));
+            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(request.Amount, splitDtos.Select(s => s.Value)));
             return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, userShare, splitDtos);
         }
     }

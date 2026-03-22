@@ -43,7 +43,7 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                             SplitPaymentCalculator.CalculateValue(p.Amount, s.Percentage)))
                         .ToArray();
                     var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
-                    var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(p.Amount, userSharePct));
+                    var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(p.Amount, splitDtos.Select(s => s.Value)));
                     return PaymentOccurrenceCalculator
                         .GetOccurrences(p.Frequency, p.StartDate, p.EndDate, request.From, request.To)
                         .Select(date => new OccurrenceDto(
