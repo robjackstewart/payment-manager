@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\backend\src\PaymentManager.Infrastructure\PaymentManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\backend\src\PaymentManager.Infrastructure\PaymentManager.Infrastructure.Sqlite.csproj" />
     <ProjectReference Include="..\PaymentManager.Host.Local.Common\PaymentManager.Host.Local.Common.csproj" />
   </ItemGroup>
 </Project>
