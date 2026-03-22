@@ -9,8 +9,6 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { ContactService } from '../../../core/services/contact.service';
 import { Contact } from '../../../core/models/contact.model';
-import { ContactFormDialogComponent } from '../contact-form-dialog/contact-form-dialog';
-import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-contact-list',
@@ -63,7 +61,10 @@ export class ContactListComponent implements OnInit {
     });
   }
 
-  openCreateDialog(): void {
+  async openCreateDialog(): Promise<void> {
+    const [{ ContactFormDialogComponent }] = await Promise.all([
+      import('../contact-form-dialog/contact-form-dialog'),
+    ]);
     const ref = this.dialog.open(ContactFormDialogComponent, { width: '450px', data: {} });
     ref.afterClosed().subscribe(result => {
       if (result) {
@@ -78,7 +79,8 @@ export class ContactListComponent implements OnInit {
     });
   }
 
-  openEditDialog(contact: Contact): void {
+  async openEditDialog(contact: Contact): Promise<void> {
+    const { ContactFormDialogComponent } = await import('../contact-form-dialog/contact-form-dialog');
     const ref = this.dialog.open(ContactFormDialogComponent, {
       width: '450px',
       data: { contact }
@@ -96,7 +98,8 @@ export class ContactListComponent implements OnInit {
     });
   }
 
-  deleteContact(contact: Contact): void {
+  async deleteContact(contact: Contact): Promise<void> {
+    const { ConfirmDialogComponent } = await import('../../../shared/confirm-dialog/confirm-dialog');
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: { title: 'Delete Contact', message: `Are you sure you want to delete "${contact.name}"?` }
     });

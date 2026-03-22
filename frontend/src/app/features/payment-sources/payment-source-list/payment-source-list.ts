@@ -9,8 +9,6 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { PaymentSourceService } from '../../../core/services/payment-source.service';
 import { PaymentSource } from '../../../core/models/payment-source.model';
-import { PaymentSourceFormDialogComponent } from '../payment-source-form-dialog/payment-source-form-dialog';
-import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-payment-source-list',
@@ -63,7 +61,8 @@ export class PaymentSourceListComponent implements OnInit {
     });
   }
 
-  openCreateDialog(): void {
+  async openCreateDialog(): Promise<void> {
+    const { PaymentSourceFormDialogComponent } = await import('../payment-source-form-dialog/payment-source-form-dialog');
     const ref = this.dialog.open(PaymentSourceFormDialogComponent, { width: '450px', data: {} });
     ref.afterClosed().subscribe(result => {
       if (result) {
@@ -78,7 +77,8 @@ export class PaymentSourceListComponent implements OnInit {
     });
   }
 
-  openEditDialog(ps: PaymentSource): void {
+  async openEditDialog(ps: PaymentSource): Promise<void> {
+    const { PaymentSourceFormDialogComponent } = await import('../payment-source-form-dialog/payment-source-form-dialog');
     const ref = this.dialog.open(PaymentSourceFormDialogComponent, {
       width: '450px',
       data: { paymentSource: ps }
@@ -96,7 +96,8 @@ export class PaymentSourceListComponent implements OnInit {
     });
   }
 
-  deletePaymentSource(ps: PaymentSource): void {
+  async deletePaymentSource(ps: PaymentSource): Promise<void> {
+    const { ConfirmDialogComponent } = await import('../../../shared/confirm-dialog/confirm-dialog');
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: { title: 'Delete Payment Source', message: `Are you sure you want to delete "${ps.name}"?` }
     });

@@ -17,8 +17,6 @@ import { PaymentSource } from '../../../core/models/payment-source.model';
 import { Payee } from '../../../core/models/payee.model';
 import { Contact } from '../../../core/models/contact.model';
 import { PAYMENT_FREQUENCY_LABELS, PaymentFrequency } from '../../../core/models/payment-frequency.enum';
-import { PaymentFormDialogComponent } from '../payment-form-dialog/payment-form-dialog';
-import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog';
 import { forkJoin } from 'rxjs';
 
 interface PaymentViewModel {
@@ -123,7 +121,8 @@ export class PaymentListComponent implements OnInit {
     });
   }
 
-  openCreateDialog(): void {
+  async openCreateDialog(): Promise<void> {
+    const { PaymentFormDialogComponent } = await import('../payment-form-dialog/payment-form-dialog');
     const ref = this.dialog.open(PaymentFormDialogComponent, {
       width: '520px',
       data: { paymentSources: this.paymentSources(), payees: this.payees(), contacts: this.contacts() }
@@ -141,7 +140,8 @@ export class PaymentListComponent implements OnInit {
     });
   }
 
-  openEditDialog(payment: Payment): void {
+  async openEditDialog(payment: Payment): Promise<void> {
+    const { PaymentFormDialogComponent } = await import('../payment-form-dialog/payment-form-dialog');
     const ref = this.dialog.open(PaymentFormDialogComponent, {
       width: '520px',
       data: { payment, paymentSources: this.paymentSources(), payees: this.payees(), contacts: this.contacts() }
@@ -159,7 +159,8 @@ export class PaymentListComponent implements OnInit {
     });
   }
 
-  deletePayment(payment: Payment): void {
+  async deletePayment(payment: Payment): Promise<void> {
+    const { ConfirmDialogComponent } = await import('../../../shared/confirm-dialog/confirm-dialog');
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: { title: 'Delete Payment', message: 'Are you sure you want to delete this payment?' }
     });
