@@ -32,10 +32,15 @@ internal sealed class GetPaymentOccurrencesTests
 
     private static async Task<GetPaymentOccurrences.Response> Handle(
         Payment[] payments, DateOnly from, DateOnly to,
+        CancellationToken ct = default) =>
+        await Handle(payments, [], from, to, ct);
+
+    private static async Task<GetPaymentOccurrences.Response> Handle(
+        Payment[] payments, PaymentSplit[] splits, DateOnly from, DateOnly to,
         CancellationToken ct = default)
     {
         var dbSet = payments.BuildMockDbSet();
-        var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
+        var splitsDbSet = splits.BuildMockDbSet();
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(dbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
@@ -51,6 +56,7 @@ internal sealed class GetPaymentOccurrencesTests
     {
         var result = await Handle([], new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
         result.Occurrences.ShouldBeEmpty();
+        result.Summary.ShouldBeEmpty();
     }
 
     // ── Once ─────────────────────────────────────────────────────────────────
@@ -228,5 +234,53 @@ internal sealed class GetPaymentOccurrencesTests
         var result = await Handle([ownPayment, otherPayment], new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
         result.Occurrences.Count.ShouldBe(1);
         result.Occurrences.First().PaymentId.ShouldBe(ownPayment.Id);
+    }
+
+    // ── Summary ───────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task Summary_Should_Aggregate_Totals_By_Currency_And_PaymentSource()
+    {
+        // payment1: $100 from source1 with 40% split to contactId
+        // payment2: $50  from source2 with no split
+        var paymentSourceId1 = Guid.NewGuid();
+        var paymentSourceId2 = Guid.NewGuid();
+        var contactId = Guid.NewGuid();
+        var payment1 = new Payment
+        {
+            Id = Guid.NewGuid(), UserId = UserId, PaymentSourceId = paymentSourceId1,
+            PayeeId = PayeeId, Amount = 100m, Currency = "USD",
+            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 15)
+        };
+        var payment2 = new Payment
+        {
+            Id = Guid.NewGuid(), UserId = UserId, PaymentSourceId = paymentSourceId2,
+            PayeeId = PayeeId, Amount = 50m, Currency = "USD",
+            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 20)
+        };
+        var split = new PaymentSplit { PaymentId = payment1.Id, ContactId = contactId, Percentage = 40m };
+        // contact value = floor(100 * 40 / 100) = 40.00; user value = 100 - 40 = 60.00
+
+        var result = await Handle(
+            [payment1, payment2], [split],
+            new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
+
+        result.Summary.Count.ShouldBe(1); // single currency group (USD)
+        var usd = result.Summary.Single(s => s.Currency == "USD");
+        usd.TotalAmount.ShouldBe(150m);   // 100 + 50
+        usd.UserTotal.ShouldBe(110m);     // 60 + 50
+        usd.ContactTotals.Count.ShouldBe(1);
+        usd.ContactTotals.Single(c => c.ContactId == contactId).Amount.ShouldBe(40m);
+
+        usd.ByPaymentSource.Count.ShouldBe(2);
+        var ps1 = usd.ByPaymentSource.Single(ps => ps.PaymentSourceId == paymentSourceId1);
+        ps1.TotalAmount.ShouldBe(100m);
+        ps1.UserTotal.ShouldBe(60m);
+        ps1.ContactTotals.Single(c => c.ContactId == contactId).Amount.ShouldBe(40m);
+
+        var ps2 = usd.ByPaymentSource.Single(ps => ps.PaymentSourceId == paymentSourceId2);
+        ps2.TotalAmount.ShouldBe(50m);
+        ps2.UserTotal.ShouldBe(50m);
+        ps2.ContactTotals.ShouldBeEmpty();
     }
 }

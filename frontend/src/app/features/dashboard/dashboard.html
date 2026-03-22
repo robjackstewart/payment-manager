@@ -117,3 +117,57 @@
     }
   </mat-card-content>
 </mat-card>
+
+<!-- Cost Breakdown Summary -->
+@if (summaryViewModel().length > 0) {
+  @for (summary of summaryViewModel(); track summary.currency) {
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>pie_chart</mat-icon>
+        <mat-card-title>Cost Breakdown — {{ summary.currency }}</mat-card-title>
+        <mat-card-subtitle>Total {{ summary.totalAmount }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-section">
+          <h4 class="summary-section-title">Overall</h4>
+          <table class="summary-table">
+            <tr>
+              <td class="summary-name">You</td>
+              <td class="summary-amount">{{ summary.userTotal }}</td>
+            </tr>
+            @for (contact of summary.contacts; track contact.name) {
+              <tr>
+                <td class="summary-name">{{ contact.name }}</td>
+                <td class="summary-amount">{{ contact.amount }}</td>
+              </tr>
+            }
+          </table>
+        </div>
+
+        @if (summary.byPaymentSource.length > 1) {
+          <div class="summary-section">
+            <h4 class="summary-section-title">By Payment Source</h4>
+            @for (ps of summary.byPaymentSource; track ps.sourceName) {
+              <div class="summary-source">
+                <h5 class="summary-source-name">{{ ps.sourceName }} <span class="summary-source-total">({{ ps.totalAmount }})</span></h5>
+                <table class="summary-table">
+                  <tr>
+                    <td class="summary-name">You</td>
+                    <td class="summary-amount">{{ ps.userTotal }}</td>
+                  </tr>
+                  @for (contact of ps.contacts; track contact.name) {
+                    <tr>
+                      <td class="summary-name">{{ contact.name }}</td>
+                      <td class="summary-amount">{{ contact.amount }}</td>
+                    </tr>
+                  }
+                </table>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+}
+

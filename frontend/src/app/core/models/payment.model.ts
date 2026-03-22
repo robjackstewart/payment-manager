@@ -63,3 +63,28 @@ export interface PaymentOccurrence {
   userShare: UserShare;
   splits: PaymentSplit[];
 }
+
+export interface OccurrenceSummaryContactAmount {
+  contactId: string;
+  amount: number;
+}
+
+export interface OccurrenceSummaryPaymentSourceBreakdown {
+  paymentSourceId: string;
+  totalAmount: number;
+  userTotal: number;
+  contactTotals: OccurrenceSummaryContactAmount[];
+}
+
+export interface OccurrenceSummary {
+  currency: string;
+  totalAmount: number;
+  userTotal: number;
+  contactTotals: OccurrenceSummaryContactAmount[];
+  byPaymentSource: OccurrenceSummaryPaymentSourceBreakdown[];
+}
+
+export interface PaymentOccurrencesResponse {
+  occurrences: PaymentOccurrence[];
+  summary: OccurrenceSummary[];
+}

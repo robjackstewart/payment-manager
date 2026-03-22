@@ -1310,7 +1310,8 @@
       },
       "GetPaymentOccurrencesResponse": {
         "required": [
-          "occurrences"
+          "occurrences",
+          "summary"
         ],
         "type": "object",
         "properties": {
@@ -1319,6 +1320,29 @@
             "items": {
               "$ref": "#/components/schemas/GetPaymentOccurrencesResponseOccurrenceDto"
             }
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentOccurrencesResponseSummaryDto"
+            }
+          }
+        }
+      },
+      "GetPaymentOccurrencesResponseContactAmountDto": {
+        "required": [
+          "contactId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       },
@@ -1408,6 +1432,70 @@
           "value": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          }
+        }
+      },
+      "GetPaymentOccurrencesResponsePaymentSourceBreakdownDto": {
+        "required": [
+          "paymentSourceId",
+          "totalAmount",
+          "userTotal",
+          "contactTotals"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentSourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "userTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "contactTotals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentOccurrencesResponseContactAmountDto"
+            }
+          }
+        }
+      },
+      "GetPaymentOccurrencesResponseSummaryDto": {
+        "required": [
+          "currency",
+          "totalAmount",
+          "userTotal",
+          "contactTotals",
+          "byPaymentSource"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "userTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "contactTotals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentOccurrencesResponseContactAmountDto"
+            }
+          },
+          "byPaymentSource": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentOccurrencesResponsePaymentSourceBreakdownDto"
+            }
           }
         }
       },

@@ -5,7 +5,7 @@ import { PaymentManagerWebApiService } from '../../../api-client';
 import {
   CreatePaymentRequest,
   Payment,
-  PaymentOccurrence,
+  PaymentOccurrencesResponse,
   UpdatePaymentRequest
 } from '../models/payment.model';
 
@@ -23,13 +23,33 @@ export class PaymentService {
     );
   }
 
-  getOccurrences(from: string, to: string): Observable<PaymentOccurrence[]> {
+  getOccurrences(from: string, to: string): Observable<PaymentOccurrencesResponse> {
     return this.api.getPaymentOccurrences(from, to).pipe(
-      map(r => r.occurrences.map(o => ({
-        ...o,
-        amount: Number(o.amount),
-        userShare: { percentage: Number(o.userShare.percentage), value: Number(o.userShare.value) },
-      } as PaymentOccurrence)))
+      map(r => ({
+        occurrences: r.occurrences.map(o => ({
+          ...o,
+          amount: Number(o.amount),
+          userShare: { percentage: Number(o.userShare.percentage), value: Number(o.userShare.value) },
+        })),
+        summary: r.summary.map(s => ({
+          currency: s.currency,
+          totalAmount: Number(s.totalAmount),
+          userTotal: Number(s.userTotal),
+          contactTotals: s.contactTotals.map(c => ({
+            contactId: c.contactId,
+            amount: Number(c.amount),
+          })),
+          byPaymentSource: s.byPaymentSource.map(ps => ({
+            paymentSourceId: ps.paymentSourceId,
+            totalAmount: Number(ps.totalAmount),
+            userTotal: Number(ps.userTotal),
+            contactTotals: ps.contactTotals.map(c => ({
+              contactId: c.contactId,
+              amount: Number(c.amount),
+            })),
+          })),
+        })),
+      } as PaymentOccurrencesResponse))
     );
   }
 

@@ -19,7 +19,17 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
 
     private sealed record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
 
-    private sealed record GetOccurrencesResponse(OccurrenceResponse[] Occurrences);
+    private sealed record SummaryDto(
+        string Currency, decimal TotalAmount, decimal UserTotal,
+        ContactAmountDto[] ContactTotals, PaymentSourceBreakdownDto[] ByPaymentSource);
+
+    private sealed record ContactAmountDto(Guid ContactId, decimal Amount);
+
+    private sealed record PaymentSourceBreakdownDto(
+        Guid PaymentSourceId, decimal TotalAmount, decimal UserTotal,
+        ContactAmountDto[] ContactTotals);
+
+    private sealed record GetOccurrencesResponse(OccurrenceResponse[] Occurrences, SummaryDto[] Summary);
 
     private async Task<(Guid PaymentSourceId, Guid PayeeId)> SetupPrerequisitesAsync(CancellationToken ct)
     {
@@ -46,6 +56,7 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<GetOccurrencesResponse>(ct);
         body.ShouldNotBeNull();
         body.Occurrences.ShouldBeEmpty();
+        body.Summary.ShouldBeEmpty();
     }
 
     // ── Once ─────────────────────────────────────────────────────────────────
@@ -242,10 +253,68 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.Occurrences.Length.ShouldBe(1);
         var occurrence = body.Occurrences[0];
         occurrence.UserShare.Percentage.ShouldBe(60m);  // 100 - 40
-        occurrence.UserShare.Value.ShouldBe(60m);        // 100 * 60 / 100
+        occurrence.UserShare.Value.ShouldBe(60m);        // 100 - 40.00 (remainder)
         occurrence.Splits.Length.ShouldBe(1);
         occurrence.Splits[0].ContactId.ShouldBe(contactId);
         occurrence.Splits[0].Percentage.ShouldBe(40m);
-        occurrence.Splits[0].Value.ShouldBe(40m);        // 100 * 40 / 100
+        occurrence.Splits[0].Value.ShouldBe(40m);        // floor(100 * 40 / 100)
+    }
+
+    [Test]
+    public async Task GetOccurrences_Summary_Should_Aggregate_By_Currency_And_PaymentSource()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (psId1, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var paymentSource2 = new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Mastercard" };
+        context.PaymentSources.Add(paymentSource2);
+        await context.SaveChanges(ct);
+        var psId2 = paymentSource2.Id;
+
+        var contactId = await SetupContactAsync("Bob", ct);
+
+        // payment1: $100 from psId1 with 40% split to Bob
+        // payment2: $50  from psId2 with no split
+        var payment1 = new Payment
+        {
+            Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = psId1, PayeeId = payeeId,
+            Amount = 100m, Currency = "USD",
+            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 15)
+        };
+        var payment2 = new Payment
+        {
+            Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = psId2, PayeeId = payeeId,
+            Amount = 50m, Currency = "USD",
+            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 20)
+        };
+        context.Payments.AddRange(payment1, payment2);
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment1.Id, ContactId = contactId, Percentage = 40m });
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .GetAsync("/api/payments/occurrences?from=2025-01-01&to=2025-01-31", ct);
+
+        var body = await response.Content.ReadFromJsonAsync<GetOccurrencesResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Summary.Length.ShouldBe(1);
+
+        var usd = body.Summary.Single(s => s.Currency == "USD");
+        usd.TotalAmount.ShouldBe(150m);   // 100 + 50
+        usd.UserTotal.ShouldBe(110m);     // (100 - 40) + 50
+        usd.ContactTotals.Length.ShouldBe(1);
+        usd.ContactTotals.Single(c => c.ContactId == contactId).Amount.ShouldBe(40m); // floor(100 * 40 / 100)
+
+        usd.ByPaymentSource.Length.ShouldBe(2);
+        var ps1 = usd.ByPaymentSource.Single(ps => ps.PaymentSourceId == psId1);
+        ps1.TotalAmount.ShouldBe(100m);
+        ps1.UserTotal.ShouldBe(60m);
+        ps1.ContactTotals.Single(c => c.ContactId == contactId).Amount.ShouldBe(40m);
+
+        var ps2 = usd.ByPaymentSource.Single(ps => ps.PaymentSourceId == psId2);
+        ps2.TotalAmount.ShouldBe(50m);
+        ps2.UserTotal.ShouldBe(50m);
+        ps2.ContactTotals.ShouldBeEmpty();
     }
 }

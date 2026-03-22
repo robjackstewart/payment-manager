@@ -27,8 +27,11 @@ model/get-all-payments-response.ts
 model/get-all-users-response-user-dto.ts
 model/get-all-users-response.ts
 model/get-payee-response.ts
+model/get-payment-occurrences-response-contact-amount-dto.ts
 model/get-payment-occurrences-response-occurrence-dto-split-dto.ts
 model/get-payment-occurrences-response-occurrence-dto.ts
+model/get-payment-occurrences-response-payment-source-breakdown-dto.ts
+model/get-payment-occurrences-response-summary-dto.ts
 model/get-payment-occurrences-response.ts
 model/get-payment-response-split-dto.ts
 model/get-payment-response.ts
