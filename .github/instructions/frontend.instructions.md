@@ -8,6 +8,31 @@ applyTo: frontend/**
 
 Angular 21.x with Angular Material. TypeScript strict mode is enabled.
 
+## Standalone Components
+
+All components are `standalone: true`. **Import specific standalone components and directives rather than whole `*Module` barrel imports.** This makes each component's dependencies explicit and keeps the dependency graph clear.
+
+```typescript
+// ✅ Correct — import only the specific components used in the template
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatTable, MatColumnDef, MatHeaderCell, MatHeaderCellDef,
+         MatCell, MatCellDef, MatHeaderRow, MatHeaderRowDef,
+         MatRow, MatRowDef } from '@angular/material/table';
+
+@Component({
+  standalone: true,
+  imports: [MatButton, MatIconButton, MatTable, MatColumnDef, ...],
+})
+
+// ❌ Wrong — module imports pull in symbols you may not use
+import { MatButtonModule } from '@angular/material/button';
+import { MatTableModule } from '@angular/material/table';
+```
+
+- Match imports exactly to what the template uses — no more, no less.
+- `ReactiveFormsModule` is the accepted import for reactive forms (its directives are tree-shaken correctly).
+- Never add `NgModule`-based wrappers for new features — the app has no feature modules.
+
 ## Signals First
 
 Prefer Angular **signals** over RxJS observables and subscriptions wherever possible.
