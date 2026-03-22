@@ -277,17 +277,25 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         // payment2: $50  from psId2 with no split
         var payment1 = new Payment
         {
-            Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId,
-            PaymentSourceId = psId1, PayeeId = payeeId,
-            Amount = 100m, Currency = "USD",
-            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 15)
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = psId1,
+            PayeeId = payeeId,
+            Amount = 100m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Once,
+            StartDate = new DateOnly(2025, 1, 15)
         };
         var payment2 = new Payment
         {
-            Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId,
-            PaymentSourceId = psId2, PayeeId = payeeId,
-            Amount = 50m, Currency = "USD",
-            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 20)
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = psId2,
+            PayeeId = payeeId,
+            Amount = 50m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Once,
+            StartDate = new DateOnly(2025, 1, 20)
         };
         context.Payments.AddRange(payment1, payment2);
         context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment1.Id, ContactId = contactId, Percentage = 40m });

@@ -248,15 +248,25 @@ internal sealed class GetPaymentOccurrencesTests
         var contactId = Guid.NewGuid();
         var payment1 = new Payment
         {
-            Id = Guid.NewGuid(), UserId = UserId, PaymentSourceId = paymentSourceId1,
-            PayeeId = PayeeId, Amount = 100m, Currency = "USD",
-            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 15)
+            Id = Guid.NewGuid(),
+            UserId = UserId,
+            PaymentSourceId = paymentSourceId1,
+            PayeeId = PayeeId,
+            Amount = 100m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Once,
+            StartDate = new DateOnly(2025, 1, 15)
         };
         var payment2 = new Payment
         {
-            Id = Guid.NewGuid(), UserId = UserId, PaymentSourceId = paymentSourceId2,
-            PayeeId = PayeeId, Amount = 50m, Currency = "USD",
-            Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 1, 20)
+            Id = Guid.NewGuid(),
+            UserId = UserId,
+            PaymentSourceId = paymentSourceId2,
+            PayeeId = PayeeId,
+            Amount = 50m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Once,
+            StartDate = new DateOnly(2025, 1, 20)
         };
         var split = new PaymentSplit { PaymentId = payment1.Id, ContactId = contactId, Percentage = 40m };
         // contact value = floor(100 * 40 / 100) = 40.00; user value = 100 - 40 = 60.00
