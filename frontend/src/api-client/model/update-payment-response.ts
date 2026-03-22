@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { UpdatePaymentResponseSplitDto } from './update-payment-response-split-dto';
+import { UserShareDto } from './user-share-dto';
 
 
 export interface UpdatePaymentResponse { 
@@ -21,6 +22,7 @@ export interface UpdatePaymentResponse {
     startDate: string;
     endDate: string | null;
     description: string | null;
+    userShare: UserShareDto;
     splits: Array<UpdatePaymentResponseSplitDto>;
 }
 

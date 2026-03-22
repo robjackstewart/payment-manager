@@ -11,7 +11,7 @@
 
 export interface GetAllPaymentsResponsePaymentDtoSplitDto { 
     contactId: string;
-    contactName: string;
     percentage: any | null;
+    value: any | null;
 }
 

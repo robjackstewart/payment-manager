@@ -101,7 +101,7 @@ export class DashboardComponent implements OnInit {
 
   readonly occurrencesViewModel = computed<OccurrenceViewModel[]>(() =>
     this.occurrences().map(o => {
-      const yourSharePct = Math.max(0, 100 - o.splits.reduce((s, x) => s + x.percentage, 0));
+      const pct = o.userShare.percentage;
       return {
         formattedDate: this.datePipe.transform(o.occurrenceDate, 'd MMM yyyy') ?? o.occurrenceDate,
         sourceName: this.paymentSourcesMap()[o.paymentSourceId] ?? o.paymentSourceId,
@@ -109,7 +109,7 @@ export class DashboardComponent implements OnInit {
         descriptionDisplay: o.description || '—',
         formattedAmount: this.currencyPipe.transform(o.amount, o.currency) ?? String(o.amount),
         currency: o.currency,
-        yourShareDisplay: `${yourSharePct % 1 === 0 ? yourSharePct.toFixed(0) : yourSharePct.toFixed(2)}%`,
+        yourShareDisplay: `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(2)}%`,
       };
     })
   );

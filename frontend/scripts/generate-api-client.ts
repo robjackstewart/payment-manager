@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -67,5 +67,11 @@ const command = [
 ].join(' ');
 
 execSync(command, { stdio: 'inherit' });
+
+const generatedTsConfig = resolve(outputDir, 'tsconfig.json');
+const tsConfig = JSON.parse(readFileSync(generatedTsConfig, 'utf-8'));
+tsConfig.compilerOptions.moduleResolution = 'bundler';
+writeFileSync(generatedTsConfig, JSON.stringify(tsConfig, null, 4) + '\n');
+console.log('→ Patched moduleResolution to "bundler" in generated tsconfig.json');
 
 console.log(`\n✔ API client generated at: ${outputDir}`);

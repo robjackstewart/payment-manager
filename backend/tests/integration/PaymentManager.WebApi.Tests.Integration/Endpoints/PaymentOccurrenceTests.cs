@@ -14,7 +14,10 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
     private sealed record OccurrenceResponse(
         Guid PaymentId, Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly OccurrenceDate, DateOnly StartDate, DateOnly? EndDate);
+        DateOnly OccurrenceDate, DateOnly StartDate, DateOnly? EndDate,
+        UserShareDto UserShare, SplitDto[] Splits);
+
+    private sealed record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
 
     private sealed record GetOccurrencesResponse(OccurrenceResponse[] Occurrences);
 
@@ -77,6 +80,8 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.Occurrences[0].PaymentId.ShouldBe(payment.Id);
         body.Occurrences[0].OccurrenceDate.ShouldBe(new DateOnly(2025, 1, 15));
         body.Occurrences[0].Amount.ShouldBe(50m);
+        body.Occurrences[0].UserShare.Percentage.ShouldBe(100m);
+        body.Occurrences[0].UserShare.Value.ShouldBe(50m);
     }
 
     [Test]
@@ -138,6 +143,8 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.Occurrences.Length.ShouldBe(3);
         body.Occurrences.ShouldAllBe(o => o.PaymentId == payment.Id);
+        body.Occurrences.ShouldAllBe(o => o.UserShare.Percentage == 100m);
+        body.Occurrences.ShouldAllBe(o => o.UserShare.Value == 9.99m);
         var dates = body.Occurrences.Select(o => o.OccurrenceDate).ToArray();
         dates.ShouldContain(new DateOnly(2025, 1, 10));
         dates.ShouldContain(new DateOnly(2025, 2, 10));
@@ -186,5 +193,59 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.Occurrences.Length.ShouldBe(2);
         body.Occurrences[0].OccurrenceDate.ShouldBe(new DateOnly(2025, 1, 5));
         body.Occurrences[1].OccurrenceDate.ShouldBe(new DateOnly(2025, 1, 20));
+    }
+
+    private async Task<Guid> SetupContactAsync(string name, CancellationToken ct)
+    {
+        var context = GetService<IPaymentManagerContext>();
+        var contact = new Contact { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = name };
+        context.Contacts.Add(contact);
+        await context.SaveChanges(ct);
+        return contact.Id;
+    }
+
+    // ── Splits ────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task GetOccurrences_Should_Include_UserShare_And_SplitValues_When_PaymentHasSplits()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (psId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var contactId = await SetupContactAsync("Alice", ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = psId,
+            PayeeId = payeeId,
+            Amount = 100m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Once,
+            StartDate = new DateOnly(2025, 1, 15)
+        };
+        context.Payments.Add(payment);
+        context.PaymentSplits.Add(new PaymentSplit
+        {
+            PaymentId = payment.Id,
+            ContactId = contactId,
+            Percentage = 40m
+        });
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .GetAsync("/api/payments/occurrences?from=2025-01-01&to=2025-01-31", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetOccurrencesResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Occurrences.Length.ShouldBe(1);
+        var occurrence = body.Occurrences[0];
+        occurrence.UserShare.Percentage.ShouldBe(60m);  // 100 - 40
+        occurrence.UserShare.Value.ShouldBe(60m);        // 100 * 60 / 100
+        occurrence.Splits.Length.ShouldBe(1);
+        occurrence.Splits[0].ContactId.ShouldBe(contactId);
+        occurrence.Splits[0].Percentage.ShouldBe(40m);
+        occurrence.Splits[0].Value.ShouldBe(40m);        // 100 * 40 / 100
     }
 }

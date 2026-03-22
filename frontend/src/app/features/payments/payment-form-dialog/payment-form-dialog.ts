@@ -149,7 +149,6 @@ export class PaymentFormDialogComponent implements OnInit {
         description: raw.description || undefined,
         splits: (raw.splits as { contactId: string; percentage: number }[])?.map(s => ({
           contactId: s.contactId,
-          contactName: this.data.contacts.find(c => c.id === s.contactId)?.name ?? '',
           percentage: Number(s.percentage)
         })) ?? []
       };

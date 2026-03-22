@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { GetPaymentOccurrencesResponseOccurrenceDtoSplitDto } from './get-payment-occurrences-response-occurrence-dto-split-dto';
+import { UserShareDto } from './user-share-dto';
 
 
 export interface GetPaymentOccurrencesResponseOccurrenceDto { 
@@ -21,6 +22,7 @@ export interface GetPaymentOccurrencesResponseOccurrenceDto {
     startDate: string;
     endDate: string | null;
     description: string | null;
+    userShare: UserShareDto;
     splits: Array<GetPaymentOccurrencesResponseOccurrenceDtoSplitDto>;
 }
 

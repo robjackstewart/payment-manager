@@ -41,3 +41,4 @@ export * from './update-payment-source-response';
 export * from './update-user-response';
 export * from './user-endpoints-create-request';
 export * from './user-endpoints-update-request';
+export * from './user-share-dto';

@@ -95,14 +95,18 @@ public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, dec
 
             logger.LogInformation("Created payment '{Id}' for user: '{UserId}' with amount: '{Amount}'", payment.Id, payment.UserId, payment.Amount);
 
-            var splits = request.Splits?.Select(s => new Response.SplitDto(s.ContactId, string.Empty, s.Percentage)).ToList()
+            var splitDtos = request.Splits?.Select(s => new Response.SplitDto(
+                    s.ContactId, s.Percentage,
+                    SplitPaymentCalculator.CalculateValue(request.Amount, s.Percentage))).ToArray()
                 ?? [];
-            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, splits);
+            var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
+            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(request.Amount, userSharePct));
+            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, userShare, splitDtos);
         }
     }
 
-    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, ICollection<Response.SplitDto> Splits)
+    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, UserShareDto UserShare, ICollection<Response.SplitDto> Splits)
     {
-        public record SplitDto(Guid ContactId, string ContactName, decimal Percentage);
+        public record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
     }
 }

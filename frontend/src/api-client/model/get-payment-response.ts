@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { GetPaymentResponseSplitDto } from './get-payment-response-split-dto';
+import { UserShareDto } from './user-share-dto';
 
 
 export interface GetPaymentResponse { 
@@ -21,6 +22,7 @@ export interface GetPaymentResponse {
     startDate: string;
     endDate: string | null;
     description: string | null;
+    userShare: UserShareDto;
     splits: Array<GetPaymentResponseSplitDto>;
 }
 

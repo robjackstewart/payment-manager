@@ -207,6 +207,8 @@ internal sealed class CreatePaymentTests
         response.Frequency.ShouldBe(request.Frequency);
         response.StartDate.ShouldBe(request.StartDate);
         response.EndDate.ShouldBe(request.EndDate);
+        response.UserShare.Percentage.ShouldBe(100m);     // no splits → user owns 100%
+        response.UserShare.Value.ShouldBe(request.Amount);
     }
 
     [Test]
@@ -215,7 +217,6 @@ internal sealed class CreatePaymentTests
         // Arrange
         var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31), new string('a', 501));
         var validator = new CreatePayment.Validator();
-
         // Act
         var result = validator.TestValidate(request);
 
@@ -270,5 +271,35 @@ internal sealed class CreatePaymentTests
             [new CreatePayment.SplitRequest(Guid.NewGuid(), 30m), new CreatePayment.SplitRequest(Guid.NewGuid(), 20m)]);
         var result = new CreatePayment.Validator().TestValidate(request);
         result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_Compute_UserShareAndSplitValues_When_RequestHasSplits()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var contactId = Guid.NewGuid();
+        var context = A.Fake<IPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(Array.Empty<Payment>().BuildMockDbSet());
+        A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.Contacts).Returns(new[]
+        {
+            new Contact { Id = contactId, UserId = Guid.NewGuid(), Name = "Alice" }
+        }.BuildMockDbSet());
+        var logger = new FakeLogger<CreatePayment.Handler>();
+        var request = new CreatePayment(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 200m, "USD",
+            PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, null,
+            [new CreatePayment.SplitRequest(contactId, 25m)]);
+        var handler = new CreatePayment.Handler(context, logger);
+
+        // Act
+        var response = await handler.Handle(request, cancellationToken);
+
+        // Assert
+        response.UserShare.Percentage.ShouldBe(75m);       // 100 - 25
+        response.UserShare.Value.ShouldBe(150m);            // 200 * 75 / 100
+        response.Splits.Single().Percentage.ShouldBe(25m);
+        response.Splits.Single().Value.ShouldBe(50m);      // 200 * 25 / 100
     }
 }

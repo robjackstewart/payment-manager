@@ -6,7 +6,6 @@ api/api.ts
 api/payment-manager-web-api.service.ts
 configuration.ts
 encoder.ts
-git_push.sh
 index.ts
 model/contact-endpoints-create-request.ts
 model/contact-endpoints-update-request.ts
@@ -52,6 +51,7 @@ model/update-payment-source-response.ts
 model/update-user-response.ts
 model/user-endpoints-create-request.ts
 model/user-endpoints-update-request.ts
+model/user-share-dto.ts
 ng-package.json
 package.json
 param.ts

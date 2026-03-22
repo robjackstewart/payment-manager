@@ -935,6 +935,7 @@
           "startDate",
           "endDate",
           "description",
+          "userShare",
           "splits"
         ],
         "type": "object",
@@ -978,6 +979,9 @@
             "type": "string",
             "nullable": true
           },
+          "userShare": {
+            "$ref": "#/components/schemas/UserShareDto"
+          },
           "splits": {
             "type": "array",
             "items": {
@@ -989,8 +993,8 @@
       "CreatePaymentResponseSplitDto": {
         "required": [
           "contactId",
-          "contactName",
-          "percentage"
+          "percentage",
+          "value"
         ],
         "type": "object",
         "properties": {
@@ -998,10 +1002,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "contactName": {
-            "type": "string"
-          },
           "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "value": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1175,6 +1180,7 @@
           "startDate",
           "endDate",
           "description",
+          "userShare",
           "splits"
         ],
         "type": "object",
@@ -1218,6 +1224,9 @@
             "type": "string",
             "nullable": true
           },
+          "userShare": {
+            "$ref": "#/components/schemas/UserShareDto"
+          },
           "splits": {
             "type": "array",
             "items": {
@@ -1229,8 +1238,8 @@
       "GetAllPaymentsResponsePaymentDtoSplitDto": {
         "required": [
           "contactId",
-          "contactName",
-          "percentage"
+          "percentage",
+          "value"
         ],
         "type": "object",
         "properties": {
@@ -1238,10 +1247,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "contactName": {
-            "type": "string"
-          },
           "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "value": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1324,6 +1334,7 @@
           "startDate",
           "endDate",
           "description",
+          "userShare",
           "splits"
         ],
         "type": "object",
@@ -1367,6 +1378,9 @@
             "type": "string",
             "nullable": true
           },
+          "userShare": {
+            "$ref": "#/components/schemas/UserShareDto"
+          },
           "splits": {
             "type": "array",
             "items": {
@@ -1378,8 +1392,8 @@
       "GetPaymentOccurrencesResponseOccurrenceDtoSplitDto": {
         "required": [
           "contactId",
-          "contactName",
-          "percentage"
+          "percentage",
+          "value"
         ],
         "type": "object",
         "properties": {
@@ -1387,10 +1401,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "contactName": {
-            "type": "string"
-          },
           "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "value": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1408,6 +1423,7 @@
           "startDate",
           "endDate",
           "description",
+          "userShare",
           "splits"
         ],
         "type": "object",
@@ -1451,6 +1467,9 @@
             "type": "string",
             "nullable": true
           },
+          "userShare": {
+            "$ref": "#/components/schemas/UserShareDto"
+          },
           "splits": {
             "type": "array",
             "items": {
@@ -1462,8 +1481,8 @@
       "GetPaymentResponseSplitDto": {
         "required": [
           "contactId",
-          "contactName",
-          "percentage"
+          "percentage",
+          "value"
         ],
         "type": "object",
         "properties": {
@@ -1471,10 +1490,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "contactName": {
-            "type": "string"
-          },
           "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "value": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1765,6 +1785,7 @@
           "startDate",
           "endDate",
           "description",
+          "userShare",
           "splits"
         ],
         "type": "object",
@@ -1808,6 +1829,9 @@
             "type": "string",
             "nullable": true
           },
+          "userShare": {
+            "$ref": "#/components/schemas/UserShareDto"
+          },
           "splits": {
             "type": "array",
             "items": {
@@ -1819,8 +1843,8 @@
       "UpdatePaymentResponseSplitDto": {
         "required": [
           "contactId",
-          "contactName",
-          "percentage"
+          "percentage",
+          "value"
         ],
         "type": "object",
         "properties": {
@@ -1828,10 +1852,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "contactName": {
-            "type": "string"
-          },
           "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "value": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1893,6 +1918,23 @@
         "properties": {
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "UserShareDto": {
+        "required": [
+          "percentage",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
           }
         }
       }

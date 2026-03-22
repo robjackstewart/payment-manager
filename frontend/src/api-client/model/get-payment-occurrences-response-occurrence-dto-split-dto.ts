@@ -11,7 +11,7 @@
 
 export interface GetPaymentOccurrencesResponseOccurrenceDtoSplitDto { 
     contactId: string;
-    contactName: string;
     percentage: any | null;
+    value: any | null;
 }
 

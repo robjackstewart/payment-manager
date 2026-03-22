@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserShareDto } from './user-share-dto';
 import { CreatePaymentResponseSplitDto } from './create-payment-response-split-dto';
 
 
@@ -21,6 +22,7 @@ export interface CreatePaymentResponse {
     startDate: string;
     endDate: string | null;
     description: string | null;
+    userShare: UserShareDto;
     splits: Array<CreatePaymentResponseSplitDto>;
 }
 
