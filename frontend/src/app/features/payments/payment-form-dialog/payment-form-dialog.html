@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ data.payment ? 'Edit Payment' : 'New Payment' }}</h2>
+<h2 mat-dialog-title>{{ title }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="form-grid">
     <mat-form-field appearance="outline" class="full-width">
@@ -91,7 +91,7 @@
     <div class="split-section">
       <div class="split-header">
         <span class="split-title">Bill Split</span>
-        <span class="your-share">Your share: <strong>{{ yourShare() | number:'1.0-2' }}%</strong></span>
+        <span class="your-share">Your share: <strong>{{ yourShareDisplay() }}</strong></span>
       </div>
 
       @if (data.contacts.length === 0) {
@@ -128,7 +128,7 @@
 <mat-dialog-actions align="end">
   <button mat-button [mat-dialog-close]="null">Cancel</button>
   <button mat-raised-button color="primary" (click)="submit()" [disabled]="form.invalid">
-    {{ data.payment ? 'Save' : 'Create' }}
+    {{ submitLabel }}
   </button>
 </mat-dialog-actions>
 

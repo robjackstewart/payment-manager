@@ -1,5 +1,5 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #sidenav [mode]="isMobile() ? 'over' : 'side'" [opened]="!isMobile()" class="sidenav">
+  <mat-sidenav #sidenav [mode]="sidenavMode()" [opened]="sidenavOpened()" class="sidenav">
     <div class="sidenav-header">
       <mat-icon class="app-icon">account_balance_wallet</mat-icon>
       <span class="app-title">Payment Manager</span>
