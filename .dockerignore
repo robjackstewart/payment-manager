@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# IDE / editor
+.vscode
+.devcontainer
+
+# Frontend — exclude dev artifacts; source is copied explicitly
+frontend/node_modules
+frontend/dist
+frontend/.angular
+
+# Backend — exclude test projects and local build artifacts
+backend/tests
+backend/**/bin
+backend/**/obj
+
+# Host (Aspire local dev — not needed in production image)
+host
+
+# Stale docker/ directory (scripts live in image/scripts/)
+docker
+
+# Misc
+README.md
+renovate.json
+Taskfile.yml

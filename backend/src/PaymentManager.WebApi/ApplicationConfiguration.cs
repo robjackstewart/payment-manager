@@ -6,7 +6,9 @@ public static class ApplicationConfiguration
 {
     public static WebApplication ConfigurePaymentManagerWebApi(this WebApplication app)
     {
-        app.MapEndpoints();
+        app.UseDefaultFiles();
+        app.UseStaticFiles();
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
@@ -15,8 +17,12 @@ public static class ApplicationConfiguration
                 c.SwaggerEndpoint("/openapi/v1.json", "Payment Manager");
             });
         }
-        app.UseCors(Constants.Cors.ALLOW_UI_POLICY_NAME);
+
+        app.UseCors(Constants.Cors.ALLOW_ALL_POLICY_NAME);
+
         app.UseExceptionHandler(_ => { });
+        app.MapEndpoints();
+        app.MapFallbackToFile("index.html");
         return app;
     }
 

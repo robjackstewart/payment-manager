@@ -40,12 +40,11 @@ public static class ServiceRegistration
         .AddExceptionHandler<ExceptionHandler>()
         .AddCors(opt =>
         {
-            opt.AddPolicy(Constants.Cors.ALLOW_UI_POLICY_NAME, builder =>
+            opt.AddPolicy(Constants.Cors.ALLOW_ALL_POLICY_NAME, policy =>
             {
-                builder
-                    .WithOrigins(configuration.Cors.AllowedOrigins)
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
             });
         });
 
