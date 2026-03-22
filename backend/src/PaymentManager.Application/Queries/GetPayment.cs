@@ -34,7 +34,7 @@ public record GetPayment(Guid Id) : IRequest<Response>
                 .ToArray();
 
             var userSharePct = SplitPaymentCalculator.UserSharePercentage(splits.Select(s => s.Percentage));
-            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(payment.Amount, userSharePct));
+            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(payment.Amount, splits.Select(s => s.Value)));
 
             logger.LogInformation("Successfully fetched payment '{Id}'", payment.Id);
             return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, userShare, splits);

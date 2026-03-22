@@ -35,9 +35,9 @@ internal sealed class SplitPaymentCalculatorTests
     }
 
     [Test]
-    public void CalculateValue_Should_RoundToTwoDecimalPlaces()
+    public void CalculateValue_Should_TruncateToTwoDecimalPlaces()
     {
-        // 100 * 33.333 / 100 = 33.333 → rounds to 33.33
+        // 100 * 33.333 / 100 = 33.333 → truncates to 33.33
         SplitPaymentCalculator.CalculateValue(100m, 33.333m).ShouldBe(33.33m);
     }
 
@@ -63,7 +63,7 @@ internal sealed class SplitPaymentCalculatorTests
 
         var splitValues = contactPercentages.Select(p => SplitPaymentCalculator.CalculateValue(amount, p)).ToArray();
         var userSharePct = SplitPaymentCalculator.UserSharePercentage(contactPercentages);
-        var userShareValue = SplitPaymentCalculator.CalculateValue(amount, userSharePct);
+        var userShareValue = SplitPaymentCalculator.UserShareValue(amount, splitValues);
 
         splitValues.ShouldBe([100m, 100m]);
         userSharePct.ShouldBe(50m);
@@ -71,5 +71,33 @@ internal sealed class SplitPaymentCalculatorTests
 
         // All shares add up to the full amount
         (splitValues.Sum() + userShareValue).ShouldBe(amount);
+    }
+
+    // ── UserShareValue ────────────────────────────────────────────────────────
+
+    [Test]
+    public void UserShareValue_Should_Return_FullAmount_When_NoSplits()
+    {
+        SplitPaymentCalculator.UserShareValue(15.99m, []).ShouldBe(15.99m);
+    }
+
+    [Test]
+    public void UserShareValue_Should_Return_Remainder_After_ContactSplits()
+    {
+        // 200 - 50 - 50 = 100
+        SplitPaymentCalculator.UserShareValue(200m, [50m, 50m]).ShouldBe(100m);
+    }
+
+    [Test]
+    public void UserShareValue_Should_Reconcile_When_Rounding_Would_Otherwise_Overflow()
+    {
+        // 15.99 / 50%: truncate(15.99 * 50 / 100) = truncate(7.995) = 7.99
+        // Contact rounds DOWN; user absorbs the remainder (8.00), not the contact.
+        var contactValue = SplitPaymentCalculator.CalculateValue(15.99m, 50m);
+        var userValue = SplitPaymentCalculator.UserShareValue(15.99m, [contactValue]);
+
+        contactValue.ShouldBe(7.99m);
+        userValue.ShouldBe(8.00m);
+        (contactValue + userValue).ShouldBe(15.99m);
     }
 }

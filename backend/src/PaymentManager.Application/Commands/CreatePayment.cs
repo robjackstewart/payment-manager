@@ -100,7 +100,7 @@ public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, dec
                     SplitPaymentCalculator.CalculateValue(request.Amount, s.Percentage))).ToArray()
                 ?? [];
             var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
-            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.CalculateValue(request.Amount, userSharePct));
+            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(request.Amount, splitDtos.Select(s => s.Value)));
             return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, payment.Amount, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, userShare, splitDtos);
         }
     }
