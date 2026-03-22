@@ -4,7 +4,6 @@
 
 # IDE / editor
 .vscode
-.config
 .devcontainer
 
 # Frontend — exclude dev artifacts; source is copied explicitly

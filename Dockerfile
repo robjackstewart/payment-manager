@@ -6,15 +6,29 @@ RUN npm ci
 COPY frontend/ .
 RUN npm run build -- --configuration production
 
-# Stage 2: Publish .NET WebAPI
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
+# Stage 2: Publish .NET WebAPI and build migrations bundle
+# Use Alpine SDK so the native SQLite library targets musl (matching the runtime image)
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS backend-build
 WORKDIR /src
 COPY Directory.Packages.props .
+COPY .config/ .config/
 COPY backend/ .
 RUN dotnet publish src/PaymentManager.WebApi/PaymentManager.WebApi.csproj \
     --configuration Release \
     --output /app/publish \
     --no-self-contained
+
+# Restore local tools (dotnet-ef) from .config/dotnet-tools.json
+RUN dotnet tool restore
+# The bundle checks __EFMigrationsHistory and only applies pending migrations,
+# making it safe to run on both fresh and existing databases.
+# (--idempotent is not supported for SQLite; the bundle handles idempotency itself.)
+RUN dotnet tool run dotnet-ef migrations bundle \
+    --self-contained \
+    --output /app/efbundle \
+    --project src/PaymentManager.Infrastructure/PaymentManager.Infrastructure.Sqlite.csproj \
+    --startup-project src/PaymentManager.WebApi/PaymentManager.WebApi.csproj \
+    --configuration Release
 
 # Stage 3: Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
@@ -23,13 +37,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 WORKDIR /app
 
 COPY --from=backend-build /app/publish .
+COPY --from=backend-build /app/efbundle /scripts/efbundle
 
 # Angular 18+ outputs browser assets to dist/<name>/browser/
 COPY --from=frontend-build /app/dist/payment-manager/browser ./wwwroot
 
 COPY image/scripts/entrypoint.sh /scripts/entrypoint.sh
 COPY image/scripts/backup.sh /scripts/backup.sh
-RUN chmod +x /scripts/*.sh
+RUN chmod +x /scripts/*.sh /scripts/efbundle
 
 ENV ASPNETCORE_ENVIRONMENT=Production \
     ASPNETCORE_URLS=http://+:8080 \

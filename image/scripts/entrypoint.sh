@@ -11,6 +11,12 @@ export SQLITE_DATABASE_PATH
 export ConnectionStrings__PaymentManager="Data Source=${SQLITE_DATABASE_PATH}"
 export DB_PATH="${SQLITE_DATABASE_PATH}"
 
+# Apply pending EF Core migrations using the pre-built bundle.
+# The bundle checks __EFMigrationsHistory and is safe to run on any database state.
+echo "[migrate] Applying migrations to ${DB_PATH}..."
+/scripts/efbundle --connection "Data Source=${DB_PATH}"
+echo "[migrate] Done."
+
 # Write the crontab using the configured schedule
 echo "${BACKUP_CRON:-0 2 * * *} /scripts/backup.sh >> /proc/1/fd/1 2>&1" > /etc/crontabs/root
 
