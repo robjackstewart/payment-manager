@@ -9,8 +9,6 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { PayeeService } from '../../../core/services/payee.service';
 import { Payee } from '../../../core/models/payee.model';
-import { PayeeFormDialogComponent } from '../payee-form-dialog/payee-form-dialog';
-import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-payee-list',
@@ -63,7 +61,8 @@ export class PayeeListComponent implements OnInit {
     });
   }
 
-  openCreateDialog(): void {
+  async openCreateDialog(): Promise<void> {
+    const { PayeeFormDialogComponent } = await import('../payee-form-dialog/payee-form-dialog');
     const ref = this.dialog.open(PayeeFormDialogComponent, { width: '450px', data: {} });
     ref.afterClosed().subscribe(result => {
       if (result) {
@@ -78,7 +77,8 @@ export class PayeeListComponent implements OnInit {
     });
   }
 
-  openEditDialog(payee: Payee): void {
+  async openEditDialog(payee: Payee): Promise<void> {
+    const { PayeeFormDialogComponent } = await import('../payee-form-dialog/payee-form-dialog');
     const ref = this.dialog.open(PayeeFormDialogComponent, {
       width: '450px',
       data: { payee }
@@ -96,7 +96,8 @@ export class PayeeListComponent implements OnInit {
     });
   }
 
-  deletePayee(payee: Payee): void {
+  async deletePayee(payee: Payee): Promise<void> {
+    const { ConfirmDialogComponent } = await import('../../../shared/confirm-dialog/confirm-dialog');
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: { title: 'Delete Payee', message: `Are you sure you want to delete "${payee.name}"?` }
     });

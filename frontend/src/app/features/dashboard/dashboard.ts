@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatCard, MatCardHeader, MatCardAvatar, MatCardTitle, MatCardSubtitle, MatCardContent, MatCardActions } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -31,7 +32,7 @@ interface OccurrenceViewModel {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  providers: [CurrencyPipe, DatePipe],
+  providers: [CurrencyPipe, DatePipe, provideNativeDateAdapter()],
   imports: [
     RouterLink,
     MatCard,

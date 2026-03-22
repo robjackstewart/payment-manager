@@ -236,7 +236,57 @@ frontend/src/
   environments/
 ```
 
-## Testing
+## Bundle Size
+
+The initial bundle must stay under **400 kB** (warning) / **600 kB** (error) as enforced by `angular.json` budgets. These limits are verified on every build, including CI.
+
+### Rules
+
+**Route-level lazy loading is mandatory.** Every page must be registered with `loadComponent` + `import()` in `app.routes.ts`. Never import a page component at the top of a module or config file.
+
+**Dialog components must be lazy-loaded.** Dialogs are not visible on page load — load them on first user interaction using `import()` inside the open method:
+
+```typescript
+// ✅ Correct — dialog chunk loaded on first open
+async openCreateDialog(): Promise<void> {
+  const { PaymentFormDialogComponent } = await import('./payment-form-dialog/payment-form-dialog');
+  this.dialog.open(PaymentFormDialogComponent, { width: '520px', data: { ... } });
+}
+
+// ❌ Wrong — dialog bundled with the route chunk whether used or not
+import { PaymentFormDialogComponent } from './payment-form-dialog/payment-form-dialog';
+openCreateDialog() { this.dialog.open(PaymentFormDialogComponent, ...); }
+```
+
+**No barrel `index.ts` re-exports.** Barrels force the bundler to evaluate entire directories, defeating tree-shaking. Always import by direct file path.
+
+**Scope heavy providers to the components that need them.** Providers added to `app.config.ts` are included in the initial bundle for every user. Add them to the `providers` array of the standalone component instead:
+
+```typescript
+// ✅ Correct — date adapter loaded only with the dashboard chunk
+@Component({
+  providers: [provideNativeDateAdapter()],
+})
+export class DashboardComponent { }
+
+// ❌ Wrong — loaded for all users, even those who never visit the dashboard
+// app.config.ts
+providers: [provideNativeDateAdapter()]
+```
+
+**Use `provideZonelessChangeDetection()`** (already configured). Never add `zone.js` back.
+
+### Diagnosing regressions
+
+When the budget warning fires, run:
+
+```bash
+npm run analyze
+```
+
+This builds with source maps and opens `source-map-explorer` to show exactly which files and packages are contributing to each chunk.
+
+
 
 **Framework:** Vitest + JSDOM
 

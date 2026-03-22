@@ -4,7 +4,7 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatFormField, MatLabel, MatError, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelect } from '@angular/material/select';
-import { MatOption } from '@angular/material/core';
+import { MatOption, provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepicker, MatDatepickerInput, MatDatepickerToggle } from '@angular/material/datepicker';
 import { MatIcon } from '@angular/material/icon';
 import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -17,6 +17,7 @@ import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models
 @Component({
   selector: 'app-payment-form-dialog',
   standalone: true,
+  providers: [provideNativeDateAdapter()],
   imports: [
     MatDialogTitle,
     MatDialogContent,

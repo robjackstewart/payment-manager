@@ -10,7 +10,8 @@
     "test": "ng test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "api-client:generate": "tsx scripts/generate-api-client.ts"
+    "api-client:generate": "tsx scripts/generate-api-client.ts",
+    "analyze": "ng build --source-map && npx source-map-explorer 'dist/payment-manager/browser/*.js' --no-border-checks"
   },
   "engines": {
     "node": "^24.0.0"
@@ -50,6 +51,7 @@
     "@types/node": "^25.5.0",
     "angular-eslint": "^21.3.1",
     "jsdom": "^29.0.0",
+    "source-map-explorer": "^2.5.3",
     "tsx": "^4.21.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.57.1",
