@@ -6,8 +6,8 @@ on:
       - '*'
 
 env:
-  TAG: ${{ GITHUB_REF_NAME}}
-  REPOSITORY: ghcr.io/${{ GITHUB_REPOSITORY}}
+  TAG: ${GITHUB_REF_NAME}
+  REPOSITORY: ghcr.io/${GITHUB_REPOSITORY}
 
 permissions:
   contents: read
