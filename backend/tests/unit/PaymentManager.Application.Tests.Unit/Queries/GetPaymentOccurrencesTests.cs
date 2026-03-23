@@ -339,4 +339,22 @@ internal sealed class GetPaymentOccurrencesTests
         ordered[1].Amount.ShouldBe(10m);   // Feb 1
         ordered[2].Amount.ShouldBe(20m);   // Mar 1
     }
+
+    [Test]
+    public async Task EffectiveValue_AfterQueryRange_AllOccurrencesUseInitialAmount()
+    {
+        // Monthly payment with InitialAmount=100m.
+        // EPV is effective 2026-01-01 — entirely after the query range (2025-01-01 → 2025-03-31).
+        // Every occurrence in the range should use InitialAmount, not the EPV amount.
+        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2025, 1, 1));
+        var effectiveValues = new[]
+        {
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2026, 1, 1), Amount = 200m },
+        };
+
+        var result = await Handle([payment], [], effectiveValues, new DateOnly(2025, 1, 1), new DateOnly(2025, 3, 31));
+
+        result.Occurrences.Count.ShouldBe(3);
+        result.Occurrences.ShouldAllBe(o => o.Amount == 100m);  // InitialAmount, not 200m
+    }
 }

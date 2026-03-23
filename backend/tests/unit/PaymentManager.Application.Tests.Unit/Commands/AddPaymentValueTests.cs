@@ -220,4 +220,32 @@ internal sealed class AddPaymentValueTests
         await Should.ThrowAsync<Exceptions.ValidationException>(
             () => handler.Handle(new AddPaymentValue(payment.Id, new DateOnly(2025, 3, 1), 50m), ct));
     }
+
+    [Test]
+    public async Task Handler_Should_Accept_When_PaymentHasNoEndDate_AndEffectiveDateIsFarFuture()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            InitialAmount = 50m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            EndDate = null   // no upper bound
+        };
+        var (context, _, valuesDbSet) = CreateFakeContext(payment, []);
+        var handler = new AddPaymentValue.Handler(context, new FakeLogger<AddPaymentValue.Handler>());
+        var farFutureDate = new DateOnly(2099, 12, 31);
+
+        var response = await handler.Handle(new AddPaymentValue(payment.Id, farFutureDate, 99m), ct);
+
+        response.EffectiveDate.ShouldBe(farFutureDate);
+        response.Amount.ShouldBe(99m);
+        A.CallTo(() => valuesDbSet.Add(A<EffectivePaymentValue>.That.Matches(v =>
+            v.EffectiveDate == farFutureDate && v.Amount == 99m))).MustHaveHappenedOnceExactly();
+    }
 }

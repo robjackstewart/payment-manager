@@ -179,4 +179,101 @@ internal sealed class GetPaymentTests
         result.Splits.Single().Percentage.ShouldBe(40m);
         result.Splits.Single().Value.ShouldBe(40m);   // 100 * 40 / 100
     }
+
+    [Test]
+    public async Task Handler_Handle_Should_Use_LatestEffectiveValue_As_CurrentAmount_When_MultipleValuesExist()
+    {
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            InitialAmount = 10m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2024, 1, 1),
+        };
+        // Two EPVs — both in the past relative to today (2026-03-23)
+        var effectiveValues = new[]
+        {
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2024, 6, 1), Amount = 20m },
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 30m },
+        };
+        var context = A.Fake<IReadOnlyPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
+        A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentValues).Returns(effectiveValues.BuildMockDbSet());
+        var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
+
+        var result = await handler.Handle(new GetPayment(payment.Id), cancellationToken);
+
+        result.CurrentAmount.ShouldBe(30m);   // the later-dated EPV wins
+        result.InitialAmount.ShouldBe(10m);
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_Ignore_FutureEffectiveValues_When_Computing_CurrentAmount()
+    {
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            InitialAmount = 50m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2024, 1, 1),
+        };
+        // EPV in the far future — should not affect CurrentAmount
+        var futureValue = new EffectivePaymentValue
+        {
+            PaymentId = payment.Id,
+            EffectiveDate = new DateOnly(2099, 1, 1),
+            Amount = 999m
+        };
+        var context = A.Fake<IReadOnlyPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
+        A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentValues).Returns(new[] { futureValue }.BuildMockDbSet());
+        var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
+
+        var result = await handler.Handle(new GetPayment(payment.Id), cancellationToken);
+
+        result.CurrentAmount.ShouldBe(50m);   // future EPV ignored → falls back to InitialAmount
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_Return_All_EffectiveValues_In_Response()
+    {
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            InitialAmount = 10m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2024, 1, 1),
+        };
+        var pastValue   = new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 20m };
+        var futureValue = new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2099, 1, 1), Amount = 99m };
+        var context = A.Fake<IReadOnlyPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
+        A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentValues).Returns(new[] { pastValue, futureValue }.BuildMockDbSet());
+        var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
+
+        var result = await handler.Handle(new GetPayment(payment.Id), cancellationToken);
+
+        // Both EPVs are returned regardless of date — Values is not filtered by today
+        result.Values.Count.ShouldBe(2);
+        result.Values.ShouldContain(v => v.EffectiveDate == pastValue.EffectiveDate && v.Amount == 20m);
+        result.Values.ShouldContain(v => v.EffectiveDate == futureValue.EffectiveDate && v.Amount == 99m);
+    }
 }

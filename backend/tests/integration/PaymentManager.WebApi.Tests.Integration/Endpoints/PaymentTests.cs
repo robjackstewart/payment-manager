@@ -503,6 +503,62 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.InitialAmount.ShouldBe(9.99m); // InitialAmount unchanged when adding EPV
     }
 
+    [Test]
+    public async Task AddPaymentValue_Should_Return_NotFound_When_Payment_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{Guid.NewGuid()}/values",
+            new { effectiveDate = "2026-01-01", amount = 12.99m }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task AddPaymentValue_Should_Return_BadRequest_When_EffectiveDate_Is_Before_StartDate()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 6, 1), null), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        // Effective date is before the payment start date
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/values",
+            new { effectiveDate = "2025-01-01", amount = 12.99m }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task AddPaymentValue_Should_Appear_In_Values_Array_When_Getting_Payment()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/values",
+            new { effectiveDate = "2026-01-01", amount = 12.99m }, ct);
+
+        var getResponse = await CreateApiClient().GetAsync($"/api/payments/{created.Id}", ct);
+        var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Values.Length.ShouldBe(1);
+        body.Values[0].EffectiveDate.ShouldBe(new DateOnly(2026, 1, 1));
+        body.Values[0].Amount.ShouldBe(12.99m);
+    }
+
     // ── RemovePaymentValue ────────────────────────────────────────────────────
 
     [Test]

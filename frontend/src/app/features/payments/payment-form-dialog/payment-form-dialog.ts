@@ -177,7 +177,16 @@ export class PaymentFormDialogComponent implements OnInit {
     this.values.push(this.createValueRow());
   }
 
+  private readonly pendingRemovals: string[] = [];
+
   removeValue(index: number): void {
+    const group = this.values.at(index) as FormGroup;
+    if (group.controls['isExisting']?.value) {
+      const original = group.controls['originalEffectiveDate']?.value as Date | null;
+      if (original) {
+        this.pendingRemovals.push(original.toISOString().split('T')[0]);
+      }
+    }
     this.values.removeAt(index);
   }
 
@@ -210,10 +219,13 @@ export class PaymentFormDialogComponent implements OnInit {
             effectiveDate: (v.effectiveDate as Date).toISOString().split('T')[0],
             amount: Number(v.amount),
           }));
-        const valuesToRemove = allValues
-          .filter(v => v.isExisting && v.originalEffectiveDate != null &&
-            (v.effectiveDate as Date).toISOString().split('T')[0] !== (v.originalEffectiveDate as Date).toISOString().split('T')[0])
-          .map(v => (v.originalEffectiveDate as Date).toISOString().split('T')[0]);
+        const valuesToRemove = [
+          ...this.pendingRemovals,
+          ...allValues
+            .filter(v => v.isExisting && v.originalEffectiveDate != null &&
+              (v.effectiveDate as Date).toISOString().split('T')[0] !== (v.originalEffectiveDate as Date).toISOString().split('T')[0])
+            .map(v => (v.originalEffectiveDate as Date).toISOString().split('T')[0])
+        ];
         this.dialogRef.close({ metadataRequest: { ...metadata, initialAmount: Number(raw.amount) }, valuesToUpsert, valuesToRemove });
       } else {
         this.dialogRef.close({ ...metadata, amount: Number(raw.amount) });
