@@ -117,7 +117,6 @@ internal sealed class AddPaymentValueTests
         };
         var existingValue = new EffectivePaymentValue
         {
-            Id = Guid.NewGuid(),
             PaymentId = payment.Id,
             EffectiveDate = new DateOnly(2025, 6, 1),
             Amount = 50m

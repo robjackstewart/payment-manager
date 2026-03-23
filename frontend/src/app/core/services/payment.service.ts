@@ -100,8 +100,12 @@ export class PaymentService {
     );
   }
 
-  addValue(paymentId: string, req: AddPaymentValueRequest): Observable<{ id: string; paymentId: string; effectiveDate: string; amount: number }> {
+  addValue(paymentId: string, req: AddPaymentValueRequest): Observable<{ paymentId: string; effectiveDate: string; amount: number }> {
     return this.api.addPaymentValue(paymentId, req) as Observable<any>;
+  }
+
+  removeValue(paymentId: string, effectiveDate: string): Observable<void> {
+    return this.api.removePaymentValue(paymentId, effectiveDate);
   }
 
   delete(id: string): Observable<void> {

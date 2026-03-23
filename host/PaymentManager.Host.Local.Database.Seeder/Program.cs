@@ -66,10 +66,10 @@ await context.SaveChanges(CancellationToken.None);
 
 foreach (var effectiveValue in Seed.EffectivePaymentValues)
 {
-    if (!await context.EffectivePaymentValues.AnyAsync(v => v.Id == effectiveValue.Id))
+    if (!await context.EffectivePaymentValues.AnyAsync(v => v.PaymentId == effectiveValue.PaymentId && v.EffectiveDate == effectiveValue.EffectiveDate))
     {
         context.EffectivePaymentValues.Add(effectiveValue);
-        logger.LogInformation("Seeded effective payment value: {Id} ({Amount}) for payment {PaymentId}", effectiveValue.Id, effectiveValue.Amount, effectiveValue.PaymentId);
+        logger.LogInformation("Seeded effective payment value: ({PaymentId}, {EffectiveDate}) = {Amount}", effectiveValue.PaymentId, effectiveValue.EffectiveDate, effectiveValue.Amount);
     }
 }
 await context.SaveChanges(CancellationToken.None);

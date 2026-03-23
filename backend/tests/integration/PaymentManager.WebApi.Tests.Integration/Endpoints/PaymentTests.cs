@@ -63,7 +63,6 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         context.EffectivePaymentValues.Add(new EffectivePaymentValue
         {
-            Id = Guid.NewGuid(),
             PaymentId = paymentId,
             EffectiveDate = effectiveDate,
             Amount = amount
@@ -502,5 +501,77 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.CurrentAmount.ShouldBe(14.99m);
         body.InitialAmount.ShouldBe(9.99m); // InitialAmount unchanged when adding EPV
+    }
+
+    // ── RemovePaymentValue ────────────────────────────────────────────────────
+
+    [Test]
+    public async Task RemovePaymentValue_Should_Return_NoContent()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 9.99m
+        };
+        context.Payments.Add(payment);
+        AddEffectiveValue(context, payment.Id, new DateOnly(2026, 1, 1), 12.99m);
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .DeleteAsync($"/api/payments/{payment.Id}/values/2026-01-01", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        // Confirm the value is gone — current amount should revert to InitialAmount
+        var getResponse = await CreateApiClient().GetAsync($"/api/payments/{payment.Id}", ct);
+        var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.CurrentAmount.ShouldBe(9.99m);
+    }
+
+    [Test]
+    public async Task RemovePaymentValue_Should_Return_NotFound_When_Payment_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+
+        var response = await CreateApiClient()
+            .DeleteAsync($"/api/payments/{Guid.NewGuid()}/values/2026-01-01", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task RemovePaymentValue_Should_Return_NotFound_When_Value_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 9.99m
+        };
+        context.Payments.Add(payment);
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .DeleteAsync($"/api/payments/{payment.Id}/values/2026-01-01", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }

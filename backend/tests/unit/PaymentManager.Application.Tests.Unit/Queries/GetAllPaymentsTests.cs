@@ -67,9 +67,9 @@ internal sealed class GetAllPaymentsTests
         var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
         var effectiveValues = new[]
         {
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payments[0].Id, EffectiveDate = payments[0].StartDate, Amount = 100m },
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payments[1].Id, EffectiveDate = payments[1].StartDate, Amount = 50m },
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payments[2].Id, EffectiveDate = payments[2].StartDate, Amount = 200m },
+            new EffectivePaymentValue { PaymentId = payments[0].Id, EffectiveDate = payments[0].StartDate, Amount = 100m },
+            new EffectivePaymentValue { PaymentId = payments[1].Id, EffectiveDate = payments[1].StartDate, Amount = 50m },
+            new EffectivePaymentValue { PaymentId = payments[2].Id, EffectiveDate = payments[2].StartDate, Amount = 200m },
         };
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
@@ -120,7 +120,7 @@ internal sealed class GetAllPaymentsTests
         A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 200m }
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 200m }
         }.BuildMockDbSet());
         var handler = new GetAllPayments.Handler(context, new FakeLogger<GetAllPayments.Handler>());
 

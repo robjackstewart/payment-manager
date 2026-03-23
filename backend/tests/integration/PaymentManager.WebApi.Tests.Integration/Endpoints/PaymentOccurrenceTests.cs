@@ -55,7 +55,6 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
     {
         context.EffectivePaymentValues.Add(new EffectivePaymentValue
         {
-            Id = Guid.NewGuid(),
             PaymentId = paymentId,
             EffectiveDate = effectiveDate,
             Amount = amount

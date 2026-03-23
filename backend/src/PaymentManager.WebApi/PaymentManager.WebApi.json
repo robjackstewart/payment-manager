@@ -916,23 +916,61 @@
           }
         }
       }
+    },
+    "/api/payments/{id}/values/{effectiveDate}": {
+      "delete": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Remove Payment Value",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "effectiveDate",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "AddPaymentValueResponse": {
         "required": [
-          "id",
           "paymentId",
           "effectiveDate",
           "amount"
         ],
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
           "paymentId": {
             "type": "string",
             "format": "uuid"

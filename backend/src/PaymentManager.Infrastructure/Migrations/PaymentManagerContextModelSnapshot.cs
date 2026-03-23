@@ -40,24 +40,17 @@ namespace PaymentManager.Infrastructure.Migrations
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.EffectivePaymentValue", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("EffectiveDate")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("EffectiveDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("PaymentId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PaymentId", "EffectiveDate")
-                        .IsUnique();
+                    b.HasKey("PaymentId", "EffectiveDate");
 
                     b.ToTable("EffectivePaymentValues");
                 });

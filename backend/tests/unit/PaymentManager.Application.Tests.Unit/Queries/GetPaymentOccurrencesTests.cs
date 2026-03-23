@@ -288,8 +288,8 @@ internal sealed class GetPaymentOccurrencesTests
         // contact value = floor(100 * 40 / 100) = 40.00; user value = 100 - 40 = 60.00
         var effectiveValues = new[]
         {
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payment1.Id, EffectiveDate = payment1.StartDate, Amount = 100m },
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payment2.Id, EffectiveDate = payment2.StartDate, Amount = 50m },
+            new EffectivePaymentValue { PaymentId = payment1.Id, EffectiveDate = payment1.StartDate, Amount = 100m },
+            new EffectivePaymentValue { PaymentId = payment2.Id, EffectiveDate = payment2.StartDate, Amount = 50m },
         };
 
         var result = await Handle(
@@ -327,8 +327,8 @@ internal sealed class GetPaymentOccurrencesTests
         var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2025, 1, 1));
         var effectiveValues = new[]
         {
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 10m },
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 3, 1), Amount = 20m },
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 10m },
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 3, 1), Amount = 20m },
         };
 
         var result = await Handle([payment], [], effectiveValues, new DateOnly(2025, 1, 1), new DateOnly(2025, 3, 31));

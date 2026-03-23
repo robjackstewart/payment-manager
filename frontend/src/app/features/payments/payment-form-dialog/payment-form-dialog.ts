@@ -157,11 +157,11 @@ export class PaymentFormDialogComponent implements OnInit {
   }
 
   private createValueRow(effectiveDate: Date | null = null, amount: number | null = null, isExisting = false): FormGroup {
-    const dateCtrl = new FormControl<Date | null>({ value: effectiveDate, disabled: isExisting }, [Validators.required]);
     return new FormGroup({
-      effectiveDate: dateCtrl,
+      effectiveDate: new FormControl<Date | null>(effectiveDate, [Validators.required]),
       amount: new FormControl<number | null>(amount, [Validators.required, Validators.min(0.01)]),
-      isExisting: new FormControl(isExisting)
+      isExisting: new FormControl(isExisting),
+      originalEffectiveDate: new FormControl<Date | null>(effectiveDate),
     });
   }
 
@@ -178,9 +178,7 @@ export class PaymentFormDialogComponent implements OnInit {
   }
 
   removeValue(index: number): void {
-    if (!this.isExistingValue(index)) {
-      this.values.removeAt(index);
-    }
+    this.values.removeAt(index);
   }
 
   submit(): void {
@@ -205,13 +203,18 @@ export class PaymentFormDialogComponent implements OnInit {
       };
 
       if (this.isEditing) {
-        const valuesToUpsert = (raw.values as { effectiveDate: Date; amount: number }[])
+        const allValues = raw.values as { effectiveDate: Date; amount: number; isExisting: boolean; originalEffectiveDate: Date | null }[];
+        const valuesToUpsert = allValues
           .filter(v => v.effectiveDate != null)
           .map(v => ({
             effectiveDate: (v.effectiveDate as Date).toISOString().split('T')[0],
             amount: Number(v.amount),
           }));
-        this.dialogRef.close({ metadataRequest: { ...metadata, initialAmount: Number(raw.amount) }, valuesToUpsert });
+        const valuesToRemove = allValues
+          .filter(v => v.isExisting && v.originalEffectiveDate != null &&
+            (v.effectiveDate as Date).toISOString().split('T')[0] !== (v.originalEffectiveDate as Date).toISOString().split('T')[0])
+          .map(v => (v.originalEffectiveDate as Date).toISOString().split('T')[0]);
+        this.dialogRef.close({ metadataRequest: { ...metadata, initialAmount: Number(raw.amount) }, valuesToUpsert, valuesToRemove });
       } else {
         this.dialogRef.close({ ...metadata, amount: Number(raw.amount) });
       }

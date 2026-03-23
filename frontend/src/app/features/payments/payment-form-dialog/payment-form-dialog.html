@@ -102,9 +102,7 @@
               <mat-form-field appearance="outline" class="split-contact">
                 <mat-label>Effective Date</mat-label>
                 <input matInput [matDatepicker]="valPicker" formControlName="effectiveDate" />
-                @if (!isExistingValue($index)) {
-                  <mat-datepicker-toggle matIconSuffix [for]="valPicker" />
-                }
+                <mat-datepicker-toggle matIconSuffix [for]="valPicker" />
                 <mat-datepicker #valPicker />
                 @if (ctrl.get('effectiveDate')?.hasError('required')) {
                   <mat-error>Date is required</mat-error>
@@ -120,11 +118,9 @@
                   <mat-error>Min 0.01</mat-error>
                 }
               </mat-form-field>
-              @if (!isExistingValue($index)) {
-                <button mat-icon-button color="warn" type="button" (click)="removeValue($index)">
-                  <mat-icon>remove_circle_outline</mat-icon>
-                </button>
-              }
+              <button mat-icon-button color="warn" type="button" (click)="removeValue($index)">
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
             </div>
           }
         </div>

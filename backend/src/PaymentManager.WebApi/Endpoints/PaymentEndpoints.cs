@@ -52,6 +52,11 @@ internal static class PaymentEndpoints
             .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json)
             .Produces<ProblemDetails>((int)HttpStatusCode.NotFound, MediaTypeNames.Application.Json);
 
+        app.MapDelete("/api/payments/{id:guid}/values/{effectiveDate}", ([FromRoute] Guid id, [FromRoute] DateOnly effectiveDate, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleRemoveValue(id, effectiveDate, sender, cancellationToken))
+            .WithName("Remove Payment Value")
+            .Produces((int)HttpStatusCode.NoContent)
+            .Produces<ProblemDetails>((int)HttpStatusCode.NotFound, MediaTypeNames.Application.Json);
+
         return app;
     }
 
@@ -94,6 +99,12 @@ internal static class PaymentEndpoints
     internal static async Task<IResult> HandleAddValue(Guid id, EffectiveValueRequest request, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new AddPaymentValue(id, request.EffectiveDate, request.Amount), cancellationToken);
-        return Results.Created($"/api/payments/{id}/values/{result.Id}", result);
+        return Results.Created($"/api/payments/{id}/values", result);
+    }
+
+    internal static async Task<IResult> HandleRemoveValue(Guid id, DateOnly effectiveDate, ISender sender, CancellationToken cancellationToken)
+    {
+        await sender.Send(new RemovePaymentValue(id, effectiveDate), cancellationToken);
+        return Results.NoContent();
     }
 }

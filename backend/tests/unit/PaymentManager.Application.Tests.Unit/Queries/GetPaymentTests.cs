@@ -50,7 +50,7 @@ internal sealed class GetPaymentTests
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = matchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 250.50m }
+            new EffectivePaymentValue { PaymentId = matchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 250.50m }
         }.BuildMockDbSet());
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(matchingPayment.Id);
@@ -100,7 +100,7 @@ internal sealed class GetPaymentTests
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = nonMatchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
+            new EffectivePaymentValue { PaymentId = nonMatchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
         }.BuildMockDbSet());
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(Guid.NewGuid());
@@ -166,7 +166,7 @@ internal sealed class GetPaymentTests
         A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
-            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
         }.BuildMockDbSet());
         var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
 

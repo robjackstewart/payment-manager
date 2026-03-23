@@ -148,12 +148,15 @@ export class PaymentListComponent implements OnInit {
     });
     ref.afterClosed().subscribe(result => {
       if (result) {
-        const { metadataRequest, valuesToUpsert }: { metadataRequest: UpdatePaymentRequest; valuesToUpsert: AddPaymentValueRequest[] } = result;
+        const { metadataRequest, valuesToUpsert, valuesToRemove }: { metadataRequest: UpdatePaymentRequest; valuesToUpsert: AddPaymentValueRequest[]; valuesToRemove: string[] } = result;
         const update$ = this.paymentService.update(payment.id, metadataRequest);
+        const removes$ = (valuesToRemove ?? []).length
+          ? (valuesToRemove ?? []).map(d => this.paymentService.removeValue(payment.id, d))
+          : [of(null)];
         const valueUpserts$ = valuesToUpsert.length
           ? valuesToUpsert.map(v => this.paymentService.addValue(payment.id, v))
           : [of(null)];
-        forkJoin([update$, ...valueUpserts$]).subscribe({
+        forkJoin([update$, ...removes$, ...valueUpserts$]).subscribe({
           next: () => {
             this.snackBar.open('Payment updated', 'Close', { duration: 2000 });
             this.load();

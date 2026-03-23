@@ -57,7 +57,6 @@ public record AddPaymentValue(Guid PaymentId, DateOnly EffectiveDate, decimal Am
             {
                 value = new EffectivePaymentValue
                 {
-                    Id = Guid.NewGuid(),
                     PaymentId = request.PaymentId,
                     EffectiveDate = request.EffectiveDate,
                     Amount = request.Amount
@@ -66,11 +65,11 @@ public record AddPaymentValue(Guid PaymentId, DateOnly EffectiveDate, decimal Am
             }
             await context.SaveChanges(cancellationToken);
 
-            logger.LogInformation("Added effective value '{Id}' for payment '{PaymentId}'", value.Id, value.PaymentId);
+            logger.LogInformation("Added effective value for payment '{PaymentId}' effective {EffectiveDate}", value.PaymentId, value.EffectiveDate);
 
-            return new Response(value.Id, value.PaymentId, value.EffectiveDate, value.Amount);
+            return new Response(value.PaymentId, value.EffectiveDate, value.Amount);
         }
     }
 
-    public record Response(Guid Id, Guid PaymentId, DateOnly EffectiveDate, decimal Amount);
+    public record Response(Guid PaymentId, DateOnly EffectiveDate, decimal Amount);
 }

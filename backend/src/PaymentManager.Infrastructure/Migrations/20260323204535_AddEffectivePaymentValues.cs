@@ -20,14 +20,13 @@ namespace PaymentManager.Infrastructure.Migrations
                 name: "EffectivePaymentValues",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     PaymentId = table.Column<Guid>(type: "TEXT", nullable: false),
                     EffectiveDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Amount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EffectivePaymentValues", x => x.Id);
+                    table.PrimaryKey("PK_EffectivePaymentValues", x => new { x.PaymentId, x.EffectiveDate });
                     table.ForeignKey(
                         name: "FK_EffectivePaymentValues_Payments_PaymentId",
                         column: x => x.PaymentId,
@@ -35,12 +34,6 @@ namespace PaymentManager.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EffectivePaymentValues_PaymentId_EffectiveDate",
-                table: "EffectivePaymentValues",
-                columns: new[] { "PaymentId", "EffectiveDate" },
-                unique: true);
         }
 
         /// <inheritdoc />

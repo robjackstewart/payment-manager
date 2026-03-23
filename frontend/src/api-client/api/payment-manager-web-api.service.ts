@@ -346,6 +346,20 @@ export class PaymentManagerWebApiService extends BaseService {
         );
     }
 
+    public removePaymentValue(id: string, effectiveDate: string): Observable<void> {
+        if (!id) throw new Error('Required parameter id was null or undefined when calling removePaymentValue.');
+        if (!effectiveDate) throw new Error('Required parameter effectiveDate was null or undefined when calling removePaymentValue.');
+
+        const { basePath, withCredentials } = this.configuration;
+        const localVarPath = `/api/payments/${encodeURIComponent(String(id))}/values/${encodeURIComponent(String(effectiveDate))}`;
+        return this.httpClient.request<void>('delete', `${basePath}${localVarPath}`,
+            {
+                ...(withCredentials ? { withCredentials } : {}),
+                observe: 'body',
+            }
+        );
+    }
+
     /**
      * @endpoint post /api/payment-sources
      * @param paymentSourceEndpointsCreateRequest 
