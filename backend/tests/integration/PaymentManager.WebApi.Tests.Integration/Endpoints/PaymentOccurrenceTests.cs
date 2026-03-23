@@ -93,6 +93,39 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.Summary.ShouldBeEmpty();
     }
 
+    // ── InitialAmount fallback ────────────────────────────────────────────────
+
+    [Test]
+    public async Task GetOccurrences_PaymentWithNoEffectiveValues_UsesInitialAmount()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (psId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = psId,
+            PayeeId = payeeId,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Once,
+            StartDate = new DateOnly(2025, 1, 15),
+            InitialAmount = 75m
+        };
+        context.Payments.Add(payment);
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .GetAsync("/api/payments/occurrences?from=2025-01-01&to=2025-01-31", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetOccurrencesResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Occurrences.Length.ShouldBe(1);
+        body.Occurrences[0].Amount.ShouldBe(75m);
+        body.Occurrences[0].UserShare.Value.ShouldBe(75m);
+    }
+
     // ── Once ─────────────────────────────────────────────────────────────────
 
     [Test]

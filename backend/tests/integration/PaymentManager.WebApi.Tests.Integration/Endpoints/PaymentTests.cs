@@ -29,7 +29,7 @@ internal sealed class PaymentTests : IntegrationTestBase
 
     private sealed record PaymentResponse(
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
-        decimal CurrentAmount, string Currency, PaymentFrequency Frequency,
+        decimal CurrentAmount, decimal InitialAmount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate, string? Description,
         UserShareDto UserShare, SplitDto[] Splits, ValueDto[] Values);
 
@@ -88,6 +88,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Id.ShouldNotBe(Guid.Empty);
         body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
         body.CurrentAmount.ShouldBe(9.99m);
+        body.InitialAmount.ShouldBe(9.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
         body.UserShare.Percentage.ShouldBe(100m);
         body.UserShare.Value.ShouldBe(9.99m);
@@ -139,6 +140,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Id.ShouldBe(payment.Id);
         body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
         body.CurrentAmount.ShouldBe(15.99m);
+        body.InitialAmount.ShouldBe(15.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
         body.UserShare.Percentage.ShouldBe(100m);
         body.UserShare.Value.ShouldBe(15.99m);
@@ -247,6 +249,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.CurrentAmount.ShouldBe(14.99m);
+        body.InitialAmount.ShouldBe(14.99m);
         body.Currency.ShouldBe("EUR");
         body.Values.Length.ShouldBe(0);
     }
@@ -498,5 +501,6 @@ internal sealed class PaymentTests : IntegrationTestBase
         var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.CurrentAmount.ShouldBe(14.99m);
+        body.InitialAmount.ShouldBe(9.99m); // InitialAmount unchanged when adding EPV
     }
 }
