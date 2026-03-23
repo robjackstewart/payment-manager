@@ -47,6 +47,20 @@ public static class Seed
         public static readonly Guid CarService = Guid.Parse("f6f6f6f6-0000-0000-0000-00000000000a");
     }
 
+    public static class EffectivePaymentValueIds
+    {
+        public static readonly Guid Netflix = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000001");
+        public static readonly Guid Rent = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000002");
+        public static readonly Guid Electric = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000003");
+        public static readonly Guid Gym = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000004");
+        public static readonly Guid Spotify = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000005");
+        public static readonly Guid Insurance = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000006");
+        public static readonly Guid Dentist = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000007");
+        public static readonly Guid Rent2 = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000008");
+        public static readonly Guid Netflix2 = Guid.Parse("a1a1a1a1-0000-0000-0000-000000000009");
+        public static readonly Guid CarService = Guid.Parse("a1a1a1a1-0000-0000-0000-00000000000a");
+    }
+
     // The default user is seeded via EF HasData migration; no need to insert here.
     public static IReadOnlyList<User> Users => [];
 
@@ -73,75 +87,17 @@ public static class Seed
 
     public static IReadOnlyList<Payment> Payments =>
     [
-        new()
-        {
-            Id = PaymentIds.Netflix, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Visa, PayeeId = PayeeIds.Netflix,
-            Amount = 15.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 1, 1), EndDate = null,
-        },
-        new()
-        {
-            Id = PaymentIds.Rent, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Debit, PayeeId = PayeeIds.Landlord,
-            Amount = 1200.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 3, 1), EndDate = new DateOnly(2026, 2, 28),
-        },
-        new()
-        {
-            Id = PaymentIds.Electric, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Debit, PayeeId = PayeeIds.ElectricCompany,
-            Amount = 85.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 1, 1), EndDate = null,
-        },
-        new()
-        {
-            Id = PaymentIds.Gym, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Visa, PayeeId = PayeeIds.GymMembership,
-            Amount = 420.00m, Currency = "USD", Frequency = PaymentFrequency.Annually,
-            StartDate = new DateOnly(2025, 6, 1), EndDate = new DateOnly(2027, 6, 1),
-        },
-        new()
-        {
-            Id = PaymentIds.Spotify, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Amex, PayeeId = PayeeIds.Spotify,
-            Amount = 11.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 2, 1), EndDate = null,
-        },
-        new()
-        {
-            Id = PaymentIds.Insurance, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Savings, PayeeId = PayeeIds.Insurance,
-            Amount = 960.00m, Currency = "USD", Frequency = PaymentFrequency.Annually,
-            StartDate = new DateOnly(2025, 4, 15), EndDate = null,
-        },
-        new()
-        {
-            Id = PaymentIds.Dentist, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Amex, PayeeId = PayeeIds.Dentist,
-            Amount = 275.00m, Currency = "USD", Frequency = PaymentFrequency.Once,
-            StartDate = new DateOnly(2025, 7, 10), EndDate = null,
-        },
-        new()
-        {
-            Id = PaymentIds.Rent2, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Mastercard, PayeeId = PayeeIds.Landlord,
-            Amount = 950.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 1, 1), EndDate = new DateOnly(2025, 12, 31),
-        },
-        new()
-        {
-            Id = PaymentIds.Netflix2, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Mastercard, PayeeId = PayeeIds.Netflix,
-            Amount = 15.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 3, 1), EndDate = null,
-        },
-        new()
-        {
-            Id = PaymentIds.CarService, UserId = UserIds.Default,
-            PaymentSourceId = PaymentSourceIds.Mastercard, PayeeId = PayeeIds.CarService,
-            Amount = 389.50m, Currency = "USD", Frequency = PaymentFrequency.Once,
-            StartDate = new DateOnly(2025, 9, 20), EndDate = null,
-        },
+        new() { Id = PaymentIds.Netflix, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Visa, PayeeId = PayeeIds.Netflix, InitialAmount = 15.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1), EndDate = null },
+        new() { Id = PaymentIds.Rent, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Debit, PayeeId = PayeeIds.Landlord, InitialAmount = 1200.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1), EndDate = new DateOnly(2026, 2, 28) },
+        new() { Id = PaymentIds.Electric, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Debit, PayeeId = PayeeIds.ElectricCompany, InitialAmount = 85.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1), EndDate = null },
+        new() { Id = PaymentIds.Gym, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Visa, PayeeId = PayeeIds.GymMembership, InitialAmount = 420.00m, Currency = "USD", Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 6, 1), EndDate = new DateOnly(2027, 6, 1) },
+        new() { Id = PaymentIds.Spotify, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Amex, PayeeId = PayeeIds.Spotify, InitialAmount = 11.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 2, 1), EndDate = null },
+        new() { Id = PaymentIds.Insurance, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Savings, PayeeId = PayeeIds.Insurance, InitialAmount = 960.00m, Currency = "USD", Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 4, 15), EndDate = null },
+        new() { Id = PaymentIds.Dentist, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Amex, PayeeId = PayeeIds.Dentist, InitialAmount = 275.00m, Currency = "USD", Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 7, 10), EndDate = null },
+        new() { Id = PaymentIds.Rent2, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Mastercard, PayeeId = PayeeIds.Landlord, InitialAmount = 950.00m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1), EndDate = new DateOnly(2025, 12, 31) },
+        new() { Id = PaymentIds.Netflix2, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Mastercard, PayeeId = PayeeIds.Netflix, InitialAmount = 15.99m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1), EndDate = null },
+        new() { Id = PaymentIds.CarService, UserId = UserIds.Default, PaymentSourceId = PaymentSourceIds.Mastercard, PayeeId = PayeeIds.CarService, InitialAmount = 389.50m, Currency = "USD", Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 9, 20), EndDate = null },
     ];
+
+    public static IReadOnlyList<EffectivePaymentValue> EffectivePaymentValues => [];
 }

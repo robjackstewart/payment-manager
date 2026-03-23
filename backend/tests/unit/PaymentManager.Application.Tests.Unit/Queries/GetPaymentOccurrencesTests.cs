@@ -23,7 +23,7 @@ internal sealed class GetPaymentOccurrencesTests
             UserId = UserId,
             PaymentSourceId = PaymentSourceId,
             PayeeId = PayeeId,
-            Amount = 100m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = frequency,
             StartDate = startDate,
@@ -37,6 +37,11 @@ internal sealed class GetPaymentOccurrencesTests
 
     private static async Task<GetPaymentOccurrences.Response> Handle(
         Payment[] payments, PaymentSplit[] splits, DateOnly from, DateOnly to,
+        CancellationToken ct = default) =>
+        await Handle(payments, splits, [], from, to, ct);
+
+    private static async Task<GetPaymentOccurrences.Response> Handle(
+        Payment[] payments, PaymentSplit[] splits, EffectivePaymentValue[] effectiveValues, DateOnly from, DateOnly to,
         CancellationToken ct = default)
     {
         var dbSet = payments.BuildMockDbSet();
@@ -44,6 +49,7 @@ internal sealed class GetPaymentOccurrencesTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(dbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentValues).Returns(effectiveValues.BuildMockDbSet());
         var logger = new FakeLogger<GetPaymentOccurrences.Handler>();
         return await new GetPaymentOccurrences.Handler(context, logger)
             .Handle(new GetPaymentOccurrences(UserId, from, to), ct);
@@ -57,6 +63,16 @@ internal sealed class GetPaymentOccurrencesTests
         var result = await Handle([], new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
         result.Occurrences.ShouldBeEmpty();
         result.Summary.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task PaymentWithNoEffectiveValues_UsesInitialAmount()
+    {
+        var payment = MakePayment(PaymentFrequency.Once, new DateOnly(2025, 1, 15));
+        // Pass empty effectiveValues — should fall back to InitialAmount (100m)
+        var result = await Handle([payment], [], [], new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
+        result.Occurrences.Count.ShouldBe(1);
+        result.Occurrences.First().Amount.ShouldBe(100m);
     }
 
     // ── Once ─────────────────────────────────────────────────────────────────
@@ -226,7 +242,7 @@ internal sealed class GetPaymentOccurrencesTests
             UserId = Guid.NewGuid(), // different user
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 200m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 1, 10),
@@ -252,7 +268,7 @@ internal sealed class GetPaymentOccurrencesTests
             UserId = UserId,
             PaymentSourceId = paymentSourceId1,
             PayeeId = PayeeId,
-            Amount = 100m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 1, 15)
@@ -263,16 +279,21 @@ internal sealed class GetPaymentOccurrencesTests
             UserId = UserId,
             PaymentSourceId = paymentSourceId2,
             PayeeId = PayeeId,
-            Amount = 50m,
+            InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 1, 20)
         };
         var split = new PaymentSplit { PaymentId = payment1.Id, ContactId = contactId, Percentage = 40m };
         // contact value = floor(100 * 40 / 100) = 40.00; user value = 100 - 40 = 60.00
+        var effectiveValues = new[]
+        {
+            new EffectivePaymentValue { PaymentId = payment1.Id, EffectiveDate = payment1.StartDate, Amount = 100m },
+            new EffectivePaymentValue { PaymentId = payment2.Id, EffectiveDate = payment2.StartDate, Amount = 50m },
+        };
 
         var result = await Handle(
-            [payment1, payment2], [split],
+            [payment1, payment2], [split], effectiveValues,
             new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
 
         result.Summary.Count.ShouldBe(1); // single currency group (USD)
@@ -292,5 +313,48 @@ internal sealed class GetPaymentOccurrencesTests
         ps2.TotalAmount.ShouldBe(50m);
         ps2.UserTotal.ShouldBe(50m);
         ps2.ContactTotals.ShouldBeEmpty();
+    }
+
+    // ── Effective amount changes ──────────────────────────────────────────────
+
+    [Test]
+    public async Task EffectiveAmount_Changes_MidPeriod_OccurrenceUsesCorrectAmount()
+    {
+        // Monthly payment from 2025-01-01 with two effective values:
+        // - from 2025-01-01: $10
+        // - from 2025-03-01: $20
+        // Jan and Feb occurrences use $10; March uses $20.
+        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2025, 1, 1));
+        var effectiveValues = new[]
+        {
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 10m },
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 3, 1), Amount = 20m },
+        };
+
+        var result = await Handle([payment], [], effectiveValues, new DateOnly(2025, 1, 1), new DateOnly(2025, 3, 31));
+
+        result.Occurrences.Count.ShouldBe(3);
+        var ordered = result.Occurrences.OrderBy(o => o.OccurrenceDate).ToArray();
+        ordered[0].Amount.ShouldBe(10m);   // Jan 1
+        ordered[1].Amount.ShouldBe(10m);   // Feb 1
+        ordered[2].Amount.ShouldBe(20m);   // Mar 1
+    }
+
+    [Test]
+    public async Task EffectiveValue_AfterQueryRange_AllOccurrencesUseInitialAmount()
+    {
+        // Monthly payment with InitialAmount=100m.
+        // EPV is effective 2026-01-01 — entirely after the query range (2025-01-01 → 2025-03-31).
+        // Every occurrence in the range should use InitialAmount, not the EPV amount.
+        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2025, 1, 1));
+        var effectiveValues = new[]
+        {
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2026, 1, 1), Amount = 200m },
+        };
+
+        var result = await Handle([payment], [], effectiveValues, new DateOnly(2025, 1, 1), new DateOnly(2025, 3, 31));
+
+        result.Occurrences.Count.ShouldBe(3);
+        result.Occurrences.ShouldAllBe(o => o.Amount == 100m);  // InitialAmount, not 200m
     }
 }

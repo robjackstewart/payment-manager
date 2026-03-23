@@ -10,12 +10,24 @@ export interface PaymentSplit {
   percentage: number;
 }
 
+export interface EffectivePaymentValue {
+  effectiveDate: string;
+  amount: number;
+}
+
+export interface AddPaymentValueRequest {
+  effectiveDate: string;
+  amount: number;
+}
+
 export interface Payment {
   id: string;
   userId: string;
   paymentSourceId: string;
   payeeId: string;
-  amount: number;
+  currentAmount: number;
+  initialAmount: number;
+  values: EffectivePaymentValue[];
   currency: string;
   frequency: PaymentFrequency;
   startDate: string;
@@ -40,7 +52,7 @@ export interface CreatePaymentRequest {
 export interface UpdatePaymentRequest {
   paymentSourceId: string;
   payeeId: string;
-  amount: number;
+  initialAmount: number;
   currency: string;
   frequency: PaymentFrequency;
   startDate: string;
@@ -88,3 +100,4 @@ export interface PaymentOccurrencesResponse {
   occurrences: PaymentOccurrence[];
   summary: OccurrenceSummary[];
 }
+

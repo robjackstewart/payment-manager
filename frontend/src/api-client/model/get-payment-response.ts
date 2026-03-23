@@ -9,6 +9,7 @@
  */
 import { GetPaymentResponseSplitDto } from './get-payment-response-split-dto';
 import { UserShareDto } from './user-share-dto';
+import { EffectivePaymentValueDto } from './effective-payment-value-dto';
 
 
 export interface GetPaymentResponse { 
@@ -16,7 +17,9 @@ export interface GetPaymentResponse {
     userId: string;
     paymentSourceId: string;
     payeeId: string;
-    amount: any | null;
+    currentAmount: any | null;
+    initialAmount: any | null;
+    values: Array<EffectivePaymentValueDto>;
     currency: string;
     frequency: number;
     startDate: string;

@@ -26,17 +26,6 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Amount</mat-label>
-      <input matInput type="number" formControlName="amount" placeholder="0.00" min="0.01" step="0.01" />
-      @if (form.controls.amount.hasError('required')) {
-        <mat-error>Amount is required</mat-error>
-      }
-      @if (form.controls.amount.hasError('min')) {
-        <mat-error>Amount must be at least 0.01</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="full-width">
       <mat-label>Currency</mat-label>
       <mat-select formControlName="currency">
         @for (code of currencyOptions; track code) {
@@ -86,6 +75,60 @@
         <mat-error>Description cannot exceed 500 characters</mat-error>
       }
     </mat-form-field>
+
+    <!-- Prices Section -->
+    <div class="split-section">
+      <div class="split-header">
+        <span class="split-title">Prices</span>
+      </div>
+
+      <!-- Amount field shown in both modes; labelled "Initial Amount" in edit mode -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ isEditing ? 'Initial Amount' : 'Amount' }}</mat-label>
+        <input matInput type="number" formControlName="amount" placeholder="0.00" min="0.01" step="0.01" />
+        @if (form.controls.amount.hasError('required')) {
+          <mat-error>Amount is required</mat-error>
+        }
+        @if (form.controls.amount.hasError('min')) {
+          <mat-error>Amount must be at least 0.01</mat-error>
+        }
+      </mat-form-field>
+
+      @if (isEditing) {
+        <!-- Edit mode: price change overrides (EffectivePaymentValues) -->
+        <div formArrayName="values">
+          @for (ctrl of valueControls; track $index) {
+            <div [formGroupName]="$index" class="split-row">
+              <mat-form-field appearance="outline" class="split-contact">
+                <mat-label>Effective Date</mat-label>
+                <input matInput [matDatepicker]="valPicker" formControlName="effectiveDate" />
+                <mat-datepicker-toggle matIconSuffix [for]="valPicker" />
+                <mat-datepicker #valPicker />
+                @if (ctrl.get('effectiveDate')?.hasError('required')) {
+                  <mat-error>Date is required</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="split-pct">
+                <mat-label>Amount</mat-label>
+                <input matInput type="number" formControlName="amount" min="0.01" step="0.01" placeholder="0.00" />
+                @if (ctrl.get('amount')?.hasError('required')) {
+                  <mat-error>Required</mat-error>
+                }
+                @if (ctrl.get('amount')?.hasError('min')) {
+                  <mat-error>Min 0.01</mat-error>
+                }
+              </mat-form-field>
+              <button mat-icon-button color="warn" type="button" (click)="removeValue($index)">
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+        <button mat-stroked-button type="button" (click)="addValue()" class="add-split-btn">
+          <mat-icon>add</mat-icon> Add price change
+        </button>
+      }
+    </div>
 
     <!-- Bill Split Section -->
     <div class="split-section">

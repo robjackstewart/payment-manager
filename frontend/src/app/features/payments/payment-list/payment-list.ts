@@ -12,12 +12,12 @@ import { PaymentService } from '../../../core/services/payment.service';
 import { PaymentSourceService } from '../../../core/services/payment-source.service';
 import { PayeeService } from '../../../core/services/payee.service';
 import { ContactService } from '../../../core/services/contact.service';
-import { Payment } from '../../../core/models/payment.model';
+import { AddPaymentValueRequest, Payment, UpdatePaymentRequest } from '../../../core/models/payment.model';
 import { PaymentSource } from '../../../core/models/payment-source.model';
 import { Payee } from '../../../core/models/payee.model';
 import { Contact } from '../../../core/models/contact.model';
 import { PAYMENT_FREQUENCY_LABELS, PaymentFrequency } from '../../../core/models/payment-frequency.enum';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 
 interface PaymentViewModel {
   payeeName: string;
@@ -85,7 +85,7 @@ export class PaymentListComponent implements OnInit {
       return {
         payeeName: this.payeesMap()[p.payeeId] ?? p.payeeId,
         descriptionDisplay: p.description || '—',
-        formattedAmount: this.currencyPipe.transform(p.amount, p.currency) ?? String(p.amount),
+        formattedAmount: this.currencyPipe.transform(p.currentAmount, p.currency) ?? String(p.currentAmount),
         yourShareDisplay: `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(2)}%`,
         frequencyLabel: PAYMENT_FREQUENCY_LABELS[p.frequency as PaymentFrequency] ?? String(p.frequency),
         formattedStartDate: this.datePipe.transform(p.startDate, 'mediumDate') ?? p.startDate,
@@ -148,7 +148,15 @@ export class PaymentListComponent implements OnInit {
     });
     ref.afterClosed().subscribe(result => {
       if (result) {
-        this.paymentService.update(payment.id, result).subscribe({
+        const { metadataRequest, valuesToUpsert, valuesToRemove }: { metadataRequest: UpdatePaymentRequest; valuesToUpsert: AddPaymentValueRequest[]; valuesToRemove: string[] } = result;
+        const update$ = this.paymentService.update(payment.id, metadataRequest);
+        const removes$ = (valuesToRemove ?? []).length
+          ? (valuesToRemove ?? []).map(d => this.paymentService.removeValue(payment.id, d))
+          : [of(null)];
+        const valueUpserts$ = valuesToUpsert.length
+          ? valuesToUpsert.map(v => this.paymentService.addValue(payment.id, v))
+          : [of(null)];
+        forkJoin([update$, ...removes$, ...valueUpserts$]).subscribe({
           next: () => {
             this.snackBar.open('Payment updated', 'Close', { duration: 2000 });
             this.load();

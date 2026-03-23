@@ -7,7 +7,6 @@ using PaymentManager.Application.Queries;
 using PaymentManager.Domain.Entities;
 using PaymentManager.Domain.Enums;
 using Shouldly;
-using static PaymentManager.Application.Queries.GetAllPayments.Response;
 
 namespace PaymentManager.Application.Tests.Unit.Queries;
 
@@ -28,7 +27,7 @@ internal sealed class GetAllPaymentsTests
                 UserId = targetUserId,
                 PaymentSourceId = Guid.NewGuid(),
                 PayeeId = Guid.NewGuid(),
-                Amount = 100m,
+                InitialAmount = 100m,
                 Currency = "USD",
                 Frequency = PaymentFrequency.Monthly,
                 StartDate = new DateOnly(2025, 1, 1),
@@ -40,7 +39,7 @@ internal sealed class GetAllPaymentsTests
                 UserId = targetUserId,
                 PaymentSourceId = Guid.NewGuid(),
                 PayeeId = Guid.NewGuid(),
-                Amount = 50m,
+                InitialAmount = 50m,
                 Currency = "USD",
                 Frequency = PaymentFrequency.Once,
                 StartDate = new DateOnly(2025, 6, 1),
@@ -52,23 +51,30 @@ internal sealed class GetAllPaymentsTests
                 UserId = otherUserId,
                 PaymentSourceId = Guid.NewGuid(),
                 PayeeId = Guid.NewGuid(),
-                Amount = 200m,
+                InitialAmount = 200m,
                 Currency = "USD",
                 Frequency = PaymentFrequency.Annually,
                 StartDate = new DateOnly(2025, 1, 1),
                 EndDate = new DateOnly(2026, 1, 1)
             }
         };
+        var expectedIds = payments
+            .Where(p => p.UserId == targetUserId)
+            .Select(p => p.Id)
+            .OrderBy(id => id)
+            .ToArray();
         var paymentsDbSet = payments.BuildMockDbSet();
         var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
-        var expectedPayments = payments
-            .Where(p => p.UserId == targetUserId)
-            .OrderBy(p => p.Id)
-            .Select(p => new PaymentDto(p.Id, p.UserId, p.PaymentSourceId, p.PayeeId, p.Amount, p.Currency, p.Frequency, p.StartDate, p.EndDate, p.Description, new UserShareDto(100m, p.Amount), []))
-            .ToArray();
+        var effectiveValues = new[]
+        {
+            new EffectivePaymentValue { PaymentId = payments[0].Id, EffectiveDate = payments[0].StartDate, Amount = 100m },
+            new EffectivePaymentValue { PaymentId = payments[1].Id, EffectiveDate = payments[1].StartDate, Amount = 50m },
+            new EffectivePaymentValue { PaymentId = payments[2].Id, EffectiveDate = payments[2].StartDate, Amount = 200m },
+        };
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentValues).Returns(effectiveValues.BuildMockDbSet());
         var logger = new FakeLogger<GetAllPayments.Handler>();
         var request = new GetAllPayments(targetUserId);
         var handler = new GetAllPayments.Handler(context, logger);
@@ -80,7 +86,6 @@ internal sealed class GetAllPaymentsTests
         result.ShouldNotBeNull();
         result.Payments.Count.ShouldBe(2);
         var resultIds = result.Payments.Select(p => p.Id).OrderBy(id => id).ToArray();
-        var expectedIds = expectedPayments.Select(p => p.Id).OrderBy(id => id).ToArray();
         resultIds.ShouldBe(expectedIds);
         result.Payments.All(p => p.UserId == targetUserId).ShouldBeTrue();
         result.Payments.All(p => p.Splits.Count == 0).ShouldBeTrue();
@@ -100,7 +105,7 @@ internal sealed class GetAllPaymentsTests
             UserId = userId,
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 200m,
+            InitialAmount = 200m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
@@ -113,6 +118,10 @@ internal sealed class GetAllPaymentsTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
+        {
+            new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 200m }
+        }.BuildMockDbSet());
         var handler = new GetAllPayments.Handler(context, new FakeLogger<GetAllPayments.Handler>());
 
         // Act

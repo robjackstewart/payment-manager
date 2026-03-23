@@ -86,7 +86,7 @@ internal sealed class ReadOnlyPaymentManagerContextTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 100.00m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = DateOnly.FromDateTime(DateTime.Today)

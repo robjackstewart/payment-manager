@@ -73,25 +73,24 @@ internal sealed class UpdatePaymentTests
     [Test]
     [TestCase(0)]
     [TestCase(-1)]
-    public void Validator_Should_HaveValidationErrorForAmount_When_ZeroOrNegative(decimal amount)
+    public void Validator_Should_HaveValidationErrorForInitialAmount_When_ZeroOrNegative(decimal initialAmount)
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), amount, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), initialAmount, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
         var validator = new UpdatePayment.Validator();
 
         // Act
         var result = validator.TestValidate(request);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Amount);
+        result.ShouldHaveValidationErrorFor(x => x.InitialAmount);
     }
 
     [Test]
     public void Validator_Should_HaveValidationErrorForFrequency_When_Invalid()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
-        var validator = new UpdatePayment.Validator();
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31)); var validator = new UpdatePayment.Validator();
 
         // Act
         var result = validator.TestValidate(request);
@@ -181,7 +180,7 @@ internal sealed class UpdatePaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 100m,
+            InitialAmount = 300m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
@@ -194,6 +193,7 @@ internal sealed class UpdatePaymentTests
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
         A.CallTo(() => context.Contacts).Returns(contactsDbSet);
+        A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
         var logger = new FakeLogger<UpdatePayment.Handler>();
         var newUserId = Guid.NewGuid();
         var newPaymentSourceId = Guid.NewGuid();
@@ -209,7 +209,7 @@ internal sealed class UpdatePaymentTests
             p.UserId == newUserId &&
             p.PaymentSourceId == newPaymentSourceId &&
             p.PayeeId == newPayeeId &&
-            p.Amount == 500m &&
+            p.InitialAmount == 500m &&
             p.Currency == "EUR" &&
             p.Frequency == PaymentFrequency.Annually
         ))).MustHaveHappenedOnceExactly();
@@ -219,13 +219,13 @@ internal sealed class UpdatePaymentTests
         response.UserId.ShouldBe(newUserId);
         response.PaymentSourceId.ShouldBe(newPaymentSourceId);
         response.PayeeId.ShouldBe(newPayeeId);
-        response.Amount.ShouldBe(500m);
+        response.CurrentAmount.ShouldBe(500m);
         response.Currency.ShouldBe("EUR");
         response.Frequency.ShouldBe(PaymentFrequency.Annually);
         response.StartDate.ShouldBe(new DateOnly(2025, 3, 1));
         response.EndDate.ShouldBe(new DateOnly(2026, 3, 1));
         response.UserShare.Percentage.ShouldBe(100m);     // no splits → user owns 100%
-        response.UserShare.Value.ShouldBe(500m);           // 500 * 100 / 100
+        response.UserShare.Value.ShouldBe(500m);
     }
 
     [Test]
@@ -248,7 +248,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForDescription_When_Over500Chars()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31), new string('a', 501));
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, new string('a', 501));
         var validator = new UpdatePayment.Validator();
 
         // Act
@@ -269,7 +269,7 @@ internal sealed class UpdatePaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 100m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
@@ -282,6 +282,7 @@ internal sealed class UpdatePaymentTests
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
         A.CallTo(() => context.Contacts).Returns(contactsDbSet);
+        A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
         var logger = new FakeLogger<UpdatePayment.Handler>();
         var request = new UpdatePayment(existingPayment.Id, existingPayment.UserId, existingPayment.PaymentSourceId, existingPayment.PayeeId, 100m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), null, "Updated description");
         var handler = new UpdatePayment.Handler(context, logger);
@@ -306,7 +307,7 @@ internal sealed class UpdatePaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 100m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
@@ -314,6 +315,7 @@ internal sealed class UpdatePaymentTests
         var context = A.Fake<IPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { existingPayment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
         A.CallTo(() => context.Contacts).Returns(new[]
         {
             new Contact { Id = contactId, UserId = existingPayment.UserId, Name = "Alice" }
@@ -330,8 +332,8 @@ internal sealed class UpdatePaymentTests
 
         // Assert
         response.UserShare.Percentage.ShouldBe(50m);       // 100 - 50
-        response.UserShare.Value.ShouldBe(200m);            // 400 * 50 / 100
+        response.UserShare.Value.ShouldBe(200m);            // 400m * 50 / 100
         response.Splits.Single().Percentage.ShouldBe(50m);
-        response.Splits.Single().Value.ShouldBe(200m);     // 400 * 50 / 100
+        response.Splits.Single().Value.ShouldBe(200m);     // 400m * 50 / 100
     }
 }

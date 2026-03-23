@@ -56,6 +56,20 @@ internal sealed class CreatePaymentTests
     }
 
     [Test]
+    public void Validator_Should_HaveValidationErrorForAmount_When_ZeroOrNegative_Zero()
+    {
+        // Arrange
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 0m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var validator = new CreatePayment.Validator();
+
+        // Act
+        var result = validator.TestValidate(request);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.Amount);
+    }
+
+    [Test]
     [TestCase(0)]
     [TestCase(-1)]
     public void Validator_Should_HaveValidationErrorForAmount_When_ZeroOrNegative(decimal amount)
@@ -180,7 +194,8 @@ internal sealed class CreatePaymentTests
         var context = A.Fake<IPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         var logger = new FakeLogger<CreatePayment.Handler>();
-        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 250.50m, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
+        var startDate = new DateOnly(2025, 1, 1);
+        var request = new CreatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 250.50m, "USD", PaymentFrequency.Monthly, startDate, new DateOnly(2025, 12, 31));
         var handler = new CreatePayment.Handler(context, logger);
 
         // Act
@@ -192,7 +207,7 @@ internal sealed class CreatePaymentTests
         payments.First().UserId.ShouldBe(request.UserId);
         payments.First().PaymentSourceId.ShouldBe(request.PaymentSourceId);
         payments.First().PayeeId.ShouldBe(request.PayeeId);
-        payments.First().Amount.ShouldBe(request.Amount);
+        payments.First().InitialAmount.ShouldBe(250.50m);
         payments.First().Currency.ShouldBe(request.Currency);
         payments.First().Frequency.ShouldBe(request.Frequency);
         payments.First().StartDate.ShouldBe(request.StartDate);
@@ -202,13 +217,14 @@ internal sealed class CreatePaymentTests
         response.UserId.ShouldBe(request.UserId);
         response.PaymentSourceId.ShouldBe(request.PaymentSourceId);
         response.PayeeId.ShouldBe(request.PayeeId);
-        response.Amount.ShouldBe(request.Amount);
+        response.CurrentAmount.ShouldBe(250.50m);
+        response.Values.ShouldBeEmpty();
         response.Currency.ShouldBe(request.Currency);
         response.Frequency.ShouldBe(request.Frequency);
         response.StartDate.ShouldBe(request.StartDate);
         response.EndDate.ShouldBe(request.EndDate);
         response.UserShare.Percentage.ShouldBe(100m);     // no splits → user owns 100%
-        response.UserShare.Value.ShouldBe(request.Amount);
+        response.UserShare.Value.ShouldBe(250.50m);
     }
 
     [Test]
@@ -303,3 +319,4 @@ internal sealed class CreatePaymentTests
         response.Splits.Single().Value.ShouldBe(50m);      // 200 * 25 / 100
     }
 }
+

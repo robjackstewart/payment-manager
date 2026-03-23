@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
+using PaymentManager.Domain.Entities;
 using PaymentManager.Domain.Enums;
 using static PaymentManager.Application.Queries.GetPaymentOccurrences;
 using static PaymentManager.Application.Queries.GetPaymentOccurrences.Response;
@@ -34,23 +35,37 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 .GroupBy(s => s.PaymentId)
                 .ToDictionary(g => g.Key, g => g.ToArray());
 
+            var effectiveValueRows = await context.EffectivePaymentValues
+                .Where(v => paymentIds.Contains(v.PaymentId))
+                .OrderBy(v => v.EffectiveDate)
+                .ToArrayAsync(cancellationToken);
+
+            var effectiveValuesByPayment = effectiveValueRows
+                .GroupBy(v => v.PaymentId)
+                .ToDictionary(g => g.Key, g => g.ToArray());
+
             var occurrences = payments
                 .SelectMany(p =>
                 {
                     var rows = splitRowsByPayment.GetValueOrDefault(p.Id) ?? [];
-                    var splitDtos = (ICollection<OccurrenceDto.SplitDto>)rows
-                        .Select(s => new OccurrenceDto.SplitDto(s.ContactId, s.Percentage,
-                            SplitPaymentCalculator.CalculateValue(p.Amount, s.Percentage)))
-                        .ToArray();
-                    var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
-                    var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(p.Amount, splitDtos.Select(s => s.Value)));
+                    var effectiveValues = effectiveValuesByPayment.GetValueOrDefault(p.Id) ?? [];
                     return PaymentOccurrenceCalculator
                         .GetOccurrences(p.Frequency, p.StartDate, p.EndDate, request.From, request.To)
-                        .Select(date => new OccurrenceDto(
-                            p.Id, p.PaymentSourceId, p.PayeeId,
-                            p.Amount, p.Currency, p.Frequency,
-                            date, p.StartDate, p.EndDate, p.Description,
-                            userShare, splitDtos));
+                        .Select(date =>
+                        {
+                            var amount = ResolveEffectiveAmount(effectiveValues, date, p.InitialAmount);
+                            var splitDtos = (ICollection<OccurrenceDto.SplitDto>)rows
+                                .Select(s => new OccurrenceDto.SplitDto(s.ContactId, s.Percentage,
+                                    SplitPaymentCalculator.CalculateValue(amount, s.Percentage)))
+                                .ToArray();
+                            var userSharePct = SplitPaymentCalculator.UserSharePercentage(splitDtos.Select(s => s.Percentage));
+                            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(amount, splitDtos.Select(s => s.Value)));
+                            return new OccurrenceDto(
+                                p.Id, p.PaymentSourceId, p.PayeeId,
+                                amount, p.Currency, p.Frequency,
+                                date, p.StartDate, p.EndDate, p.Description,
+                                userShare, splitDtos);
+                        });
                 })
                 .OrderBy(o => o.OccurrenceDate)
                 .ThenBy(o => o.PaymentId)
@@ -87,6 +102,19 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 occurrences.Length, request.UserId, request.From, request.To);
 
             return new Response([.. occurrences], [.. summary]);
+        }
+
+        private static decimal ResolveEffectiveAmount(EffectivePaymentValue[] sortedValues, DateOnly occurrenceDate, decimal initialAmount)
+        {
+            EffectivePaymentValue? current = null;
+            foreach (var v in sortedValues)
+            {
+                if (v.EffectiveDate <= occurrenceDate)
+                    current = v;
+                else
+                    break;
+            }
+            return current?.Amount ?? initialAmount;
         }
     }
 

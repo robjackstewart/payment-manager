@@ -24,7 +24,7 @@ internal sealed class DeletePaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 100m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
 using PaymentManager.Domain.Entities;
@@ -20,7 +21,7 @@ internal sealed class PaymentTests : IntegrationTestBase
 
     private sealed record UpdateRequest(
         Guid PaymentSourceId, Guid PayeeId,
-        decimal Amount, string Currency, PaymentFrequency Frequency,
+        decimal InitialAmount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate, string? Description = null,
         IReadOnlyList<SplitRequest>? Splits = null);
 
@@ -28,16 +29,17 @@ internal sealed class PaymentTests : IntegrationTestBase
 
     private sealed record PaymentResponse(
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
-        decimal Amount, string Currency, PaymentFrequency Frequency,
+        decimal CurrentAmount, decimal InitialAmount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate, string? Description,
-        UserShareDto UserShare, SplitDto[] Splits);
+        UserShareDto UserShare, SplitDto[] Splits, ValueDto[] Values);
 
     private sealed record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
 
+    private sealed record ValueDto(DateOnly EffectiveDate, decimal Amount);
+
     private sealed record GetAllResponse(PaymentResponse[] Payments);
 
-    private async Task<(Guid PaymentSourceId, Guid PayeeId)> SetupPrerequisitesAsync(
-        CancellationToken ct)
+    private async Task<(Guid PaymentSourceId, Guid PayeeId)> SetupPrerequisitesAsync(CancellationToken ct)
     {
         var context = GetService<IPaymentManagerContext>();
         var paymentSource = new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Visa" };
@@ -57,6 +59,16 @@ internal sealed class PaymentTests : IntegrationTestBase
         return contact.Id;
     }
 
+    private static void AddEffectiveValue(IPaymentManagerContext context, Guid paymentId, DateOnly effectiveDate, decimal amount)
+    {
+        context.EffectivePaymentValues.Add(new EffectivePaymentValue
+        {
+            PaymentId = paymentId,
+            EffectiveDate = effectiveDate,
+            Amount = amount
+        });
+    }
+
     // ── Create ────────────────────────────────────────────────────────────────
 
     [Test]
@@ -74,7 +86,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.Id.ShouldNotBe(Guid.Empty);
         body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
-        body.Amount.ShouldBe(9.99m);
+        body.CurrentAmount.ShouldBe(9.99m);
+        body.InitialAmount.ShouldBe(9.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
         body.UserShare.Percentage.ShouldBe(100m);
         body.UserShare.Value.ShouldBe(9.99m);
@@ -110,10 +123,10 @@ internal sealed class PaymentTests : IntegrationTestBase
             UserId = DefaultUserService.DefaultUserId,
             PaymentSourceId = paymentSourceId,
             PayeeId = payeeId,
-            Amount = 15.99m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 1, 1)
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 15.99m
         };
         context.Payments.Add(payment);
         await context.SaveChanges(ct);
@@ -125,7 +138,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.Id.ShouldBe(payment.Id);
         body.UserId.ShouldBe(DefaultUserService.DefaultUserId);
-        body.Amount.ShouldBe(15.99m);
+        body.CurrentAmount.ShouldBe(15.99m);
+        body.InitialAmount.ShouldBe(15.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
         body.UserShare.Percentage.ShouldBe(100m);
         body.UserShare.Value.ShouldBe(15.99m);
@@ -152,11 +166,14 @@ internal sealed class PaymentTests : IntegrationTestBase
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
         var context = GetService<IPaymentManagerContext>();
-        context.Payments.AddRange(
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 10m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 20m, Currency = "USD", Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 1, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 30m, Currency = "USD", Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 6, 1) },
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Amount = 40m, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1) });
+        var payments = new[]
+        {
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1), InitialAmount = 10m },
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 1, 1), InitialAmount = 10m },
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 6, 1), InitialAmount = 10m },
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1), InitialAmount = 10m }
+        };
+        context.Payments.AddRange(payments);
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient().GetAsync("/api/payments", ct);
@@ -182,24 +199,58 @@ internal sealed class PaymentTests : IntegrationTestBase
             UserId = DefaultUserService.DefaultUserId,
             PaymentSourceId = paymentSourceId,
             PayeeId = payeeId,
-            Amount = 9.99m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
-            StartDate = new DateOnly(2025, 1, 1)
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 9.99m
+        };
+        context.Payments.Add(payment);
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{payment.Id}", new UpdateRequest(
+            paymentSourceId, payeeId, 9.99m, "EUR", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.CurrentAmount.ShouldBe(9.99m);
+        body.Currency.ShouldBe("EUR");
+        body.UserShare.Percentage.ShouldBe(100m);
+        body.UserShare.Value.ShouldBe(9.99m);
+    }
+
+    [Test]
+    public async Task UpdatePayment_Should_Update_InitialAmount()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 9.99m
         };
         context.Payments.Add(payment);
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{payment.Id}", new UpdateRequest(
             paymentSourceId, payeeId, 14.99m, "EUR", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null), ct);
+            new DateOnly(2025, 1, 1), null), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
-        body.Amount.ShouldBe(14.99m);
-        body.UserShare.Percentage.ShouldBe(100m);
-        body.UserShare.Value.ShouldBe(14.99m);
+        body.CurrentAmount.ShouldBe(14.99m);
+        body.InitialAmount.ShouldBe(14.99m);
+        body.Currency.ShouldBe("EUR");
+        body.Values.Length.ShouldBe(0);
     }
 
     [Test]
@@ -209,7 +260,7 @@ internal sealed class PaymentTests : IntegrationTestBase
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{Guid.NewGuid()}", new UpdateRequest(
-            paymentSourceId, payeeId, 10m, "USD", PaymentFrequency.Once,
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Once,
             new DateOnly(2026, 1, 1), null), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -229,10 +280,10 @@ internal sealed class PaymentTests : IntegrationTestBase
             UserId = DefaultUserService.DefaultUserId,
             PaymentSourceId = paymentSourceId,
             PayeeId = payeeId,
-            Amount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
-            StartDate = new DateOnly(2025, 1, 1)
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 50m
         };
         context.Payments.Add(payment);
         await context.SaveChanges(ct);
@@ -272,11 +323,11 @@ internal sealed class PaymentTests : IntegrationTestBase
             UserId = DefaultUserService.DefaultUserId,
             PaymentSourceId = paymentSourceId,
             PayeeId = payeeId,
-            Amount = 9.99m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
-            Description = "Original description"
+            Description = "Original description",
+            InitialAmount = 9.99m
         };
         context.Payments.Add(payment);
         await context.SaveChanges(ct);
@@ -313,9 +364,9 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Splits.Length.ShouldBe(1);
         body.Splits[0].ContactId.ShouldBe(contactId);
         body.Splits[0].Percentage.ShouldBe(30m);
-        body.Splits[0].Value.ShouldBe(30m);          // 100 * 30 / 100
-        body.UserShare.Percentage.ShouldBe(70m);      // 100 - 30
-        body.UserShare.Value.ShouldBe(70m);            // 100 * 70 / 100
+        body.Splits[0].Value.ShouldBe(30m);
+        body.UserShare.Percentage.ShouldBe(70m);
+        body.UserShare.Value.ShouldBe(70m);
     }
 
     [Test]
@@ -375,9 +426,9 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Splits.Length.ShouldBe(1);
         body.Splits[0].ContactId.ShouldBe(contactId2);
         body.Splits[0].Percentage.ShouldBe(40m);
-        body.Splits[0].Value.ShouldBe(40m);          // 100 * 40 / 100
-        body.UserShare.Percentage.ShouldBe(60m);      // 100 - 40
-        body.UserShare.Value.ShouldBe(60m);            // 100 * 60 / 100
+        body.Splits[0].Value.ShouldBe(40m);
+        body.UserShare.Percentage.ShouldBe(60m);
+        body.UserShare.Value.ShouldBe(60m);
     }
 
     [Test]
@@ -399,8 +450,184 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Payments[0].Splits.Length.ShouldBe(1);
         body.Payments[0].Splits[0].ContactId.ShouldBe(contactId);
         body.Payments[0].Splits[0].Percentage.ShouldBe(50m);
-        body.Payments[0].Splits[0].Value.ShouldBe(25m);    // 50 * 50 / 100
-        body.Payments[0].UserShare.Percentage.ShouldBe(50m); // 100 - 50
-        body.Payments[0].UserShare.Value.ShouldBe(25m);      // 50 * 50 / 100
+        body.Payments[0].Splits[0].Value.ShouldBe(25m);
+        body.Payments[0].UserShare.Percentage.ShouldBe(50m);
+        body.Payments[0].UserShare.Value.ShouldBe(25m);
+    }
+
+    // ── AddPaymentValue ───────────────────────────────────────────────────────
+
+    [Test]
+    public async Task AddPaymentValue_Should_Return_Created_With_Value()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/values",
+            new { effectiveDate = "2026-01-01", amount = 12.99m }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    [Test]
+    public async Task AddPaymentValue_Should_Update_When_Date_Already_Exists()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        // Upsert the same date with a new amount
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/values",
+            new { effectiveDate = "2026-01-01", amount = 14.99m }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // Verify the payment now reflects the updated amount
+        var getResponse = await CreateApiClient().GetAsync($"/api/payments/{created.Id}", ct);
+        var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.CurrentAmount.ShouldBe(14.99m);
+        body.InitialAmount.ShouldBe(9.99m); // InitialAmount unchanged when adding EPV
+    }
+
+    [Test]
+    public async Task AddPaymentValue_Should_Return_NotFound_When_Payment_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{Guid.NewGuid()}/values",
+            new { effectiveDate = "2026-01-01", amount = 12.99m }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task AddPaymentValue_Should_Return_BadRequest_When_EffectiveDate_Is_Before_StartDate()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 6, 1), null), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        // Effective date is before the payment start date
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/values",
+            new { effectiveDate = "2025-01-01", amount = 12.99m }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task AddPaymentValue_Should_Appear_In_Values_Array_When_Getting_Payment()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/values",
+            new { effectiveDate = "2026-01-01", amount = 12.99m }, ct);
+
+        var getResponse = await CreateApiClient().GetAsync($"/api/payments/{created.Id}", ct);
+        var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Values.Length.ShouldBe(1);
+        body.Values[0].EffectiveDate.ShouldBe(new DateOnly(2026, 1, 1));
+        body.Values[0].Amount.ShouldBe(12.99m);
+    }
+
+    // ── RemovePaymentValue ────────────────────────────────────────────────────
+
+    [Test]
+    public async Task RemovePaymentValue_Should_Return_NoContent()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 9.99m
+        };
+        context.Payments.Add(payment);
+        AddEffectiveValue(context, payment.Id, new DateOnly(2026, 1, 1), 12.99m);
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .DeleteAsync($"/api/payments/{payment.Id}/values/2026-01-01", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        // Confirm the value is gone — current amount should revert to InitialAmount
+        var getResponse = await CreateApiClient().GetAsync($"/api/payments/{payment.Id}", ct);
+        var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.CurrentAmount.ShouldBe(9.99m);
+    }
+
+    [Test]
+    public async Task RemovePaymentValue_Should_Return_NotFound_When_Payment_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+
+        var response = await CreateApiClient()
+            .DeleteAsync($"/api/payments/{Guid.NewGuid()}/values/2026-01-01", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task RemovePaymentValue_Should_Return_NotFound_When_Value_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = DefaultUserService.DefaultUserId,
+            PaymentSourceId = paymentSourceId,
+            PayeeId = payeeId,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+            InitialAmount = 9.99m
+        };
+        context.Payments.Add(payment);
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .DeleteAsync($"/api/payments/{payment.Id}/values/2026-01-01", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }

@@ -13,7 +13,7 @@ import { PaymentEndpointsSplitRequest } from './payment-endpoints-split-request'
 export interface PaymentEndpointsCreateRequest { 
     paymentSourceId: string;
     payeeId: string;
-    amount: any | null;
+    amount: number;
     currency: string;
     frequency: number;
     startDate: string;

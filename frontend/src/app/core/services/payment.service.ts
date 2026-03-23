@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PaymentManagerWebApiService } from '../../../api-client';
 import {
+  AddPaymentValueRequest,
   CreatePaymentRequest,
   Payment,
   PaymentOccurrencesResponse,
@@ -17,7 +18,9 @@ export class PaymentService {
     return this.api.getAllPayments().pipe(
       map(r => r.payments.map(p => ({
         ...p,
-        amount: Number(p.amount),
+        currentAmount: Number(p.currentAmount),
+        initialAmount: Number(p.initialAmount),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
         userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
       } as Payment)))
     );
@@ -54,7 +57,15 @@ export class PaymentService {
   }
 
   getById(id: string): Observable<Payment> {
-    return this.api.getPayment(id) as Observable<Payment>;
+    return this.api.getPayment(id).pipe(
+      map(p => ({
+        ...p,
+        currentAmount: Number(p.currentAmount),
+        initialAmount: Number(p.initialAmount),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
+        userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
+      } as Payment))
+    );
   }
 
   create(req: CreatePaymentRequest): Observable<Payment> {
@@ -62,7 +73,15 @@ export class PaymentService {
       ...req,
       endDate: req.endDate ?? null,
       splits: req.splits?.map(s => ({ contactId: s.contactId, percentage: s.percentage })) ?? null,
-    }) as Observable<Payment>;
+    }).pipe(
+      map(p => ({
+        ...p,
+        currentAmount: Number(p.currentAmount),
+        initialAmount: Number(p.initialAmount),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
+        userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
+      } as Payment))
+    );
   }
 
   update(id: string, req: UpdatePaymentRequest): Observable<Payment> {
@@ -70,7 +89,23 @@ export class PaymentService {
       ...req,
       endDate: req.endDate ?? null,
       splits: req.splits?.map(s => ({ contactId: s.contactId, percentage: s.percentage })) ?? null,
-    }) as Observable<Payment>;
+    }).pipe(
+      map(p => ({
+        ...p,
+        currentAmount: Number(p.currentAmount),
+        initialAmount: Number(p.initialAmount),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
+        userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
+      } as Payment))
+    );
+  }
+
+  addValue(paymentId: string, req: AddPaymentValueRequest): Observable<{ paymentId: string; effectiveDate: string; amount: number }> {
+    return this.api.addPaymentValue(paymentId, req);
+  }
+
+  removeValue(paymentId: string, effectiveDate: string): Observable<void> {
+    return this.api.removePaymentValue(paymentId, effectiveDate);
   }
 
   delete(id: string): Observable<void> {
