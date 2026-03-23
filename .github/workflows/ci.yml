@@ -1,4 +1,4 @@
-name: CI
+name: Application
 
 on:
   - pull_request
@@ -46,15 +46,3 @@ jobs:
         run: devcontainer exec --workspace-folder . -- task frontend:lint
       - name: Test
         run: devcontainer exec --workspace-folder . -- task frontend:test
-
-  image:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Install dev container CLI
-        run: npm install -g @devcontainers/cli
-      - name: Spin up dev container
-        run: devcontainer up --workspace-folder .
-      - name: Build Docker image
-        run: devcontainer exec --workspace-folder . -- task image:build
