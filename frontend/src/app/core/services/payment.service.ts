@@ -20,7 +20,7 @@ export class PaymentService {
         ...p,
         currentAmount: Number(p.currentAmount),
         initialAmount: Number(p.initialAmount),
-        values: (p.values ?? []).map((v: any) => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
         userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
       } as Payment)))
     );
@@ -62,7 +62,7 @@ export class PaymentService {
         ...p,
         currentAmount: Number(p.currentAmount),
         initialAmount: Number(p.initialAmount),
-        values: (p.values ?? []).map((v: any) => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
         userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
       } as Payment))
     );
@@ -78,7 +78,7 @@ export class PaymentService {
         ...p,
         currentAmount: Number(p.currentAmount),
         initialAmount: Number(p.initialAmount),
-        values: (p.values ?? []).map((v: any) => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
         userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
       } as Payment))
     );
@@ -94,14 +94,14 @@ export class PaymentService {
         ...p,
         currentAmount: Number(p.currentAmount),
         initialAmount: Number(p.initialAmount),
-        values: (p.values ?? []).map((v: any) => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
+        values: (p.values ?? []).map(v => ({ effectiveDate: v.effectiveDate, amount: Number(v.amount) })),
         userShare: { percentage: Number(p.userShare.percentage), value: Number(p.userShare.value) },
       } as Payment))
     );
   }
 
   addValue(paymentId: string, req: AddPaymentValueRequest): Observable<{ paymentId: string; effectiveDate: string; amount: number }> {
-    return this.api.addPaymentValue(paymentId, req) as Observable<any>;
+    return this.api.addPaymentValue(paymentId, req);
   }
 
   removeValue(paymentId: string, effectiveDate: string): Observable<void> {

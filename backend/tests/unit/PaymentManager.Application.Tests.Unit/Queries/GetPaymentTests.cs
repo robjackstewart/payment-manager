@@ -261,7 +261,7 @@ internal sealed class GetPaymentTests
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2024, 1, 1),
         };
-        var pastValue   = new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 20m };
+        var pastValue = new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 20m };
         var futureValue = new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2099, 1, 1), Amount = 99m };
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());

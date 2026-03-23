@@ -90,7 +90,7 @@ internal sealed class UpdatePaymentTests
     public void Validator_Should_HaveValidationErrorForFrequency_When_Invalid()
     {
         // Arrange
-        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));        var validator = new UpdatePayment.Validator();
+        var request = new UpdatePayment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 100m, "USD", (PaymentFrequency)999, new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31)); var validator = new UpdatePayment.Validator();
 
         // Act
         var result = validator.TestValidate(request);
