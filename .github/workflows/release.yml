@@ -36,4 +36,5 @@ jobs:
       - name: Tag and push Docker image
         run: |
           docker push ${{ env.REPOSITORY }}:${{ env.TAG }}
+          docker tag ${{ env.REPOSITORY }}:${{ env.TAG }} ${{ env.REPOSITORY }}:latest
           docker push ${{ env.REPOSITORY }}:latest
