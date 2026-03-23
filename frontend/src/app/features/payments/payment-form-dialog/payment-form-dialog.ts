@@ -13,12 +13,11 @@ import { PaymentSource } from '../../../core/models/payment-source.model';
 import { Payee } from '../../../core/models/payee.model';
 import { Contact } from '../../../core/models/contact.model';
 import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models/payment-frequency.enum';
-import { CurrencyPipe, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-payment-form-dialog',
   standalone: true,
-  providers: [provideNativeDateAdapter(), CurrencyPipe, DatePipe],
+  providers: [provideNativeDateAdapter()],
   imports: [
     MatDialogTitle,
     MatDialogContent,
@@ -37,9 +36,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
     MatDatepickerInput,
     MatDatepickerToggle,
     MatIcon,
-    ReactiveFormsModule,
-    DatePipe,
-    CurrencyPipe,
+    ReactiveFormsModule
   ],
   templateUrl: './payment-form-dialog.html'
 })
