@@ -56,5 +56,8 @@ tasks:
       - dotnet tool restore
 
   image:build:
+    vars:
+      TAG: '{{.TAG | default "latest"}}'
+      REPOSITORY: '{{.REPOSITORY | default "payment-manager"}}'
     cmds:
-      - docker build -t payment-manager:latest .
+      - docker build -t {{.REPOSITORY}}:{{.TAG}} .
