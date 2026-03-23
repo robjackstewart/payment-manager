@@ -53,7 +53,7 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                         .GetOccurrences(p.Frequency, p.StartDate, p.EndDate, request.From, request.To)
                         .Select(date =>
                         {
-                            var amount = ResolveEffectiveAmount(effectiveValues, date);
+                            var amount = ResolveEffectiveAmount(effectiveValues, date, p.InitialAmount);
                             var splitDtos = (ICollection<OccurrenceDto.SplitDto>)rows
                                 .Select(s => new OccurrenceDto.SplitDto(s.ContactId, s.Percentage,
                                     SplitPaymentCalculator.CalculateValue(amount, s.Percentage)))
@@ -104,7 +104,7 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
             return new Response([.. occurrences], [.. summary]);
         }
 
-        private static decimal ResolveEffectiveAmount(EffectivePaymentValue[] sortedValues, DateOnly occurrenceDate)
+        private static decimal ResolveEffectiveAmount(EffectivePaymentValue[] sortedValues, DateOnly occurrenceDate, decimal initialAmount)
         {
             EffectivePaymentValue? current = null;
             foreach (var v in sortedValues)
@@ -114,7 +114,7 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 else
                     break;
             }
-            return (current ?? sortedValues[0]).Amount;
+            return current?.Amount ?? initialAmount;
         }
     }
 

@@ -37,17 +37,8 @@ internal sealed class GetPaymentOccurrencesTests
 
     private static async Task<GetPaymentOccurrences.Response> Handle(
         Payment[] payments, PaymentSplit[] splits, DateOnly from, DateOnly to,
-        CancellationToken ct = default)
-    {
-        var effectiveValues = payments.Select(p => new EffectivePaymentValue
-        {
-            Id = Guid.NewGuid(),
-            PaymentId = p.Id,
-            EffectiveDate = p.StartDate,
-            Amount = 100m
-        }).ToArray();
-        return await Handle(payments, splits, effectiveValues, from, to, ct);
-    }
+        CancellationToken ct = default) =>
+        await Handle(payments, splits, [], from, to, ct);
 
     private static async Task<GetPaymentOccurrences.Response> Handle(
         Payment[] payments, PaymentSplit[] splits, EffectivePaymentValue[] effectiveValues, DateOnly from, DateOnly to,
@@ -72,6 +63,16 @@ internal sealed class GetPaymentOccurrencesTests
         var result = await Handle([], new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
         result.Occurrences.ShouldBeEmpty();
         result.Summary.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task PaymentWithNoEffectiveValues_UsesInitialAmount()
+    {
+        var payment = MakePayment(PaymentFrequency.Once, new DateOnly(2025, 1, 15));
+        // Pass empty effectiveValues — should fall back to InitialAmount (100m)
+        var result = await Handle([payment], [], [], new DateOnly(2025, 1, 1), new DateOnly(2025, 1, 31));
+        result.Occurrences.Count.ShouldBe(1);
+        result.Occurrences.First().Amount.ShouldBe(100m);
     }
 
     // ── Once ─────────────────────────────────────────────────────────────────
