@@ -59,7 +59,17 @@ foreach (var payment in Seed.Payments)
     if (!await context.Payments.AnyAsync(p => p.Id == payment.Id))
     {
         context.Payments.Add(payment);
-        logger.LogInformation("Seeded payment: {Id} ({Amount})", payment.Id, payment.Amount);
+        logger.LogInformation("Seeded payment: {Id}", payment.Id);
+    }
+}
+await context.SaveChanges(CancellationToken.None);
+
+foreach (var effectiveValue in Seed.EffectivePaymentValues)
+{
+    if (!await context.EffectivePaymentValues.AnyAsync(v => v.Id == effectiveValue.Id))
+    {
+        context.EffectivePaymentValues.Add(effectiveValue);
+        logger.LogInformation("Seeded effective payment value: {Id} ({Amount}) for payment {PaymentId}", effectiveValue.Id, effectiveValue.Amount, effectiveValue.PaymentId);
     }
 }
 await context.SaveChanges(CancellationToken.None);

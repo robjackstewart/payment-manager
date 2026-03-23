@@ -11,4 +11,5 @@ public interface IReadOnlyPaymentManagerContext
     public IQueryable<Payment> Payments { get; }
     public IQueryable<Contact> Contacts { get; }
     public IQueryable<PaymentSplit> PaymentSplits { get; }
+    public IQueryable<EffectivePaymentValue> EffectivePaymentValues { get; }
 }

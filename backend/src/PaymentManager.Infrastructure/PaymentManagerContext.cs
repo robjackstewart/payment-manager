@@ -15,6 +15,7 @@ internal class PaymentManagerContext(DbContextOptions<PaymentManagerContext> opt
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Contact> Contacts { get; set; }
     public DbSet<PaymentSplit> PaymentSplits { get; set; }
+    public DbSet<EffectivePaymentValue> EffectivePaymentValues { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

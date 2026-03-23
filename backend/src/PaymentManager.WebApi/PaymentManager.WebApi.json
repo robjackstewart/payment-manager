@@ -855,10 +855,98 @@
           }
         }
       }
+    },
+    "/api/payments/{id}/values": {
+      "post": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Add Payment Value",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentEndpointsEffectiveValueRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddPaymentValueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AddPaymentValueResponse": {
+        "required": [
+          "id",
+          "paymentId",
+          "effectiveDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          }
+        }
+      },
       "ContactEndpointsCreateRequest": {
         "required": [
           "name"
@@ -929,7 +1017,9 @@
           "userId",
           "paymentSourceId",
           "payeeId",
-          "amount",
+          "currentAmount",
+          "initialAmount",
+          "values",
           "currency",
           "frequency",
           "startDate",
@@ -956,9 +1046,19 @@
             "type": "string",
             "format": "uuid"
           },
-          "amount": {
+          "currentAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "initialAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePaymentResponseValueDto"
+            }
           },
           "currency": {
             "type": "string"
@@ -1007,6 +1107,23 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          }
+        }
+      },
+      "CreatePaymentResponseValueDto": {
+        "required": [
+          "effectiveDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1174,7 +1291,9 @@
           "userId",
           "paymentSourceId",
           "payeeId",
-          "amount",
+          "currentAmount",
+          "initialAmount",
+          "values",
           "currency",
           "frequency",
           "startDate",
@@ -1201,9 +1320,19 @@
             "type": "string",
             "format": "uuid"
           },
-          "amount": {
+          "currentAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "initialAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAllPaymentsResponsePaymentDtoValueDto"
+            }
           },
           "currency": {
             "type": "string"
@@ -1252,6 +1381,23 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          }
+        }
+      },
+      "GetAllPaymentsResponsePaymentDtoValueDto": {
+        "required": [
+          "effectiveDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1505,7 +1651,9 @@
           "userId",
           "paymentSourceId",
           "payeeId",
-          "amount",
+          "currentAmount",
+          "initialAmount",
+          "values",
           "currency",
           "frequency",
           "startDate",
@@ -1532,9 +1680,19 @@
             "type": "string",
             "format": "uuid"
           },
-          "amount": {
+          "currentAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "initialAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentResponseValueDto"
+            }
           },
           "currency": {
             "type": "string"
@@ -1583,6 +1741,23 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          }
+        }
+      },
+      "GetPaymentResponseValueDto": {
+        "required": [
+          "effectiveDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }
@@ -1699,6 +1874,23 @@
           }
         }
       },
+      "PaymentEndpointsEffectiveValueRequest": {
+        "required": [
+          "effectiveDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          }
+        }
+      },
       "PaymentEndpointsSplitRequest": {
         "required": [
           "contactId",
@@ -1720,7 +1912,7 @@
         "required": [
           "paymentSourceId",
           "payeeId",
-          "amount",
+          "initialAmount",
           "currency",
           "frequency",
           "startDate",
@@ -1736,7 +1928,7 @@
             "type": "string",
             "format": "uuid"
           },
-          "amount": {
+          "initialAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           },
@@ -1867,7 +2059,9 @@
           "userId",
           "paymentSourceId",
           "payeeId",
-          "amount",
+          "currentAmount",
+          "initialAmount",
+          "values",
           "currency",
           "frequency",
           "startDate",
@@ -1894,9 +2088,19 @@
             "type": "string",
             "format": "uuid"
           },
-          "amount": {
+          "currentAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
+          },
+          "initialAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdatePaymentResponseValueDto"
+            }
           },
           "currency": {
             "type": "string"
@@ -1945,6 +2149,23 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "format": "double"
+          }
+        }
+      },
+      "UpdatePaymentResponseValueDto": {
+        "required": [
+          "effectiveDate",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "format": "double"
           }

@@ -13,8 +13,9 @@ namespace PaymentManager.WebApi.Endpoints;
 internal static class PaymentEndpoints
 {
     public record CreateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null, IReadOnlyList<SplitRequest>? Splits = null);
-    public record UpdateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null, IReadOnlyList<SplitRequest>? Splits = null);
+    public record UpdateRequest(Guid PaymentSourceId, Guid PayeeId, decimal InitialAmount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null, IReadOnlyList<SplitRequest>? Splits = null);
     public record SplitRequest(Guid ContactId, decimal Percentage);
+    public record EffectiveValueRequest(DateOnly EffectiveDate, decimal Amount);
 
     public static WebApplication Map(WebApplication app)
     {
@@ -45,6 +46,12 @@ internal static class PaymentEndpoints
             .WithName("Delete Payment")
             .Produces((int)HttpStatusCode.NoContent);
 
+        app.MapPost("/api/payments/{id:guid}/values", ([FromRoute] Guid id, [FromBody] EffectiveValueRequest request, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleAddValue(id, request, sender, cancellationToken))
+            .WithName("Add Payment Value")
+            .Produces<AddPaymentValue.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
+            .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json)
+            .Produces<ProblemDetails>((int)HttpStatusCode.NotFound, MediaTypeNames.Application.Json);
+
         return app;
     }
 
@@ -74,7 +81,7 @@ internal static class PaymentEndpoints
 
     internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdatePayment(id, userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description, request.Splits?.Select(s => new UpdatePayment.SplitRequest(s.ContactId, s.Percentage)).ToList()), cancellationToken);
+        var result = await sender.Send(new UpdatePayment(id, userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.InitialAmount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description, request.Splits?.Select(s => new UpdatePayment.SplitRequest(s.ContactId, s.Percentage)).ToList()), cancellationToken);
         return Results.Ok(result);
     }
 
@@ -82,5 +89,11 @@ internal static class PaymentEndpoints
     {
         await sender.Send(new DeletePayment(id), cancellationToken);
         return Results.NoContent();
+    }
+
+    internal static async Task<IResult> HandleAddValue(Guid id, EffectiveValueRequest request, ISender sender, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new AddPaymentValue(id, request.EffectiveDate, request.Amount), cancellationToken);
+        return Results.Created($"/api/payments/{id}/values/{result.Id}", result);
     }
 }

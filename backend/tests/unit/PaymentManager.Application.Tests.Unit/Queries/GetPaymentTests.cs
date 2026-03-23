@@ -24,7 +24,7 @@ internal sealed class GetPaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 250.50m,
+            InitialAmount = 250.50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
@@ -36,7 +36,7 @@ internal sealed class GetPaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 50m,
+            InitialAmount = 99m,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
             StartDate = new DateOnly(2025, 6, 1),
@@ -48,6 +48,10 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
+        {
+            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = matchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 250.50m }
+        }.BuildMockDbSet());
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(matchingPayment.Id);
         var handler = new GetPayment.Handler(context, logger);
@@ -61,13 +65,13 @@ internal sealed class GetPaymentTests
         result.UserId.ShouldBe(matchingPayment.UserId);
         result.PaymentSourceId.ShouldBe(matchingPayment.PaymentSourceId);
         result.PayeeId.ShouldBe(matchingPayment.PayeeId);
-        result.Amount.ShouldBe(matchingPayment.Amount);
+        result.CurrentAmount.ShouldBe(250.50m);
         result.Currency.ShouldBe(matchingPayment.Currency);
         result.Frequency.ShouldBe(matchingPayment.Frequency);
         result.StartDate.ShouldBe(matchingPayment.StartDate);
         result.EndDate.ShouldBe(matchingPayment.EndDate);
         result.UserShare.Percentage.ShouldBe(100m);   // no splits → user owns 100%
-        result.UserShare.Value.ShouldBe(matchingPayment.Amount);
+        result.UserShare.Value.ShouldBe(250.50m);
         result.Splits.ShouldBeEmpty();
     }
 
@@ -82,7 +86,7 @@ internal sealed class GetPaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 100m,
+            InitialAmount = 99m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
@@ -94,6 +98,10 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
+        {
+            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = nonMatchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
+        }.BuildMockDbSet());
         var logger = new FakeLogger<GetPayment.Handler>();
         var request = new GetPayment(Guid.NewGuid());
         var handler = new GetPayment.Handler(context, logger);
@@ -101,6 +109,38 @@ internal sealed class GetPaymentTests
 
         // Act & Assert
         await handle.ShouldThrowAsync<NotFoundException<Payment>>();
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_Use_InitialAmount_When_NoEffectivePaymentValuesExist()
+    {
+        // Arrange
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            PaymentSourceId = Guid.NewGuid(),
+            PayeeId = Guid.NewGuid(),
+            InitialAmount = 75m,
+            Currency = "USD",
+            Frequency = PaymentFrequency.Monthly,
+            StartDate = new DateOnly(2025, 1, 1),
+        };
+        var context = A.Fake<IReadOnlyPaymentManagerContext>();
+        A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
+        A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
+        var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
+
+        // Act
+        var result = await handler.Handle(new GetPayment(payment.Id), cancellationToken);
+
+        // Assert
+        result.CurrentAmount.ShouldBe(75m);
+        result.Values.ShouldBeEmpty();
+        result.UserShare.Percentage.ShouldBe(100m);
+        result.UserShare.Value.ShouldBe(75m);
     }
 
     [Test]
@@ -115,7 +155,7 @@ internal sealed class GetPaymentTests
             UserId = Guid.NewGuid(),
             PaymentSourceId = Guid.NewGuid(),
             PayeeId = Guid.NewGuid(),
-            Amount = 100m,
+            InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
             StartDate = new DateOnly(2025, 1, 1),
@@ -124,6 +164,10 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
+        {
+            new EffectivePaymentValue { Id = Guid.NewGuid(), PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
+        }.BuildMockDbSet());
         var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
 
         // Act
