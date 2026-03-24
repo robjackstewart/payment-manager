@@ -17,7 +17,7 @@ import { MatTooltip } from '@angular/material/tooltip';
     RouterLink,
     RouterLinkActive,
     MatSidenavContainer,
-    MatSidenav,
+  MatSidenv,
     MatSidenavContent,
     MatToolbar,
     MatNavList,
