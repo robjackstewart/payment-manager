@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, effect, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { MatToolbar } from '@angular/material/toolbar';
@@ -6,6 +6,8 @@ import { MatNavList, MatListItem, MatListItemIcon, MatListItemTitle } from '@ang
 import { MatIcon } from '@angular/material/icon';
 import { MatIconButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-root',
@@ -25,6 +27,8 @@ import { MatDivider } from '@angular/material/divider';
     MatIcon,
     MatIconButton,
     MatDivider,
+    MatSlideToggle,
+    MatTooltip,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'
@@ -34,8 +38,22 @@ export class AppComponent {
   readonly sidenavMode = computed(() => this.isMobile() ? 'over' : 'side');
   readonly sidenavOpened = computed(() => !this.isMobile());
 
+  readonly isDarkMode = signal(
+    localStorage.getItem('theme') === 'dark' ||
+    (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  );
+
   constructor() {
     window.addEventListener('resize', () => this.isMobile.set(window.innerWidth < 768));
+
+    effect(() => {
+      document.body.classList.toggle('dark-theme', this.isDarkMode());
+      localStorage.setItem('theme', this.isDarkMode() ? 'dark' : 'light');
+    });
+  }
+
+  toggleDarkMode(): void {
+    this.isDarkMode.update(v => !v);
   }
 }
 
