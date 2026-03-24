@@ -7,6 +7,9 @@ includes:
   frontend:
     taskfile: frontend/Taskfile.yml
     dir: frontend
+  host:
+    taskfile: host/Taskfile.yml
+    dir: host
 
 tasks:
   environment:check:
