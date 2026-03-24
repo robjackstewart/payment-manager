@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using NUnit.Framework;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Domain.Entities;
 using PaymentManager.Domain.Enums;
 using PaymentManager.WebApi.Services;

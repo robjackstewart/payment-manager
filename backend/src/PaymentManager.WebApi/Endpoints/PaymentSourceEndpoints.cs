@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Mime;
-using MediatR;
+using PaymentManager.Application.Common.Dispatch;
 using Microsoft.AspNetCore.Mvc;
 using PaymentManager.Application.Commands;
 using PaymentManager.Application.Queries;

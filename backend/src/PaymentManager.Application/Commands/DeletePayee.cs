@@ -1,6 +1,6 @@
-using MediatR;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Domain.Entities;
 using static PaymentManager.Application.Common.Exceptions;
 
@@ -8,9 +8,9 @@ namespace PaymentManager.Application.Commands;
 
 public record DeletePayee(Guid Id) : IRequest
 {
-    internal sealed class Handler(IPaymentManagerContext context, ILogger<Handler> logger) : IRequestHandler<DeletePayee>
+    internal sealed class Handler(IPaymentManagerContext context, ILogger<Handler> logger) : IRequestHandler<DeletePayee, Unit>
     {
-        public async Task Handle(DeletePayee request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DeletePayee request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Deleting payee '{Id}'", request.Id);
             var payee = await context.Payees.FindAsync([request.Id], cancellationToken);
@@ -24,6 +24,7 @@ public record DeletePayee(Guid Id) : IRequest
             await context.SaveChanges(cancellationToken);
 
             logger.LogInformation("Deleted payee '{Id}'", request.Id);
+            return Unit.Value;
         }
     }
 }

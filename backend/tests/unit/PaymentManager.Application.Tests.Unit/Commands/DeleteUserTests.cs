@@ -1,12 +1,13 @@
 using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using FakeItEasy;
-using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using Microsoft.Extensions.Logging.Testing;
 using static PaymentManager.Application.Common.Exceptions;
+using PaymentManager.Application.Common;
 
 namespace PaymentManager.Application.Tests.Unit.Commands;
 

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Testing;
 using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Domain.Entities;
 using Shouldly;
 using static PaymentManager.Application.Common.Exceptions;

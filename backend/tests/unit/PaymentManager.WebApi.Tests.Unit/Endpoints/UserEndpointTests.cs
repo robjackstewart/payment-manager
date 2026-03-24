@@ -1,5 +1,5 @@
 using FakeItEasy;
-using MediatR;
+using PaymentManager.Application.Common.Dispatch;
 using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using PaymentManager.Application.Queries;

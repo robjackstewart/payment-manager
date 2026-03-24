@@ -1,6 +1,7 @@
 using FakeItEasy;
 using MockQueryable.FakeItEasy;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Domain.Entities;
 using PaymentManager.Domain.Enums;
 

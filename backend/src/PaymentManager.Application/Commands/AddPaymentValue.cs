@@ -1,8 +1,8 @@
 using FluentValidation;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Application.Common.Validation;
 using PaymentManager.Domain.Entities;
 using static PaymentManager.Application.Commands.AddPaymentValue;

@@ -1,5 +1,5 @@
 using FluentValidation;
-using MediatR;
+using PaymentManager.Application.Common.Dispatch;
 
 namespace PaymentManager.Application.Common.Validation;
 

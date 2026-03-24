@@ -1,6 +1,7 @@
 using CommunityToolkit.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Host.Local.Common;
 using PaymentManager.Infrastructure;
 
