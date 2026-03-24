@@ -7,7 +7,6 @@ COPY frontend/Taskfile.yml ./
 COPY frontend/package*.json ./
 RUN task install-locked-dependencies
 COPY frontend/ .
-ENV CONFIGURATION=Release
 RUN task build:production
 
 # Stage 2: Publish .NET WebAPI and build migrations bundle
