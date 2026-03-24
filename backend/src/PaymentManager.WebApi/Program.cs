@@ -8,5 +8,5 @@ var configuration = builder.Configuration.Get<WebApiConfiguration>();
 Guard.IsNotNull(configuration);
 builder.Services.AddPaymentManagerWebApi(configuration);
 var app = builder.Build();
-app.ConfigurePaymentManagerWebApi();
+app.ConfigurePaymentManagerWebApi(configuration);
 await app.RunAsync();

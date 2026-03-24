@@ -11,6 +11,15 @@ export SQLITE_DATABASE_PATH
 export ConnectionStrings__PaymentManager="Data Source=${SQLITE_DATABASE_PATH}"
 export DB_PATH="${SQLITE_DATABASE_PATH}"
 
+# BASE_PATH sets an optional URL prefix for reverse-proxy deployments (e.g. /payment-manager).
+# Strip any trailing slash so the value is consistently unprefixed.
+BASE_PATH="${BASE_PATH:-}"
+BASE_PATH="${BASE_PATH%/}"
+# Substitute the placeholder in the pre-built frontend config so Angular can read it at runtime.
+sed -i "s|__BASE_PATH__|${BASE_PATH}|g" /app/wwwroot/proxy.json
+# Export for ASP.NET Core configuration binding (maps to Configuration.BasePath).
+export BasePath="${BASE_PATH}"
+
 # Apply pending EF Core migrations using the pre-built bundle.
 # The bundle checks __EFMigrationsHistory and is safe to run on any database state.
 echo "[migrate] Applying migrations to ${DB_PATH}..."
