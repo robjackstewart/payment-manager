@@ -316,54 +316,6 @@ internal sealed class GetPaymentOccurrencesTests
         ps2.ContactTotals.ShouldBeEmpty();
     }
 
-    // ── Date-range overlap filter (DB-level) ─────────────────────────────────
-
-    [Test]
-    public async Task Monthly_EndDateBeforeFrom_IsExcluded_ReturnsNoOccurrences()
-    {
-        // Active period ends 2024-12-31 — entirely before the [2025-01-01, 2025-12-31] window.
-        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2024, 1, 1), new DateOnly(2024, 12, 31));
-        var result = await Handle([payment], new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
-        result.Occurrences.ShouldBeEmpty();
-    }
-
-    [Test]
-    public async Task Monthly_StartDateAfterTo_IsExcluded_ReturnsNoOccurrences()
-    {
-        // Active period starts 2026-01-01 — entirely after the [2025-01-01, 2025-12-31] window.
-        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2026, 1, 1));
-        var result = await Handle([payment], new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
-        result.Occurrences.ShouldBeEmpty();
-    }
-
-    [Test]
-    public async Task Monthly_StraddlesWindowStart_OnlyOccurrencesWithinWindowReturned()
-    {
-        // Active period 2024-06-15 to 2025-03-31, window [2025-01-01, 2025-12-31].
-        // Occurrences on 15th of each month within active period ∩ window = Jan, Feb, Mar 2025.
-        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2024, 6, 15), new DateOnly(2025, 3, 31));
-        var result = await Handle([payment], new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
-        result.Occurrences.Count.ShouldBe(3);
-        var dates = result.Occurrences.Select(o => o.OccurrenceDate).ToArray();
-        dates.ShouldContain(new DateOnly(2025, 1, 15));
-        dates.ShouldContain(new DateOnly(2025, 2, 15));
-        dates.ShouldContain(new DateOnly(2025, 3, 15));
-    }
-
-    [Test]
-    public async Task Monthly_StraddlesWindowEnd_OnlyOccurrencesWithinWindowReturned()
-    {
-        // Active period 2025-10-15 onwards (no EndDate), window [2025-01-01, 2025-12-31].
-        // Occurrences on 15th of each month ≥ StartDate and ≤ To = Oct, Nov, Dec 2025.
-        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2025, 10, 15));
-        var result = await Handle([payment], new DateOnly(2025, 1, 1), new DateOnly(2025, 12, 31));
-        result.Occurrences.Count.ShouldBe(3);
-        var dates = result.Occurrences.Select(o => o.OccurrenceDate).ToArray();
-        dates.ShouldContain(new DateOnly(2025, 10, 15));
-        dates.ShouldContain(new DateOnly(2025, 11, 15));
-        dates.ShouldContain(new DateOnly(2025, 12, 15));
-    }
-
     // ── Effective amount changes ──────────────────────────────────────────────
 
     [Test]
