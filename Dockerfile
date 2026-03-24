@@ -27,7 +27,9 @@ RUN task bundle-migrations OUTPUT=/app/efbundle
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 
 # crond is provided by busybox, which is included in Alpine
+# tini is used as PID 1 to handle zombie reaping and signal forwarding
 WORKDIR /app
+RUN apk add --no-cache tini
 
 COPY --from=backend-build /app/publish .
 COPY --from=backend-build /app/efbundle /scripts/efbundle
@@ -50,4 +52,4 @@ VOLUME /data
 
 EXPOSE 8080
 
-ENTRYPOINT ["/scripts/entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/scripts/entrypoint.sh"]
