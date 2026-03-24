@@ -4,8 +4,14 @@ namespace PaymentManager.WebApi;
 
 public static class ApplicationConfiguration
 {
-    public static WebApplication ConfigurePaymentManagerWebApi(this WebApplication app)
+    public static WebApplication ConfigurePaymentManagerWebApi(this WebApplication app, Configuration configuration)
     {
+        if (!string.IsNullOrEmpty(configuration.BasePath))
+        {
+            app.UsePathBase(configuration.BasePath);
+            app.UseRouting();
+        }
+
         app.UseDefaultFiles();
         app.UseStaticFiles();
 
