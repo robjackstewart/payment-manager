@@ -4,6 +4,7 @@ using MockQueryable.FakeItEasy;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Application.Queries;
 using PaymentManager.Domain.Entities;
 using Shouldly;

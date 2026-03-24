@@ -1,13 +1,13 @@
 using FakeItEasy;
-using MediatR;
+using PaymentManager.Application.Common.Dispatch;
 using NUnit.Framework;
 using PaymentManager.Application.Commands;
-using PaymentManager.Application.Common;
 using PaymentManager.Application.Queries;
 using PaymentManager.Domain.Enums;
 using PaymentManager.WebApi.Endpoints;
 using PaymentManager.WebApi.Services;
 using Shouldly;
+using PaymentManager.Application.Common;
 
 namespace PaymentManager.WebApi.Tests.Unit.Endpoints;
 

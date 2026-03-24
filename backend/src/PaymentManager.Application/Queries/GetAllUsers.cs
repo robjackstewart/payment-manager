@@ -1,7 +1,7 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using static PaymentManager.Application.Queries.GetAllUsers;
 using static PaymentManager.Application.Queries.GetAllUsers.Response;
 

@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using Shouldly;
 
 namespace PaymentManager.Application.Tests.Unit.Common;

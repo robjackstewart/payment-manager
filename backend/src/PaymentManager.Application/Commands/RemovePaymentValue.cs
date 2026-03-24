@@ -1,8 +1,8 @@
 using FluentValidation;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Domain.Entities;
 using static PaymentManager.Application.Common.Exceptions;
 
@@ -19,9 +19,9 @@ public record RemovePaymentValue(Guid PaymentId, DateOnly EffectiveDate) : IRequ
         }
     }
 
-    internal sealed class Handler(IPaymentManagerContext context, ILogger<Handler> logger) : IRequestHandler<RemovePaymentValue>
+    internal sealed class Handler(IPaymentManagerContext context, ILogger<Handler> logger) : IRequestHandler<RemovePaymentValue, Unit>
     {
-        public async Task Handle(RemovePaymentValue request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(RemovePaymentValue request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Removing effective value for payment '{PaymentId}' effective {EffectiveDate}", request.PaymentId, request.EffectiveDate);
 
@@ -38,6 +38,7 @@ public record RemovePaymentValue(Guid PaymentId, DateOnly EffectiveDate) : IRequ
             await context.SaveChanges(cancellationToken);
 
             logger.LogInformation("Removed effective value for payment '{PaymentId}' effective {EffectiveDate}", request.PaymentId, request.EffectiveDate);
+            return Unit.Value;
         }
     }
 }

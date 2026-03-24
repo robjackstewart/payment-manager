@@ -2,11 +2,12 @@ using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using FluentValidation.TestHelper;
 using FakeItEasy;
-using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 using PaymentManager.Domain.Entities;
 using MockQueryable.FakeItEasy;
 using Shouldly;
 using Microsoft.Extensions.Logging.Testing;
+using PaymentManager.Application.Common;
 
 namespace PaymentManager.Application.Tests.Unit.Commands;
 

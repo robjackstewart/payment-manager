@@ -1,5 +1,5 @@
 using FakeItEasy;
-using MediatR;
+using PaymentManager.Application.Common.Dispatch;
 using NUnit.Framework;
 using PaymentManager.Application.Commands;
 using PaymentManager.Application.Queries;
@@ -137,7 +137,7 @@ internal sealed class PaymentSourceEndpointTests
         var id = Guid.NewGuid();
         var sender = A.Fake<ISender>();
         A.CallTo(() => sender.Send(A<DeletePaymentSource>._, A<CancellationToken>._))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(Application.Common.Dispatch.Unit.Value));
 
         // Act
         var result = await PaymentSourceEndpoints.HandleDelete(id, sender, cancellationToken);

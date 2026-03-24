@@ -2,6 +2,7 @@ using CommunityToolkit.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentManager.Application.Common;
+using PaymentManager.Application.Common.Dispatch;
 
 namespace PaymentManager.Infrastructure;
 
