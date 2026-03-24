@@ -1,5 +1,5 @@
-import { Component, computed, effect, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, computed, effect, inject, signal, ViewChild, AfterViewInit } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatNavList, MatListItem, MatListItemIcon, MatListItemTitle } from '@angular/material/list';
@@ -33,7 +33,10 @@ import { MatTooltip } from '@angular/material/tooltip';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit {
+  @ViewChild(MatSidenav, { static: false }) private readonly sidenav!: MatSidenav;
+
+  private readonly router = inject(Router);
   readonly isMobile = signal(window.innerWidth < 768);
   readonly sidenavMode = computed(() => this.isMobile() ? 'over' : 'side');
   readonly sidenavOpened = computed(() => !this.isMobile());
@@ -54,6 +57,14 @@ export class AppComponent {
 
   toggleDarkMode(): void {
     this.isDarkMode.update(v => !v);
+  }
+
+  ngAfterViewInit(): void {
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd && this.isMobile()) {
+        this.sidenav.close();
+      }
+    });
   }
 }
 
