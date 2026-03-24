@@ -10,6 +10,6 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(withFetch()),
-    provideApi(environment.apiBaseUrl),
+    provideApi(environment.apiBaseUrl ?? window.location.origin),
   ]
 };
