@@ -15,7 +15,7 @@
   transition: box-shadow 0.2s;
 
   &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--mat-sys-shadow) 20%, transparent);
   }
 
   .stat-number {
@@ -38,18 +38,18 @@
   gap: 12px;
   margin-top: 24px;
   padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 8px;
 }
 
 .month-filter-icon {
-  color: rgba(0, 0, 0, 0.54);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .month-filter-label {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.54);
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .month-picker-field {
@@ -71,7 +71,7 @@
     flex-direction: column;
     align-items: center;
     padding: 32px;
-    color: rgba(0, 0, 0, 0.38);
+    color: var(--mat-sys-on-surface-variant);
 
     mat-icon {
       font-size: 48px;
@@ -97,7 +97,7 @@
     font-size: 11px;
     font-weight: 600;
     margin: 0 0 10px;
-    color: rgba(0, 0, 0, 0.45);
+    color: var(--mat-sys-on-surface-variant);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
@@ -107,12 +107,12 @@
   .summary-person-list {
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--mat-sys-outline-variant);
     border-radius: 6px;
     overflow: hidden;
 
     &--inset {
-      border-color: rgba(0, 0, 0, 0.08);
+      border-color: var(--mat-sys-outline-variant);
     }
   }
 
@@ -121,14 +121,14 @@
     align-items: center;
     gap: 10px;
     padding: 8px 12px;
-    background: #fff;
+    background: var(--mat-sys-surface-container);
 
     &:not(:last-child) {
-      border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+      border-bottom: 1px solid var(--mat-sys-outline-variant);
     }
 
     &--you {
-      background: rgba(var(--mat-sys-primary-rgb, 63, 81, 181), 0.06);
+      background: color-mix(in srgb, var(--mat-sys-primary) 10%, var(--mat-sys-surface-container));
     }
   }
 
@@ -136,7 +136,7 @@
     font-size: 18px;
     width: 18px;
     height: 18px;
-    color: rgba(0, 0, 0, 0.38);
+    color: var(--mat-sys-on-surface-variant);
     flex-shrink: 0;
   }
 
@@ -158,8 +158,8 @@
   // ── Payment source panels ─────────────────────────────────────────────────
 
   .summary-source-panel {
-    border-left: 3px solid rgba(0, 0, 0, 0.15);
-    background: rgba(0, 0, 0, 0.02);
+    border-left: 3px solid var(--mat-sys-outline);
+    background: var(--mat-sys-surface-container-low);
     border-radius: 0 6px 6px 0;
     padding: 10px 12px 12px;
     margin-bottom: 10px;
@@ -180,7 +180,7 @@
     font-size: 18px;
     width: 18px;
     height: 18px;
-    color: rgba(0, 0, 0, 0.54);
+    color: var(--mat-sys-on-surface-variant);
     flex-shrink: 0;
   }
 
@@ -188,13 +188,13 @@
     flex: 1;
     font-size: 13px;
     font-weight: 600;
-    color: rgba(0, 0, 0, 0.75);
+    color: var(--mat-sys-on-surface);
   }
 
   .summary-source-total {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(0, 0, 0, 0.54);
+    color: var(--mat-sys-on-surface-variant);
     font-variant-numeric: tabular-nums;
   }
 

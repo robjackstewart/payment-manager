@@ -37,6 +37,15 @@ body {
 }
 /* You can add global styles to this file, and also import other style files */
 
+body.dark-theme {
+  color-scheme: dark;
+}
+
+// Make tables transparent so they inherit the card background.
+.mat-mdc-table {
+  --mat-table-background-color: transparent;
+}
+
 .full-width {
   width: 100%;
 }

@@ -35,8 +35,16 @@
           <mat-icon>menu</mat-icon>
         </button>
       }
-      <span class="toolbar-title">Payment Manager</span>
       <span class="spacer"></span>
+      <mat-icon class="theme-icon">light_mode</mat-icon>
+      <mat-slide-toggle
+        [checked]="isDarkMode()"
+        (change)="toggleDarkMode()"
+        matTooltip="Toggle dark mode"
+        aria-label="Toggle dark mode"
+        class="theme-toggle"
+      />
+      <mat-icon class="theme-icon">dark_mode</mat-icon>
     </mat-toolbar>
     <main class="content">
       <router-outlet />
