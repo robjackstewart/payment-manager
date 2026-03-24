@@ -1,34 +1,28 @@
 # Stage 1: Build Angular frontend
 FROM node:24-alpine AS frontend-build
 WORKDIR /app
+RUN apk add --no-cache curl && \
+    sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -b /usr/local/bin
+COPY frontend/Taskfile.yml ./
 COPY frontend/package*.json ./
-RUN npm ci
+RUN task install-locked-dependencies
 COPY frontend/ .
-RUN npm run build -- --configuration production
+ENV CONFIGURATION=Release
+RUN task build:production
 
 # Stage 2: Publish .NET WebAPI and build migrations bundle
 # Use Alpine SDK so the native SQLite library targets musl (matching the runtime image)
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS backend-build
 WORKDIR /src
+RUN apk add --no-cache curl && \
+    sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -b /usr/local/bin
 COPY Directory.Packages.props .
 COPY .config/ .config/
+COPY backend/Taskfile.yml ./
 COPY backend/ .
-RUN dotnet publish src/PaymentManager.WebApi/PaymentManager.WebApi.csproj \
-    --configuration Release \
-    --output /app/publish \
-    --no-self-contained
-
-# Restore local tools (dotnet-ef) from .config/dotnet-tools.json
-RUN dotnet tool restore
-# The bundle checks __EFMigrationsHistory and only applies pending migrations,
-# making it safe to run on both fresh and existing databases.
-# (--idempotent is not supported for SQLite; the bundle handles idempotency itself.)
-RUN dotnet tool run dotnet-ef migrations bundle \
-    --self-contained \
-    --output /app/efbundle \
-    --project src/PaymentManager.Infrastructure/PaymentManager.Infrastructure.Sqlite.csproj \
-    --startup-project src/PaymentManager.WebApi/PaymentManager.WebApi.csproj \
-    --configuration Release
+ENV CONFIGURATION=Release
+RUN task publish OUTPUT=/app/publish
+RUN task bundle-migrations OUTPUT=/app/efbundle
 
 # Stage 3: Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final

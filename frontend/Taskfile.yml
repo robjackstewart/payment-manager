@@ -20,6 +20,10 @@ tasks:
     cmds:
       - npm run build
 
+  build:production:
+    cmds:
+      - npm run build -- --configuration production
+
   dev:
     cmds:
       - npm run dev

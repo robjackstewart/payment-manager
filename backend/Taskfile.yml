@@ -12,6 +12,33 @@ tasks:
     cmds:
       - dotnet build
 
+  restore-tools:
+    cmds:
+      - dotnet tool restore
+
+  publish:
+    vars:
+      OUTPUT: '{{.OUTPUT | default "./publish"}}'
+      CONFIGURATION: '{{.CONFIGURATION | default "Debug"}}'
+    cmds:
+      - dotnet publish src/PaymentManager.WebApi/PaymentManager.WebApi.csproj
+          --configuration {{.CONFIGURATION}}
+          --output {{.OUTPUT}}
+          --no-self-contained
+
+  bundle-migrations:
+    vars:
+      OUTPUT: '{{.OUTPUT | default "./efbundle"}}'
+      CONFIGURATION: '{{.CONFIGURATION | default "Debug"}}'
+    deps: [restore-tools]
+    cmds:
+      - dotnet tool run dotnet-ef migrations bundle
+          --self-contained
+          --output {{.OUTPUT}}
+          --project src/PaymentManager.Infrastructure/PaymentManager.Infrastructure.Sqlite.csproj
+          --startup-project src/PaymentManager.WebApi/PaymentManager.WebApi.csproj
+          --configuration {{.CONFIGURATION}}
+
   install-locked-dependencies:
     cmds:
       - dotnet restore --locked-mode
