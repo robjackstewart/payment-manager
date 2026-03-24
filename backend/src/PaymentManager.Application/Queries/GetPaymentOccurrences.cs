@@ -21,7 +21,9 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 request.UserId, request.From, request.To);
 
             var payments = await context.Payments
-                .Where(x => x.UserId == request.UserId)
+                .Where(x => x.UserId == request.UserId
+                    && x.StartDate <= request.To
+                    && (x.EndDate == null || x.EndDate >= request.From))
                 .ToArrayAsync(cancellationToken);
 
             var paymentIds = payments.Select(p => p.Id).ToHashSet();
@@ -36,7 +38,7 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 .ToDictionary(g => g.Key, g => g.ToArray());
 
             var effectiveValueRows = await context.EffectivePaymentValues
-                .Where(v => paymentIds.Contains(v.PaymentId))
+                .Where(v => paymentIds.Contains(v.PaymentId) && v.EffectiveDate <= request.To)
                 .OrderBy(v => v.EffectiveDate)
                 .ToArrayAsync(cancellationToken);
 
