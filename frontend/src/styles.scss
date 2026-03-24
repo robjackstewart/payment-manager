@@ -46,6 +46,14 @@ body.dark-theme {
   --mat-table-background-color: transparent;
 }
 
+// On mobile, make dialogs fill the screen width with small padding.
+@media (max-width: 767px) {
+  .cdk-overlay-pane.mat-mdc-dialog-panel {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+  }
+}
+
 .full-width {
   width: 100%;
 }
@@ -55,6 +63,11 @@ body.dark-theme {
   flex-direction: column;
   gap: 4px;
   min-width: 420px;
+
+  @media (max-width: 767px) {
+    min-width: unset;
+    width: 100%;
+  }
 }
 
 .split-section {
