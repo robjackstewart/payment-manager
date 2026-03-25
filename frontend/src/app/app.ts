@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal, ViewChild, AfterViewInit } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd, ActivatedRouteSnapshot } from '@angular/router';
 import { MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatNavList, MatListItem, MatListItemIcon, MatListItemTitle } from '@angular/material/list';
@@ -59,12 +59,22 @@ export class AppComponent implements AfterViewInit {
     this.isDarkMode.update(v => !v);
   }
 
+  readonly pageTitle = signal('');
+
   ngAfterViewInit(): void {
+    this.pageTitle.set(this.getActiveTitle());
     this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd && this.isMobile()) {
-        this.sidenav.close();
+      if (event instanceof NavigationEnd) {
+        this.pageTitle.set(this.getActiveTitle());
+        if (this.isMobile()) this.sidenav.close();
       }
     });
+  }
+
+  private getActiveTitle(): string {
+    let snapshot: ActivatedRouteSnapshot = this.router.routerState.snapshot.root;
+    while (snapshot.firstChild) snapshot = snapshot.firstChild;
+    return snapshot.title ?? '';
   }
 }
 
