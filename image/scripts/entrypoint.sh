@@ -15,8 +15,11 @@ export DB_PATH="${SQLITE_DATABASE_PATH}"
 # Strip any trailing slash so the value is consistently unprefixed.
 BASE_PATH="${BASE_PATH:-}"
 BASE_PATH="${BASE_PATH%/}"
-# Substitute the placeholder in the pre-built frontend config so Angular can read it at runtime.
-sed -i "s|__BASE_PATH__|${BASE_PATH}|g" /app/wwwroot/proxy.json
+# If a base path is configured, rewrite the <base href> in the pre-built index.html so the
+# browser resolves all chunk URLs relative to the correct path. Defaults to / when unset.
+if [ -n "$BASE_PATH" ]; then
+  sed -i "s|<base href=\"[^\"]*\">|<base href=\"${BASE_PATH}/\">|" /app/wwwroot/index.html
+fi
 # Export for ASP.NET Core configuration binding (maps to Configuration.BasePath).
 export BasePath="${BASE_PATH}"
 
