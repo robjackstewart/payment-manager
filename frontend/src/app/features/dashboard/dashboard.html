@@ -1,58 +1,5 @@
 <h1 class="dashboard-header">Dashboard</h1>
 
-<div class="dashboard-grid">
-  <mat-card class="stat-card" routerLink="/payment-sources">
-    <mat-card-header>
-      <mat-icon mat-card-avatar>credit_card</mat-icon>
-      <mat-card-title>Payment Sources</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (loading()) {
-        <mat-spinner diameter="40" />
-      } @else {
-        <p class="stat-number">{{ paymentSourceCount() }}</p>
-      }
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-button routerLink="/payment-sources" color="primary">VIEW ALL</button>
-    </mat-card-actions>
-  </mat-card>
-
-  <mat-card class="stat-card" routerLink="/payees">
-    <mat-card-header>
-      <mat-icon mat-card-avatar>store</mat-icon>
-      <mat-card-title>Payees</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (loading()) {
-        <mat-spinner diameter="40" />
-      } @else {
-        <p class="stat-number">{{ payeeCount() }}</p>
-      }
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-button routerLink="/payees" color="primary">VIEW ALL</button>
-    </mat-card-actions>
-  </mat-card>
-
-  <mat-card class="stat-card" routerLink="/payments">
-    <mat-card-header>
-      <mat-icon mat-card-avatar>payments</mat-icon>
-      <mat-card-title>Payments</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (loading()) {
-        <mat-spinner diameter="40" />
-      } @else {
-        <p class="stat-number">{{ paymentCount() }}</p>
-      }
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-button routerLink="/payments" color="primary">VIEW ALL</button>
-    </mat-card-actions>
-  </mat-card>
-</div>
-
 <!-- Month filter bar -->
 <div class="month-filter-bar">
   <mat-icon class="month-filter-icon">calendar_month</mat-icon>
@@ -79,9 +26,17 @@
         <mat-card-header>
           <mat-icon mat-card-avatar>pie_chart</mat-icon>
           <mat-card-title>Cost Breakdown — {{ summary.currency }}</mat-card-title>
-          <mat-card-subtitle>Total {{ summary.totalAmount }}</mat-card-subtitle>
+          <mat-card-subtitle>
+            Total {{ summary.totalAmount }}
+            @if (summary.delta) {
+              <span [class]="'delta delta--' + summary.deltaState">{{ summary.delta }}</span>
+            }
+          </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
+          @if (summary.pieSlices.length > 1) {
+            <app-source-pie-chart [slices]="summary.pieSlices" [currency]="summary.currency" />
+          }
           <div class="summary-section">
             <p class="summary-section-title">Overall</p>
             <div class="summary-person-list">

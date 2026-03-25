@@ -1,9 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { MAT_DATE_FORMATS, provideNativeDateAdapter } from '@angular/material/core';
-import { MatCard, MatCardHeader, MatCardAvatar, MatCardTitle, MatCardSubtitle, MatCardContent, MatCardActions } from '@angular/material/card';
-import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardHeader, MatCardAvatar, MatCardTitle, MatCardSubtitle, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTable, MatColumnDef, MatHeaderCell, MatHeaderCellDef, MatCell, MatCellDef, MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef } from '@angular/material/table';
@@ -21,6 +19,7 @@ import { Payee } from '../../core/models/payee.model';
 import { PaymentSource } from '../../core/models/payment-source.model';
 import { Contact } from '../../core/models/contact.model';
 import { forkJoin } from 'rxjs';
+import { SourcePieChartComponent, PieSlice } from './source-pie-chart';
 
 interface OccurrenceViewModel {
   formattedDate: string;
@@ -48,8 +47,11 @@ interface SummaryViewModel {
   currency: string;
   totalAmount: string;
   userTotal: string;
+  delta: string | null;
+  deltaState: 'increase' | 'decrease' | 'same' | null;
   contacts: SummaryContactRow[];
   byPaymentSource: PaymentSourceSummaryVm[];
+  pieSlices: PieSlice[];
 }
 
 @Component({
@@ -73,15 +75,12 @@ interface SummaryViewModel {
     },
   ],
   imports: [
-    RouterLink,
     MatCard,
     MatCardHeader,
     MatCardAvatar,
     MatCardTitle,
     MatCardSubtitle,
     MatCardContent,
-    MatCardActions,
-    MatButton,
     MatIcon,
     MatProgressSpinner,
     MatTable,
@@ -103,6 +102,7 @@ interface SummaryViewModel {
     MatDatepickerToggle,
     MatDivider,
     ReactiveFormsModule,
+    SourcePieChartComponent,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
@@ -116,12 +116,10 @@ export class DashboardComponent implements OnInit {
   private readonly datePipe = inject(DatePipe);
 
   readonly loading = signal(false);
-  readonly paymentSourceCount = signal(0);
-  readonly payeeCount = signal(0);
-  readonly paymentCount = signal(0);
 
   readonly occurrences = signal<PaymentOccurrence[]>([]);
   readonly occurrencesSummary = signal<OccurrenceSummary[]>([]);
+  readonly prevOccurrencesSummary = signal<OccurrenceSummary[]>([]);
   readonly occurrencesLoading = signal(false);
   readonly payees = signal<Payee[]>([]);
   readonly contacts = signal<Contact[]>([]);
@@ -166,25 +164,50 @@ export class DashboardComponent implements OnInit {
   readonly summaryViewModel = computed<SummaryViewModel[]>(() => {
     const contactsMap = this.contactsMap();
     const paymentSourcesMap = this.paymentSourcesMap();
+    const prevSummary = this.prevOccurrencesSummary();
 
-    return this.occurrencesSummary().map(s => ({
-      currency: s.currency,
-      totalAmount: this.currencyPipe.transform(s.totalAmount, s.currency) ?? String(s.totalAmount),
-      userTotal: this.currencyPipe.transform(s.userTotal, s.currency) ?? String(s.userTotal),
-      contacts: s.contactTotals.map(c => ({
-        name: contactsMap[c.contactId] ?? c.contactId,
-        amount: this.currencyPipe.transform(c.amount, s.currency) ?? String(c.amount),
-      })),
-      byPaymentSource: s.byPaymentSource.map(ps => ({
-        sourceName: paymentSourcesMap[ps.paymentSourceId] ?? ps.paymentSourceId,
-        totalAmount: this.currencyPipe.transform(ps.totalAmount, s.currency) ?? String(ps.totalAmount),
-        userTotal: this.currencyPipe.transform(ps.userTotal, s.currency) ?? String(ps.userTotal),
-        contacts: ps.contactTotals.map(c => ({
+    return this.occurrencesSummary().map(s => {
+      const prev = prevSummary.find(p => p.currency === s.currency);
+      const deltaAmount = prev != null ? s.totalAmount - prev.totalAmount : null;
+      let delta: string | null = null;
+      let deltaState: SummaryViewModel['deltaState'] = null;
+      if (deltaAmount !== null) {
+        if (deltaAmount === 0) {
+          delta = '— Same as last month';
+          deltaState = 'same';
+        } else {
+          const abs = Math.abs(deltaAmount);
+          const formatted = this.currencyPipe.transform(abs, s.currency) ?? String(abs);
+          delta = deltaAmount > 0 ? `▲ ${formatted} vs last month` : `▼ ${formatted} vs last month`;
+          deltaState = deltaAmount > 0 ? 'increase' : 'decrease';
+        }
+      }
+
+      return {
+        currency: s.currency,
+        totalAmount: this.currencyPipe.transform(s.totalAmount, s.currency) ?? String(s.totalAmount),
+        userTotal: this.currencyPipe.transform(s.userTotal, s.currency) ?? String(s.userTotal),
+        delta,
+        deltaState,
+        contacts: s.contactTotals.map(c => ({
           name: contactsMap[c.contactId] ?? c.contactId,
           amount: this.currencyPipe.transform(c.amount, s.currency) ?? String(c.amount),
         })),
-      })),
-    }));
+        byPaymentSource: s.byPaymentSource.map(ps => ({
+          sourceName: paymentSourcesMap[ps.paymentSourceId] ?? ps.paymentSourceId,
+          totalAmount: this.currencyPipe.transform(ps.totalAmount, s.currency) ?? String(ps.totalAmount),
+          userTotal: this.currencyPipe.transform(ps.userTotal, s.currency) ?? String(ps.userTotal),
+          contacts: ps.contactTotals.map(c => ({
+            name: contactsMap[c.contactId] ?? c.contactId,
+            amount: this.currencyPipe.transform(c.amount, s.currency) ?? String(c.amount),
+          })),
+        })),
+        pieSlices: s.byPaymentSource.map(ps => ({
+          label: paymentSourcesMap[ps.paymentSourceId] ?? ps.paymentSourceId,
+          amount: ps.totalAmount,
+        })),
+      };
+    });
   });
 
   // Month picker — defaults to current month
@@ -200,13 +223,9 @@ export class DashboardComponent implements OnInit {
     forkJoin({
       paymentSources: this.paymentSourceService.getAll(),
       payees: this.payeeService.getAll(),
-      payments: this.paymentService.getAll(),
       contacts: this.contactService.getAll(),
     }).subscribe({
-      next: ({ paymentSources, payees, payments, contacts }) => {
-        this.paymentSourceCount.set(paymentSources.length);
-        this.payeeCount.set(payees.length);
-        this.paymentCount.set(payments.length);
+      next: ({ paymentSources, payees, contacts }) => {
         this.payees.set(payees);
         this.paymentSources.set(paymentSources);
         this.contacts.set(contacts);
@@ -228,17 +247,21 @@ export class DashboardComponent implements OnInit {
   private loadOccurrences(date: Date): void {
     const from = new Date(date.getFullYear(), date.getMonth(), 1);
     const to = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    const fromStr = this.toDateString(from);
-    const toStr = this.toDateString(to);
+    const prevFrom = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+    const prevTo = new Date(date.getFullYear(), date.getMonth(), 0);
 
     this.occurrencesLoading.set(true);
-    this.paymentService.getOccurrences(fromStr, toStr).subscribe({
-      next: ({ occurrences, summary }) => {
-        this.occurrences.set(occurrences);
-        this.occurrencesSummary.set(summary);
+    forkJoin({
+      current: this.paymentService.getOccurrences(this.toDateString(from), this.toDateString(to)),
+      previous: this.paymentService.getOccurrences(this.toDateString(prevFrom), this.toDateString(prevTo)),
+    }).subscribe({
+      next: ({ current, previous }) => {
+        this.occurrences.set(current.occurrences);
+        this.occurrencesSummary.set(current.summary);
+        this.prevOccurrencesSummary.set(previous.summary);
         this.occurrencesLoading.set(false);
       },
-      error: () => this.occurrencesLoading.set(false)
+      error: () => this.occurrencesLoading.set(false),
     });
   }
 
