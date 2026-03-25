@@ -182,5 +182,6 @@
 
     &--increase { color: #ed6c02; }
     &--decrease { color: #2e7d32; }
+    &--same { color: var(--mat-sys-primary); }
   }
 }

@@ -48,7 +48,7 @@ interface SummaryViewModel {
   totalAmount: string;
   userTotal: string;
   delta: string | null;
-  deltaIsIncrease: boolean;
+  deltaState: 'increase' | 'decrease' | 'same' | null;
   contacts: SummaryContactRow[];
   byPaymentSource: PaymentSourceSummaryVm[];
   pieSlices: PieSlice[];
@@ -170,12 +170,17 @@ export class DashboardComponent implements OnInit {
       const prev = prevSummary.find(p => p.currency === s.currency);
       const deltaAmount = prev != null ? s.totalAmount - prev.totalAmount : null;
       let delta: string | null = null;
-      let deltaIsIncrease = false;
+      let deltaState: SummaryViewModel['deltaState'] = null;
       if (deltaAmount !== null) {
-        const abs = Math.abs(deltaAmount);
-        const formatted = this.currencyPipe.transform(abs, s.currency) ?? String(abs);
-        delta = deltaAmount >= 0 ? `▲ ${formatted} vs last month` : `▼ ${formatted} vs last month`;
-        deltaIsIncrease = deltaAmount > 0;
+        if (deltaAmount === 0) {
+          delta = '— Same as last month';
+          deltaState = 'same';
+        } else {
+          const abs = Math.abs(deltaAmount);
+          const formatted = this.currencyPipe.transform(abs, s.currency) ?? String(abs);
+          delta = deltaAmount > 0 ? `▲ ${formatted} vs last month` : `▼ ${formatted} vs last month`;
+          deltaState = deltaAmount > 0 ? 'increase' : 'decrease';
+        }
       }
 
       return {
@@ -183,7 +188,7 @@ export class DashboardComponent implements OnInit {
         totalAmount: this.currencyPipe.transform(s.totalAmount, s.currency) ?? String(s.totalAmount),
         userTotal: this.currencyPipe.transform(s.userTotal, s.currency) ?? String(s.userTotal),
         delta,
-        deltaIsIncrease,
+        deltaState,
         contacts: s.contactTotals.map(c => ({
           name: contactsMap[c.contactId] ?? c.contactId,
           amount: this.currencyPipe.transform(c.amount, s.currency) ?? String(c.amount),

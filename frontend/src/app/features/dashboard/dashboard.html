@@ -29,7 +29,7 @@
           <mat-card-subtitle>
             Total {{ summary.totalAmount }}
             @if (summary.delta) {
-              <span [class]="summary.deltaIsIncrease ? 'delta delta--increase' : 'delta delta--decrease'">{{ summary.delta }}</span>
+              <span [class]="'delta delta--' + summary.deltaState">{{ summary.delta }}</span>
             }
           </mat-card-subtitle>
         </mat-card-header>
