@@ -7,7 +7,7 @@ COPY frontend/Taskfile.yml ./
 COPY frontend/package*.json ./
 RUN task install-locked-dependencies
 COPY frontend/ .
-RUN task build:app-image
+RUN task build:production
 
 # Stage 2: Publish .NET WebAPI and build migrations bundle
 # Use Alpine SDK so the native SQLite library targets musl (matching the runtime image)
