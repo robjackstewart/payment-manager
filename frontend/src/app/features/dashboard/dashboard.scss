@@ -4,34 +4,6 @@
   font-weight: 500;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-
-  &:hover {
-    box-shadow: 0 4px 20px color-mix(in srgb, var(--mat-sys-shadow) 20%, transparent);
-  }
-
-  .stat-number {
-    font-size: 48px;
-    font-weight: 700;
-    margin: 8px 0;
-    text-align: center;
-  }
-
-  mat-icon[mat-card-avatar] {
-    font-size: 40px;
-    width: 40px;
-    height: 40px;
-  }
-}
-
 .month-filter-bar {
   display: flex;
   align-items: center;
@@ -200,5 +172,15 @@
 
   mat-divider {
     margin: 4px 0;
+  }
+
+  .delta {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: 500;
+
+    &--increase { color: #ed6c02; }
+    &--decrease { color: #2e7d32; }
   }
 }
