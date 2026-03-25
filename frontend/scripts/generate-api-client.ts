@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,18 +55,25 @@ console.log('→ Removing existing .ts files from output directory...');
 deleteTsFiles(outputDir);
 console.log('');
 
-const command = [
-  'docker run --rm',
-  `-v "${inputMount}:/local/input:ro"`,
-  `-v "${outputMount}:/local/output"`,
-  'openapitools/openapi-generator-cli:latest generate',
-  `--input-spec /local/input/${specFile}`,
-  '--generator-name typescript-angular',
-  '--output /local/output',
+const dockerArgs = [
+  'run',
+  '--rm',
+  '-v',
+  `${inputMount}:/local/input:ro`,
+  '-v',
+  `${outputMount}:/local/output`,
+  'openapitools/openapi-generator-cli:latest',
+  'generate',
+  '--input-spec',
+  `/local/input/${specFile}`,
+  '--generator-name',
+  'typescript-angular',
+  '--output',
+  '/local/output',
   `--additional-properties=${additionalProperties}`,
-].join(' ');
+];
 
-execSync(command, { stdio: 'inherit' });
+execFileSync('docker', dockerArgs, { stdio: 'inherit' });
 
 const generatedTsConfig = resolve(outputDir, 'tsconfig.json');
 const tsConfig = JSON.parse(readFileSync(generatedTsConfig, 'utf-8'));
