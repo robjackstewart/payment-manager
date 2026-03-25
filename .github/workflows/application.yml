@@ -3,6 +3,9 @@ name: Application
 on:
   - pull_request
 
+permissions:
+  contents: read
+
 env:
   tag: ${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
 
