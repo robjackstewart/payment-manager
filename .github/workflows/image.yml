@@ -8,12 +8,13 @@ on:
     tags:
       - '*'
 
-env:
-  TAG: ${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
-  REPOSITORY: ghcr.io/${GITHUB_REPOSITORY}
 permissions:
   contents: read
   packages: write
+
+env:
+  TAG: ${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
+  REPOSITORY: ghcr.io/${GITHUB_REPOSITORY}
 
 jobs:
   build:
