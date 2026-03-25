@@ -6,6 +6,9 @@ on:
 env:
   tag: ${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
 
+permissions:
+  contents: read
+
 jobs:
   backend:
     runs-on: ubuntu-24.04
