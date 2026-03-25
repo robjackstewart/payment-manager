@@ -24,6 +24,10 @@ tasks:
     cmds:
       - npm run build -- --configuration production
 
+  build:app-image:
+    cmds:
+      - npm run build -- --configuration app-image
+
   dev:
     cmds:
       - npm run dev
