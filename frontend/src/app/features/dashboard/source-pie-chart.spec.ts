@@ -1,16 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('ag-charts-community', () => ({
-  AgCharts: {
-    create: vi.fn().mockReturnValue({
-      update: vi.fn().mockResolvedValue(undefined),
-      destroy: vi.fn(),
-    }),
-  },
-  ModuleRegistry: { registerModules: vi.fn() },
-  PieSeriesModule: {},
-}));
-
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { AgCharts } from 'ag-charts-community';
 import { SourcePieChartComponent } from './source-pie-chart';
@@ -18,8 +6,15 @@ import { SourcePieChartComponent } from './source-pie-chart';
 describe('SourcePieChartComponent', () => {
   let fixture: ComponentFixture<SourcePieChartComponent>;
   let component: SourcePieChartComponent;
+  let fakeChart: { update: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    fakeChart = {
+      update: vi.fn().mockResolvedValue(undefined),
+      destroy: vi.fn(),
+    };
+    vi.spyOn(AgCharts, 'create').mockReturnValue(fakeChart as unknown as ReturnType<typeof AgCharts.create>);
+
     await TestBed.configureTestingModule({
       imports: [SourcePieChartComponent],
     }).compileComponents();
@@ -29,7 +24,7 @@ describe('SourcePieChartComponent', () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
     document.body.classList.remove('dark-theme');
   });
 
@@ -41,11 +36,10 @@ describe('SourcePieChartComponent', () => {
 
   it('calls chart.update when ngOnChanges is called after init', () => {
     fixture.detectChanges();
-    const chartMock = (AgCharts.create as ReturnType<typeof vi.fn>).mock.results[0].value;
 
     component.ngOnChanges();
 
-    expect(chartMock.update).toHaveBeenCalled();
+    expect(fakeChart.update).toHaveBeenCalled();
   });
 
   it('does not call chart.update when ngOnChanges is called before init', () => {
@@ -56,11 +50,10 @@ describe('SourcePieChartComponent', () => {
 
   it('calls chart.destroy and disconnects observer on ngOnDestroy', () => {
     fixture.detectChanges();
-    const chartMock = (AgCharts.create as ReturnType<typeof vi.fn>).mock.results[0].value;
 
     component.ngOnDestroy();
 
-    expect(chartMock.destroy).toHaveBeenCalled();
+    expect(fakeChart.destroy).toHaveBeenCalled();
   });
 
   it('uses dark theme when body has dark-theme class', () => {
@@ -68,14 +61,16 @@ describe('SourcePieChartComponent', () => {
 
     fixture.detectChanges();
 
-    const createCall = (AgCharts.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const createCall = vi.mocked(AgCharts.create).mock.calls[0][0] as any;
     expect(createCall.theme.baseTheme).toBe('ag-material-dark');
   });
 
   it('uses light theme when body does not have dark-theme class', () => {
     fixture.detectChanges();
 
-    const createCall = (AgCharts.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const createCall = vi.mocked(AgCharts.create).mock.calls[0][0] as any;
     expect(createCall.theme.baseTheme).toBe('ag-material');
   });
 
@@ -87,14 +82,15 @@ describe('SourcePieChartComponent', () => {
     fixture.componentRef.setInput('slices', slices);
     fixture.detectChanges();
 
-    const createCall = (AgCharts.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const createCall = vi.mocked(AgCharts.create).mock.calls[0][0];
     expect(createCall.data).toEqual(slices);
   });
 
   it('sets background fill to transparent', () => {
     fixture.detectChanges();
 
-    const createCall = (AgCharts.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const createCall = vi.mocked(AgCharts.create).mock.calls[0][0] as any;
     expect(createCall.background.fill).toBe('transparent');
   });
 });

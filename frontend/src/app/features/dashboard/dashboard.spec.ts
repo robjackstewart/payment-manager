@@ -1,20 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('ag-charts-community', () => ({
-  AgCharts: {
-    create: vi.fn().mockReturnValue({
-      update: vi.fn().mockResolvedValue(undefined),
-      destroy: vi.fn(),
-    }),
-  },
-  ModuleRegistry: { registerModules: vi.fn() },
-  PieSeriesModule: {},
-}));
-
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { of } from 'rxjs';
+import { AgCharts } from 'ag-charts-community';
 import { ContactService } from '../../core/services/contact.service';
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentSourceService } from '../../core/services/payment-source.service';
@@ -49,6 +38,11 @@ function makeOccurrenceResponse(
 }
 
 function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
+  vi.spyOn(AgCharts, 'create').mockReturnValue({
+    update: vi.fn().mockResolvedValue(undefined),
+    destroy: vi.fn(),
+  } as unknown as ReturnType<typeof AgCharts.create>);
+
   const mockPaymentService = {
     getOccurrences: getOccurrencesMock ?? vi.fn().mockReturnValue(of(makeOccurrenceResponse())),
   };
@@ -74,7 +68,7 @@ function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
 
 describe('DashboardComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   describe('reference data', () => {
     it('exposes payees after loading', async () => {

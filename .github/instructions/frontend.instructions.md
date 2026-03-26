@@ -293,3 +293,47 @@ This builds with source maps and opens `source-map-explorer` to show exactly whi
 - Test files are colocated with source files (`*.spec.ts`).
 - Use `TestBed` for component/service tests that need the Angular DI container.
 - Prefer testing behaviour over implementation details — assert on rendered output and signal values, not internal method calls.
+
+## Mocking External Packages
+
+**Never use `vi.mock('package-name', ...)` for node_modules packages.** Angular's `@angular/build:unit-test` builder sets `externalPackages: true` in esbuild, which leaves all node_modules unbundled. When vitest processes `vi.mock(...)` for an external package, it tries to resolve the package to a file path — but since esbuild never bundled it, the resolution returns `undefined` and vitest crashes with `TypeError: Cannot read properties of undefined (reading 'trim')`. This failure is flaky when multiple spec files mock the same package.
+
+**Use `vi.spyOn` instead.** It operates at runtime on already-imported object properties and never needs to resolve a module path.
+
+```typescript
+// ✅ Correct — spy on the imported object in beforeEach
+import { AgCharts } from 'ag-charts-community';
+
+let fakeChart: { update: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn> };
+
+beforeEach(() => {
+  fakeChart = {
+    update: vi.fn().mockResolvedValue(undefined),
+    destroy: vi.fn(),
+  };
+  vi.spyOn(AgCharts, 'create').mockReturnValue(
+    fakeChart as unknown as ReturnType<typeof AgCharts.create>,
+  );
+});
+
+afterEach(() => {
+  vi.restoreAllMocks(); // restores original implementations for all spies
+});
+
+it('calls AgCharts.create after view init', () => {
+  fixture.detectChanges();
+  expect(AgCharts.create).toHaveBeenCalled();
+});
+
+// ❌ Wrong — crashes with Angular's esbuild test runner
+vi.mock('ag-charts-community', () => ({
+  AgCharts: { create: vi.fn() },
+}));
+```
+
+Use `vi.mocked(fn)` for type-safe access to mock call history:
+
+```typescript
+const options = vi.mocked(AgCharts.create).mock.calls[0][0] as any;
+expect(options.theme.baseTheme).toBe('ag-material');
+```
