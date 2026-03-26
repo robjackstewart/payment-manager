@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose, MatDialogRef } from '@angular/material/dialog';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatFormField, MatLabel, MatError, MatSuffix } from '@angular/material/form-field';
@@ -40,7 +41,7 @@ import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models
   ],
   templateUrl: './payment-form-dialog.html'
 })
-export class PaymentFormDialogComponent implements OnInit {
+export class PaymentFormDialogComponent {
   readonly dialogRef = inject(MatDialogRef<PaymentFormDialogComponent>);
   readonly data = inject<{
     payment?: Payment;
@@ -61,8 +62,6 @@ export class PaymentFormDialogComponent implements OnInit {
   ];
 
   readonly currencyOptions = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'SEK', 'NOK', 'DKK', 'PLN'];
-
-  readonly showEndDate = signal(true);
 
   readonly form = new FormGroup({
     paymentSourceId: new FormControl(this.data?.payment?.paymentSourceId ?? '', [Validators.required]),
@@ -109,6 +108,21 @@ export class PaymentFormDialogComponent implements OnInit {
     return `${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}%`;
   });
 
+  private readonly frequency = toSignal(
+    this.form.controls.frequency.valueChanges,
+    { initialValue: this.form.controls.frequency.value }
+  );
+
+  readonly showEndDate = computed(() => this.frequency() !== PaymentFrequency.Once);
+
+  constructor() {
+    effect(() => {
+      if (this.frequency() === PaymentFrequency.Once) {
+        untracked(() => this.form.controls.endDate.setValue(null));
+      }
+    });
+  }
+
   get splits(): FormArray {
     return this.form.get('splits') as FormArray;
   }
@@ -127,18 +141,6 @@ export class PaymentFormDialogComponent implements OnInit {
 
   isExistingValue(index: number): boolean {
     return !!(this.values.at(index) as FormGroup).controls['isExisting']?.value;
-  }
-
-  ngOnInit(): void {
-    this.form.controls.frequency.valueChanges.subscribe(freq => {
-      this.showEndDate.set(freq !== PaymentFrequency.Once);
-      if (freq === PaymentFrequency.Once) {
-        this.form.controls.endDate.setValue(null);
-      }
-    });
-
-    const initialFreq = this.form.controls.frequency.value;
-    this.showEndDate.set(initialFreq !== PaymentFrequency.Once);
   }
 
   private static parseDateOnly(value: string): Date {
