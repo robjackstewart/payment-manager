@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { MatDatepicker } from '@angular/material/datepicker';
 import { of } from 'rxjs';
 import { AgCharts } from 'ag-charts-community';
 import { ContactService } from '../../core/services/contact.service';
@@ -354,9 +355,9 @@ describe('DashboardComponent', () => {
       await fixture.whenStable();
 
       const newDate = new Date(2024, 5, 1);
-      component.onMonthSelected(newDate, { close: vi.fn() } as any);
+      component.onMonthSelected(newDate, { close: vi.fn() } as unknown as MatDatepicker<Date>);
 
-      expect((component as any).selectedMonth()).toEqual(newDate);
+      expect((component as unknown as { selectedMonth: () => Date }).selectedMonth()).toEqual(newDate);
     });
 
     it('updates selectedMonthLabel to reflect the selected month and year', async () => {
@@ -364,7 +365,7 @@ describe('DashboardComponent', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      component.onMonthSelected(new Date(2024, 5, 1), { close: vi.fn() } as any);
+      component.onMonthSelected(new Date(2024, 5, 1), { close: vi.fn() } as unknown as MatDatepicker<Date>);
 
       expect(component.selectedMonthLabel()).toContain('June');
       expect(component.selectedMonthLabel()).toContain('2024');
@@ -375,7 +376,7 @@ describe('DashboardComponent', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const picker = { close: vi.fn() } as any;
+      const picker = { close: vi.fn() } as unknown as MatDatepicker<Date>;
       component.onMonthSelected(new Date(2024, 5, 1), picker);
 
       expect(picker.close).toHaveBeenCalled();

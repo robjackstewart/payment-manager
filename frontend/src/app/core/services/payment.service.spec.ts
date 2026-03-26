@@ -3,6 +3,7 @@ import { of, firstValueFrom } from 'rxjs';
 import { vi, describe, it, expect } from 'vitest';
 import { PaymentManagerWebApiService } from '../../../api-client';
 import { PaymentFrequency } from '../models/payment-frequency.enum';
+import { PaymentSplit } from '../models/payment.model';
 import { PaymentService } from './payment.service';
 
 const mockPaymentDto = {
@@ -242,7 +243,7 @@ describe('PaymentService', () => {
       const { service, apiSpy } = setup();
       apiSpy['createPayment'].mockReturnValue(of(mockPaymentDto));
 
-      await firstValueFrom(service.create({ ...baseReq, splits: null as any }));
+      await firstValueFrom(service.create({ ...baseReq, splits: null as unknown as PaymentSplit[] }));
 
       expect(apiSpy['createPayment']).toHaveBeenCalledWith(
         expect.objectContaining({ splits: null })
@@ -331,7 +332,7 @@ describe('PaymentService', () => {
       apiSpy['updatePayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(
-        service.update('1', { ...baseReq, splits: null as any })
+        service.update('1', { ...baseReq, splits: null as unknown as PaymentSplit[] })
       );
 
       expect(apiSpy['updatePayment']).toHaveBeenCalledWith(
