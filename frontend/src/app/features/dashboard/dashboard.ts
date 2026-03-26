@@ -16,7 +16,7 @@ import { PaymentService } from '../../core/services/payment.service';
 import { ContactService } from '../../core/services/contact.service';
 import { forkJoin } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { SourcePieChartComponent, PieSlice } from './source-pie-chart';
+import { PaymentsPieChartComponent, PieSlice } from './payments-pie-chart';
 
 interface OccurrenceViewModel {
   formattedDate: string;
@@ -104,7 +104,7 @@ interface SummaryViewModel {
     MatDatepickerToggle,
     MatDivider,
     ReactiveFormsModule,
-    SourcePieChartComponent,
+    PaymentsPieChartComponent,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'

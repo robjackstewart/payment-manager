@@ -9,7 +9,7 @@ export interface PieSlice {
 }
 
 @Component({
-  selector: 'app-source-pie-chart',
+  selector: 'app-payments-pie-chart',
   standalone: true,
   template: `<div #container class="pie-container"></div>`,
   styles: [`
@@ -19,7 +19,7 @@ export interface PieSlice {
     }
   `],
 })
-export class SourcePieChartComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class PaymentsPieChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   readonly slices = input<PieSlice[]>([]);
   readonly currency = input<string>('');
 

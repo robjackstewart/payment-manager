@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { AgCharts } from 'ag-charts-community';
-import { SourcePieChartComponent } from './source-pie-chart';
+import { PaymentsPieChartComponent } from './payments-pie-chart';
 
 async function setup() {
   document.body.classList.remove('dark-theme');
@@ -14,15 +14,15 @@ async function setup() {
 
   TestBed.resetTestingModule();
   await TestBed.configureTestingModule({
-    imports: [SourcePieChartComponent],
+    imports: [PaymentsPieChartComponent],
   }).compileComponents();
 
-  const fixture = TestBed.createComponent(SourcePieChartComponent);
+  const fixture = TestBed.createComponent(PaymentsPieChartComponent);
   const component = fixture.componentInstance;
   return { fixture, component, fakeChart };
 }
 
-describe('SourcePieChartComponent', () => {
+describe('PaymentsPieChartComponent', () => {
   it('calls AgCharts.create after view init', async () => {
     const { fixture } = await setup();
     fixture.detectChanges();

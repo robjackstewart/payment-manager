@@ -33,7 +33,7 @@
         </mat-card-header>
         <mat-card-content>
           @if (summary.pieSlices.length > 1) {
-            <app-source-pie-chart [slices]="summary.pieSlices" [currency]="summary.currency" />
+            <app-payments-pie-chart [slices]="summary.pieSlices" [currency]="summary.currency" />
           }
           <div class="summary-section">
             <p class="summary-section-title">Overall</p>
@@ -97,7 +97,7 @@
     <mat-card-content>
       @for (group of schedulePayeeSlices(); track group.currency) {
         @if (group.slices.length > 1) {
-          <app-source-pie-chart [slices]="group.slices" [currency]="group.currency" />
+          <app-payments-pie-chart [slices]="group.slices" [currency]="group.currency" />
         }
       }
       @if (occurrencesViewModel().length === 0) {
