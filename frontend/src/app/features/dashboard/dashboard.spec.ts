@@ -39,7 +39,6 @@ function makeOccurrenceResponse(
 
 function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
   TestBed.resetTestingModule();
-  vi.restoreAllMocks();
   vi.spyOn(AgCharts, 'create').mockReturnValue({
     update: vi.fn().mockResolvedValue(undefined),
     destroy: vi.fn(),
