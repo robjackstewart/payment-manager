@@ -14,10 +14,6 @@ import { PaymentSourceService } from '../../core/services/payment-source.service
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { ContactService } from '../../core/services/contact.service';
-import { OccurrenceSummary, PaymentOccurrence } from '../../core/models/payment.model';
-import { Payee } from '../../core/models/payee.model';
-import { PaymentSource } from '../../core/models/payment-source.model';
-import { Contact } from '../../core/models/contact.model';
 import { forkJoin } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { SourcePieChartComponent, PieSlice } from './source-pie-chart';
