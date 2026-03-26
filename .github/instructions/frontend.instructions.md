@@ -294,6 +294,57 @@ This builds with source maps and opens `source-map-explorer` to show exactly whi
 - Use `TestBed` for component/service tests that need the Angular DI container.
 - Prefer testing behaviour over implementation details — assert on rendered output and signal values, not internal method calls.
 
+## Test Structure
+
+**No `beforeEach` or `afterEach` in spec files.** All setup logic belongs in an explicit `setup()` function that every test must call. A global `afterEach` in `src/test-setup.ts` (registered via `angular.json` `setupFiles`) handles `vi.restoreAllMocks()` + `vi.clearAllMocks()` after every test — do not add this to individual spec files.
+
+This pattern enforces that each test is self-contained and fails loudly if `setup()` is forgotten, since mocks are wiped clean after every test.
+
+```typescript
+// ✅ Correct — explicit setup(), no hooks in spec file
+function setup() {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({
+    providers: [MyService, { provide: ApiClient, useValue: { getData: vi.fn() } }],
+  });
+  const service = TestBed.inject(MyService);
+  const api = TestBed.inject(ApiClient) as { getData: ReturnType<typeof vi.fn> };
+  return { service, api };
+}
+
+describe('MyService', () => {
+  it('returns data from the API', async () => {
+    const { service, api } = setup();
+    api.getData.mockReturnValue(of([{ id: 1 }]));
+
+    const result = await firstValueFrom(service.getAll());
+
+    expect(result).toEqual([{ id: 1 }]);
+  });
+});
+
+// ❌ Wrong — shared state via beforeEach breaks test isolation
+describe('MyService', () => {
+  let service: MyService;
+  let api: { getData: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    api = { getData: vi.fn() };
+    TestBed.configureTestingModule({ ... });
+    service = TestBed.inject(MyService);
+  });
+});
+```
+
+### setup() responsibilities
+
+`setup()` must handle, in this order:
+1. **State cleanup** — `localStorage.clear()`, `document.body.classList.remove(...)`, etc.
+2. **Spy setup** — `vi.spyOn(...)` for any external package methods
+3. **TestBed** — `TestBed.resetTestingModule()` then `TestBed.configureTestingModule(...)`
+4. **Component/service creation** — `TestBed.createComponent(...)` or `TestBed.inject(...)`
+5. **Return** — all fixtures, mocks, and instances the test will need
+
 ## Mocking External Packages
 
 **Never use `vi.mock('package-name', ...)` for node_modules packages.** Angular's `@angular/build:unit-test` builder sets `externalPackages: true` in esbuild, which leaves all node_modules unbundled. When vitest processes `vi.mock(...)` for an external package, it tries to resolve the package to a file path — but since esbuild never bundled it, the resolution returns `undefined` and vitest crashes with `TypeError: Cannot read properties of undefined (reading 'trim')`. This failure is flaky when multiple spec files mock the same package.
@@ -301,29 +352,20 @@ This builds with source maps and opens `source-map-explorer` to show exactly whi
 **Use `vi.spyOn` instead.** It operates at runtime on already-imported object properties and never needs to resolve a module path.
 
 ```typescript
-// ✅ Correct — spy on the imported object in beforeEach
+// ✅ Correct — spy on the imported object in setup()
 import { AgCharts } from 'ag-charts-community';
 
-let fakeChart: { update: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn> };
-
-beforeEach(() => {
-  fakeChart = {
+function setup() {
+  const fakeChart = {
     update: vi.fn().mockResolvedValue(undefined),
     destroy: vi.fn(),
   };
   vi.spyOn(AgCharts, 'create').mockReturnValue(
     fakeChart as unknown as ReturnType<typeof AgCharts.create>,
   );
-});
-
-afterEach(() => {
-  vi.restoreAllMocks(); // restores original implementations for all spies
-});
-
-it('calls AgCharts.create after view init', () => {
-  fixture.detectChanges();
-  expect(AgCharts.create).toHaveBeenCalled();
-});
+  // ... TestBed setup ...
+  return { fakeChart };
+}
 
 // ❌ Wrong — crashes with Angular's esbuild test runner
 vi.mock('ag-charts-community', () => ({

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ContactService } from '../../../core/services/contact.service';
@@ -10,6 +10,7 @@ import { Contact } from '../../../core/models/contact.model';
 const mockContact: Contact = { id: '1', userId: 'u1', name: 'Alice' };
 
 function setup(contacts: Contact[] = [mockContact]) {
+  TestBed.resetTestingModule();
   const mockContactService = {
     getAll: vi.fn().mockReturnValue(of(contacts)),
     create: vi.fn().mockReturnValue(of({})),
@@ -33,8 +34,6 @@ function setup(contacts: Contact[] = [mockContact]) {
 }
 
 describe('ContactListComponent', () => {
-  beforeEach(() => TestBed.resetTestingModule());
-
   describe('data loading', () => {
     it('returns contacts after loading', async () => {
       const { fixture, component } = setup([mockContact]);

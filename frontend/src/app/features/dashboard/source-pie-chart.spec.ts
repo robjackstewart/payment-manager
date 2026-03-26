@@ -1,40 +1,37 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { AgCharts } from 'ag-charts-community';
 import { SourcePieChartComponent } from './source-pie-chart';
 
+async function setup() {
+  document.body.classList.remove('dark-theme');
+
+  const fakeChart = {
+    update: vi.fn().mockResolvedValue(undefined),
+    destroy: vi.fn(),
+  };
+  vi.spyOn(AgCharts, 'create').mockReturnValue(fakeChart as unknown as ReturnType<typeof AgCharts.create>);
+
+  TestBed.resetTestingModule();
+  await TestBed.configureTestingModule({
+    imports: [SourcePieChartComponent],
+  }).compileComponents();
+
+  const fixture = TestBed.createComponent(SourcePieChartComponent);
+  const component = fixture.componentInstance;
+  return { fixture, component, fakeChart };
+}
+
 describe('SourcePieChartComponent', () => {
-  let fixture: ComponentFixture<SourcePieChartComponent>;
-  let component: SourcePieChartComponent;
-  let fakeChart: { update: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn> };
-
-  beforeEach(async () => {
-    fakeChart = {
-      update: vi.fn().mockResolvedValue(undefined),
-      destroy: vi.fn(),
-    };
-    vi.spyOn(AgCharts, 'create').mockReturnValue(fakeChart as unknown as ReturnType<typeof AgCharts.create>);
-
-    await TestBed.configureTestingModule({
-      imports: [SourcePieChartComponent],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(SourcePieChartComponent);
-    component = fixture.componentInstance;
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    document.body.classList.remove('dark-theme');
-  });
-
-  it('calls AgCharts.create after view init', () => {
+  it('calls AgCharts.create after view init', async () => {
+    const { fixture } = await setup();
     fixture.detectChanges();
 
     expect(AgCharts.create).toHaveBeenCalled();
   });
 
-  it('calls chart.update when ngOnChanges is called after init', () => {
+  it('calls chart.update when ngOnChanges is called after init', async () => {
+    const { fixture, component, fakeChart } = await setup();
     fixture.detectChanges();
 
     component.ngOnChanges();
@@ -42,13 +39,15 @@ describe('SourcePieChartComponent', () => {
     expect(fakeChart.update).toHaveBeenCalled();
   });
 
-  it('does not call chart.update when ngOnChanges is called before init', () => {
+  it('does not call chart.update when ngOnChanges is called before init', async () => {
+    const { component } = await setup();
     component.ngOnChanges();
 
     expect(AgCharts.create).not.toHaveBeenCalled();
   });
 
-  it('calls chart.destroy and disconnects observer on ngOnDestroy', () => {
+  it('calls chart.destroy and disconnects observer on ngOnDestroy', async () => {
+    const { fixture, component, fakeChart } = await setup();
     fixture.detectChanges();
 
     component.ngOnDestroy();
@@ -56,7 +55,8 @@ describe('SourcePieChartComponent', () => {
     expect(fakeChart.destroy).toHaveBeenCalled();
   });
 
-  it('uses dark theme when body has dark-theme class', () => {
+  it('uses dark theme when body has dark-theme class', async () => {
+    const { fixture } = await setup();
     document.body.classList.add('dark-theme');
 
     fixture.detectChanges();
@@ -66,7 +66,8 @@ describe('SourcePieChartComponent', () => {
     expect(createCall.theme.baseTheme).toBe('ag-material-dark');
   });
 
-  it('uses light theme when body does not have dark-theme class', () => {
+  it('uses light theme when body does not have dark-theme class', async () => {
+    const { fixture } = await setup();
     fixture.detectChanges();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,7 +75,8 @@ describe('SourcePieChartComponent', () => {
     expect(createCall.theme.baseTheme).toBe('ag-material');
   });
 
-  it('passes slices input as chart data', () => {
+  it('passes slices input as chart data', async () => {
+    const { fixture } = await setup();
     const slices = [
       { label: 'Cash', amount: 500 },
       { label: 'Card', amount: 300 },
@@ -86,7 +88,8 @@ describe('SourcePieChartComponent', () => {
     expect(createCall.data).toEqual(slices);
   });
 
-  it('sets background fill to transparent', () => {
+  it('sets background fill to transparent', async () => {
+    const { fixture } = await setup();
     fixture.detectChanges();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

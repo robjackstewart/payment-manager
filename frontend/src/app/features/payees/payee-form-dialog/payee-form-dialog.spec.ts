@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { PayeeFormDialogComponent } from './payee-form-dialog';
 import { Payee } from '../../../core/models/payee.model';
 
-function buildComponent(data: { payee?: Payee } = {}) {
+function setup(data: { payee?: Payee } = {}) {
+  TestBed.resetTestingModule();
   const dialogRef = { close: vi.fn() } as unknown as MatDialogRef<PayeeFormDialogComponent>;
 
   TestBed.configureTestingModule({
@@ -21,21 +22,19 @@ function buildComponent(data: { payee?: Payee } = {}) {
 }
 
 describe('PayeeFormDialogComponent', () => {
-  beforeEach(() => TestBed.resetTestingModule());
-
   describe('create mode (no payee in data)', () => {
     it('has the correct title', () => {
-      const { component } = buildComponent();
+      const { component } = setup();
       expect(component.title).toBe('New Payee');
     });
 
     it('has the correct submitLabel', () => {
-      const { component } = buildComponent();
+      const { component } = setup();
       expect(component.submitLabel).toBe('Create');
     });
 
     it('initialises the name control as empty', () => {
-      const { component } = buildComponent();
+      const { component } = setup();
       expect(component.form.controls.name.value).toBe('');
     });
   });
@@ -44,24 +43,24 @@ describe('PayeeFormDialogComponent', () => {
     const payee: Payee = { id: '1', userId: 'u1', name: 'Alice' };
 
     it('has the correct title', () => {
-      const { component } = buildComponent({ payee });
+      const { component } = setup({ payee });
       expect(component.title).toBe('Edit Payee');
     });
 
     it('has the correct submitLabel', () => {
-      const { component } = buildComponent({ payee });
+      const { component } = setup({ payee });
       expect(component.submitLabel).toBe('Save');
     });
 
     it('pre-fills the name control with the existing value', () => {
-      const { component } = buildComponent({ payee });
+      const { component } = setup({ payee });
       expect(component.form.controls.name.value).toBe('Alice');
     });
   });
 
   describe('submit()', () => {
     it('calls dialogRef.close with the form value when the form is valid', () => {
-      const { component, dialogRef } = buildComponent();
+      const { component, dialogRef } = setup();
       component.form.controls.name.setValue('Alice');
 
       component.submit();
@@ -70,7 +69,7 @@ describe('PayeeFormDialogComponent', () => {
     });
 
     it('does not call dialogRef.close when the form is invalid', () => {
-      const { component, dialogRef } = buildComponent();
+      const { component, dialogRef } = setup();
       component.form.controls.name.setValue('');
 
       component.submit();

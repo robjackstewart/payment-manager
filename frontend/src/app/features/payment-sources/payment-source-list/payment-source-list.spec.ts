@@ -9,6 +9,7 @@ import { PaymentSource } from '../../../core/models/payment-source.model';
 const mockPaymentSource: PaymentSource = { id: '1', userId: 'u1', name: 'Main Account' };
 
 function setup(paymentSources: PaymentSource[] = [mockPaymentSource]) {
+  TestBed.resetTestingModule();
   const mockPaymentSourceService = {
     getAll: vi.fn().mockReturnValue(of(paymentSources)),
     create: vi.fn().mockReturnValue(of({})),
@@ -32,8 +33,6 @@ function setup(paymentSources: PaymentSource[] = [mockPaymentSource]) {
 }
 
 describe('PaymentSourceListComponent', () => {
-  beforeEach(() => TestBed.resetTestingModule());
-
   describe('data loading', () => {
     it('returns payment sources after loading', async () => {
       const { fixture, component } = setup([mockPaymentSource]);

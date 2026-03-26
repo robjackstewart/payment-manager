@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PayeeListComponent } from './payee-list';
@@ -16,34 +16,32 @@ function buildMockDialogRef(closeValue: unknown) {
   return { afterClosed: vi.fn().mockReturnValue(of(closeValue)) };
 }
 
-describe('PayeeListComponent', () => {
-  let payeeService: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
-  let dialog: { open: ReturnType<typeof vi.fn> };
-  let snackBar: { open: ReturnType<typeof vi.fn> };
+function setup() {
+  const payeeService = {
+    getAll: vi.fn().mockReturnValue(of(mockPayees)),
+    create: vi.fn().mockReturnValue(of({ id: '3', userId: 'u1', name: 'Charlie' })),
+    update: vi.fn().mockReturnValue(of({ id: '1', userId: 'u1', name: 'Alice Updated' })),
+    delete: vi.fn().mockReturnValue(of(undefined)),
+  };
+  const dialog = { open: vi.fn() };
+  const snackBar = { open: vi.fn() };
 
-  beforeEach(() => {
-    payeeService = {
-      getAll: vi.fn().mockReturnValue(of(mockPayees)),
-      create: vi.fn().mockReturnValue(of({ id: '3', userId: 'u1', name: 'Charlie' })),
-      update: vi.fn().mockReturnValue(of({ id: '1', userId: 'u1', name: 'Alice Updated' })),
-      delete: vi.fn().mockReturnValue(of(undefined)),
-    };
-    dialog = { open: vi.fn() };
-    snackBar = { open: vi.fn() };
-
-    TestBed.configureTestingModule({
-      imports: [PayeeListComponent],
-      providers: [
-        { provide: PayeeService, useValue: payeeService },
-        { provide: MatDialog, useValue: dialog },
-        { provide: MatSnackBar, useValue: snackBar },
-      ],
-    });
+  TestBed.configureTestingModule({
+    imports: [PayeeListComponent],
+    providers: [
+      { provide: PayeeService, useValue: payeeService },
+      { provide: MatDialog, useValue: dialog },
+      { provide: MatSnackBar, useValue: snackBar },
+    ],
   });
 
+  const fixture = TestBed.createComponent(PayeeListComponent);
+  return { fixture, component: fixture.componentInstance, payeeService, dialog, snackBar };
+}
+
+describe('PayeeListComponent', () => {
   it('after init, payeesForTable() returns the loaded payees array', async () => {
-    const fixture = TestBed.createComponent(PayeeListComponent);
-    const component = fixture.componentInstance;
+    const { fixture, component } = setup();
     fixture.detectChanges();
     await fixture.whenStable();
     expect(component.payeesForTable()).toEqual(mockPayees);
@@ -51,10 +49,10 @@ describe('PayeeListComponent', () => {
 
   describe('openCreateDialog', () => {
     it('with a dialog result calls payeeService.create() and shows success snackbar', async () => {
+      const { fixture, payeeService, dialog, snackBar } = setup();
       const mockRef = buildMockDialogRef({ name: 'Charlie' });
       dialog.open.mockReturnValue(mockRef);
 
-      const fixture = TestBed.createComponent(PayeeListComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -65,10 +63,10 @@ describe('PayeeListComponent', () => {
     });
 
     it('with null dialog result does NOT call payeeService.create()', async () => {
+      const { fixture, payeeService, dialog } = setup();
       const mockRef = buildMockDialogRef(null);
       dialog.open.mockReturnValue(mockRef);
 
-      const fixture = TestBed.createComponent(PayeeListComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -78,11 +76,11 @@ describe('PayeeListComponent', () => {
     });
 
     it('when payeeService.create() throws shows error snackbar', async () => {
+      const { fixture, payeeService, dialog, snackBar } = setup();
       const mockRef = buildMockDialogRef({ name: 'Charlie' });
       dialog.open.mockReturnValue(mockRef);
       payeeService.create.mockReturnValue(throwError(() => new Error('network')));
 
-      const fixture = TestBed.createComponent(PayeeListComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -94,11 +92,11 @@ describe('PayeeListComponent', () => {
 
   describe('openEditDialog', () => {
     it('with a dialog result calls payeeService.update() with the payee id and result', async () => {
+      const { fixture, payeeService, dialog, snackBar } = setup();
       const payee = mockPayees[0];
       const mockRef = buildMockDialogRef({ name: 'Alice Updated' });
       dialog.open.mockReturnValue(mockRef);
 
-      const fixture = TestBed.createComponent(PayeeListComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -109,11 +107,11 @@ describe('PayeeListComponent', () => {
     });
 
     it('with null dialog result does NOT call payeeService.update()', async () => {
+      const { fixture, payeeService, dialog } = setup();
       const payee = mockPayees[0];
       const mockRef = buildMockDialogRef(null);
       dialog.open.mockReturnValue(mockRef);
 
-      const fixture = TestBed.createComponent(PayeeListComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -125,11 +123,11 @@ describe('PayeeListComponent', () => {
 
   describe('deletePayee', () => {
     it('when confirmed calls payeeService.delete() and shows success snackbar', async () => {
+      const { fixture, payeeService, dialog, snackBar } = setup();
       const payee = mockPayees[0];
       const mockRef = buildMockDialogRef(true);
       dialog.open.mockReturnValue(mockRef);
 
-      const fixture = TestBed.createComponent(PayeeListComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -140,11 +138,11 @@ describe('PayeeListComponent', () => {
     });
 
     it('when cancelled does NOT call payeeService.delete()', async () => {
+      const { fixture, payeeService, dialog } = setup();
       const payee = mockPayees[0];
       const mockRef = buildMockDialogRef(false);
       dialog.open.mockReturnValue(mockRef);
 
-      const fixture = TestBed.createComponent(PayeeListComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 

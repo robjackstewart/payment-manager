@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { PaymentManagerWebApiService } from '../../../api-client';
 import { PaymentSource } from '../models/payment-source.model';
 import { PaymentSourceService } from './payment-source.service';
@@ -17,25 +17,24 @@ function makeApi() {
   };
 }
 
-describe('PaymentSourceService', () => {
-  let service: PaymentSourceService;
-  let api: ReturnType<typeof makeApi>;
+function setup() {
+  const api = makeApi();
 
-  beforeEach(() => {
-    api = makeApi();
-
-    TestBed.configureTestingModule({
-      providers: [
-        PaymentSourceService,
-        { provide: PaymentManagerWebApiService, useValue: api },
-      ],
-    });
-
-    service = TestBed.inject(PaymentSourceService);
+  TestBed.configureTestingModule({
+    providers: [
+      PaymentSourceService,
+      { provide: PaymentManagerWebApiService, useValue: api },
+    ],
   });
 
+  const service = TestBed.inject(PaymentSourceService);
+  return { service, api };
+}
+
+describe('PaymentSourceService', () => {
   describe('getAll()', () => {
     it('maps paymentSources from the API response', async () => {
+      const { service, api } = setup();
       api.getAllPaymentSources.mockReturnValue(of({ paymentSources: [mockSource] }));
 
       const result = await firstValueFrom(service.getAll());
@@ -44,6 +43,7 @@ describe('PaymentSourceService', () => {
     });
 
     it('returns an empty array when paymentSources is empty', async () => {
+      const { service, api } = setup();
       api.getAllPaymentSources.mockReturnValue(of({ paymentSources: [] }));
 
       const result = await firstValueFrom(service.getAll());
@@ -54,6 +54,7 @@ describe('PaymentSourceService', () => {
 
   describe('getById(id)', () => {
     it('calls getPaymentSource with the given id', async () => {
+      const { service, api } = setup();
       api.getPaymentSource.mockReturnValue(of(mockSource));
 
       const result = await firstValueFrom(service.getById('1'));
@@ -65,6 +66,7 @@ describe('PaymentSourceService', () => {
 
   describe('create(req)', () => {
     it('passes the request to createPaymentSource and returns the result', async () => {
+      const { service, api } = setup();
       const req = { name: 'New Card' };
       api.createPaymentSource.mockReturnValue(of(mockSource));
 
@@ -77,6 +79,7 @@ describe('PaymentSourceService', () => {
 
   describe('update(id, req)', () => {
     it('passes both id and request to updatePaymentSource and returns the result', async () => {
+      const { service, api } = setup();
       const req = { name: 'Updated' };
       api.updatePaymentSource.mockReturnValue(of(mockSource));
 
@@ -89,6 +92,7 @@ describe('PaymentSourceService', () => {
 
   describe('delete(id)', () => {
     it('passes the id to deletePaymentSource', async () => {
+      const { service, api } = setup();
       api.deletePaymentSource.mockReturnValue(of(undefined));
 
       await firstValueFrom(service.delete('1'));

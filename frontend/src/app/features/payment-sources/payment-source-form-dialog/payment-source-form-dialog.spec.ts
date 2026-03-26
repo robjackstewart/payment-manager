@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { PaymentSourceFormDialogComponent } from './payment-source-form-dialog';
 
-function buildComponent(data: { paymentSource?: { id: string; name: string } } = {}) {
+function setup(data: { paymentSource?: { id: string; name: string } } = {}) {
+  TestBed.resetTestingModule();
   const dialogRef = { close: vi.fn() } as unknown as MatDialogRef<PaymentSourceFormDialogComponent>;
 
   TestBed.configureTestingModule({
@@ -20,21 +21,19 @@ function buildComponent(data: { paymentSource?: { id: string; name: string } } =
 }
 
 describe('PaymentSourceFormDialogComponent', () => {
-  beforeEach(() => TestBed.resetTestingModule());
-
   describe('create mode (no paymentSource in data)', () => {
     it('has the correct title', () => {
-      const { component } = buildComponent();
+      const { component } = setup();
       expect(component.title).toBe('New Payment Source');
     });
 
     it('has the correct submitLabel', () => {
-      const { component } = buildComponent();
+      const { component } = setup();
       expect(component.submitLabel).toBe('Create');
     });
 
     it('initialises the name control as empty', () => {
-      const { component } = buildComponent();
+      const { component } = setup();
       expect(component.form.controls.name.value).toBe('');
     });
   });
@@ -43,24 +42,24 @@ describe('PaymentSourceFormDialogComponent', () => {
     const paymentSource = { id: '1', name: 'Main Account' };
 
     it('has the correct title', () => {
-      const { component } = buildComponent({ paymentSource });
+      const { component } = setup({ paymentSource });
       expect(component.title).toBe('Edit Payment Source');
     });
 
     it('has the correct submitLabel', () => {
-      const { component } = buildComponent({ paymentSource });
+      const { component } = setup({ paymentSource });
       expect(component.submitLabel).toBe('Save');
     });
 
     it('pre-fills the name control with the existing value', () => {
-      const { component } = buildComponent({ paymentSource });
+      const { component } = setup({ paymentSource });
       expect(component.form.controls.name.value).toBe('Main Account');
     });
   });
 
   describe('submit()', () => {
     it('calls dialogRef.close with the form value when the form is valid', () => {
-      const { component, dialogRef } = buildComponent();
+      const { component, dialogRef } = setup();
       component.form.controls.name.setValue('Savings');
 
       component.submit();
@@ -69,7 +68,7 @@ describe('PaymentSourceFormDialogComponent', () => {
     });
 
     it('does not call dialogRef.close when the form is invalid', () => {
-      const { component, dialogRef } = buildComponent();
+      const { component, dialogRef } = setup();
       component.form.controls.name.setValue('');
 
       component.submit();

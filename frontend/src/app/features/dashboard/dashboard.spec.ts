@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -38,6 +38,8 @@ function makeOccurrenceResponse(
 }
 
 function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
+  TestBed.resetTestingModule();
+  vi.restoreAllMocks();
   vi.spyOn(AgCharts, 'create').mockReturnValue({
     update: vi.fn().mockResolvedValue(undefined),
     destroy: vi.fn(),
@@ -67,9 +69,6 @@ function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
 }
 
 describe('DashboardComponent', () => {
-  beforeEach(() => TestBed.resetTestingModule());
-  afterEach(() => vi.restoreAllMocks());
-
   describe('reference data', () => {
     it('exposes payees after loading', async () => {
       const { fixture, component } = setup();

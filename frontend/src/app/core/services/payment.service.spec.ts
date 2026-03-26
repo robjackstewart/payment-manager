@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, firstValueFrom } from 'rxjs';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import { PaymentManagerWebApiService } from '../../../api-client';
 import { PaymentFrequency } from '../models/payment-frequency.enum';
 import { PaymentService } from './payment.service';
@@ -21,34 +21,33 @@ const mockPaymentDto = {
   splits: [],
 };
 
-describe('PaymentService', () => {
-  let service: PaymentService;
-  let apiSpy: Record<string, ReturnType<typeof vi.fn>>;
+function setup() {
+  const apiSpy = {
+    getAllPayments: vi.fn(),
+    getPayment: vi.fn(),
+    getPaymentOccurrences: vi.fn(),
+    createPayment: vi.fn(),
+    updatePayment: vi.fn(),
+    addPaymentValue: vi.fn(),
+    removePaymentValue: vi.fn(),
+    deletePayment: vi.fn(),
+  };
 
-  beforeEach(() => {
-    apiSpy = {
-      getAllPayments: vi.fn(),
-      getPayment: vi.fn(),
-      getPaymentOccurrences: vi.fn(),
-      createPayment: vi.fn(),
-      updatePayment: vi.fn(),
-      addPaymentValue: vi.fn(),
-      removePaymentValue: vi.fn(),
-      deletePayment: vi.fn(),
-    };
-
-    TestBed.configureTestingModule({
-      providers: [
-        PaymentService,
-        { provide: PaymentManagerWebApiService, useValue: apiSpy },
-      ],
-    });
-
-    service = TestBed.inject(PaymentService);
+  TestBed.configureTestingModule({
+    providers: [
+      PaymentService,
+      { provide: PaymentManagerWebApiService, useValue: apiSpy },
+    ],
   });
 
+  const service = TestBed.inject(PaymentService);
+  return { service, apiSpy };
+}
+
+describe('PaymentService', () => {
   describe('getAll()', () => {
     it('converts string amounts to numbers', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['getAllPayments'].mockReturnValue(of({ payments: [mockPaymentDto] }));
 
       const [payment] = await firstValueFrom(service.getAll());
@@ -66,6 +65,7 @@ describe('PaymentService', () => {
     });
 
     it('returns an empty array when there are no payments', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['getAllPayments'].mockReturnValue(of({ payments: [] }));
 
       const result = await firstValueFrom(service.getAll());
@@ -76,6 +76,7 @@ describe('PaymentService', () => {
 
   describe('getById(id)', () => {
     it('passes the correct id to the API', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['getPayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(service.getById('42'));
@@ -84,6 +85,7 @@ describe('PaymentService', () => {
     });
 
     it('converts string amounts to numbers', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['getPayment'].mockReturnValue(of(mockPaymentDto));
 
       const payment = await firstValueFrom(service.getById('1'));
@@ -131,6 +133,7 @@ describe('PaymentService', () => {
     };
 
     it('passes from and to strings to the API', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['getPaymentOccurrences'].mockReturnValue(
         of({ occurrences: [], summary: [] })
       );
@@ -144,6 +147,7 @@ describe('PaymentService', () => {
     });
 
     it('converts occurrence string amounts to numbers', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['getPaymentOccurrences'].mockReturnValue(
         of({ occurrences: [mockOccurrenceDto], summary: [] })
       );
@@ -162,6 +166,7 @@ describe('PaymentService', () => {
     });
 
     it('converts summary string amounts to numbers', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['getPaymentOccurrences'].mockReturnValue(
         of({ occurrences: [], summary: [mockSummaryDto] })
       );
@@ -199,6 +204,7 @@ describe('PaymentService', () => {
     };
 
     it('passes endDate as null when undefined', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['createPayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(service.create({ ...baseReq, endDate: undefined }));
@@ -209,6 +215,7 @@ describe('PaymentService', () => {
     });
 
     it('passes endDate through when provided', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['createPayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(
@@ -221,6 +228,7 @@ describe('PaymentService', () => {
     });
 
     it('passes splits as null when undefined', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['createPayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(service.create({ ...baseReq, splits: undefined }));
@@ -231,6 +239,7 @@ describe('PaymentService', () => {
     });
 
     it('passes splits as null when null', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['createPayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(service.create({ ...baseReq, splits: null as any }));
@@ -241,6 +250,7 @@ describe('PaymentService', () => {
     });
 
     it('converts response string amounts to numbers', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['createPayment'].mockReturnValue(of(mockPaymentDto));
 
       const payment = await firstValueFrom(service.create(baseReq));
@@ -267,6 +277,7 @@ describe('PaymentService', () => {
     };
 
     it('passes the correct id to the API', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['updatePayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(service.update('99', baseReq));
@@ -278,6 +289,7 @@ describe('PaymentService', () => {
     });
 
     it('passes endDate as null when undefined', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['updatePayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(service.update('1', { ...baseReq, endDate: undefined }));
@@ -289,6 +301,7 @@ describe('PaymentService', () => {
     });
 
     it('passes endDate through when provided', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['updatePayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(
@@ -302,6 +315,7 @@ describe('PaymentService', () => {
     });
 
     it('passes splits as null when undefined', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['updatePayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(service.update('1', { ...baseReq, splits: undefined }));
@@ -313,6 +327,7 @@ describe('PaymentService', () => {
     });
 
     it('passes splits as null when null', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['updatePayment'].mockReturnValue(of(mockPaymentDto));
 
       await firstValueFrom(
@@ -326,6 +341,7 @@ describe('PaymentService', () => {
     });
 
     it('converts response string amounts to numbers', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['updatePayment'].mockReturnValue(of(mockPaymentDto));
 
       const payment = await firstValueFrom(service.update('1', baseReq));
@@ -339,6 +355,7 @@ describe('PaymentService', () => {
 
   describe('addValue(paymentId, req)', () => {
     it('delegates directly to the API and passes through the response', async () => {
+      const { service, apiSpy } = setup();
       const mockResponse = { paymentId: '1', effectiveDate: '2024-06-01', amount: 120 };
       apiSpy['addPaymentValue'].mockReturnValue(of(mockResponse));
 
@@ -356,6 +373,7 @@ describe('PaymentService', () => {
 
   describe('removeValue(paymentId, effectiveDate)', () => {
     it('delegates directly to the API', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['removePaymentValue'].mockReturnValue(of(undefined));
 
       await firstValueFrom(service.removeValue('1', '2024-06-01'));
@@ -366,6 +384,7 @@ describe('PaymentService', () => {
 
   describe('delete(id)', () => {
     it('passes the correct id to the API', async () => {
+      const { service, apiSpy } = setup();
       apiSpy['deletePayment'].mockReturnValue(of(undefined));
 
       await firstValueFrom(service.delete('7'));
