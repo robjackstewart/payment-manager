@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd, ActivatedRouteSnapshot } from '@angular/router';
 import { MatSidenavContainer, MatSidenav, MatSidenavContent } from '@angular/material/sidenav';
@@ -36,12 +36,10 @@ import { filter } from 'rxjs';
   styleUrl: './app.scss'
 })
 export class AppComponent {
-  @ViewChild(MatSidenav, { static: false }) private readonly sidenav!: MatSidenav;
-
   private readonly router = inject(Router);
   readonly isMobile = signal(window.innerWidth < 768);
   readonly sidenavMode = computed(() => this.isMobile() ? 'over' : 'side');
-  readonly sidenavOpened = computed(() => !this.isMobile());
+  readonly sidenavOpen = signal(window.innerWidth >= 768);
 
   readonly isDarkMode = signal(
     localStorage.getItem('theme') === 'dark' ||
@@ -57,7 +55,11 @@ export class AppComponent {
   );
 
   constructor() {
-    window.addEventListener('resize', () => this.isMobile.set(window.innerWidth < 768));
+    window.addEventListener('resize', () => {
+      const mobile = window.innerWidth < 768;
+      this.isMobile.set(mobile);
+      this.sidenavOpen.set(!mobile);
+    });
 
     effect(() => {
       document.body.classList.toggle('dark-theme', this.isDarkMode());
@@ -68,7 +70,7 @@ export class AppComponent {
       const event = this.navigationEnd();
       if (!event) return;
       this.pageTitle.set(this.getActiveTitle());
-      if (this.isMobile()) this.sidenav.close();
+      if (this.isMobile()) this.sidenavOpen.set(false);
     });
   }
 
@@ -80,6 +82,10 @@ export class AppComponent {
 
   toggleDarkMode(): void {
     this.isDarkMode.update(v => !v);
+  }
+
+  toggleSidenav(): void {
+    this.sidenavOpen.update(v => !v);
   }
 }
 

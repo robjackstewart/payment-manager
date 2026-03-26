@@ -65,15 +65,15 @@ describe('AppComponent', () => {
     });
   });
 
-  describe('sidenavOpened', () => {
+  describe('sidenavOpen', () => {
     it('is false on mobile', () => {
       const { component } = setup({ innerWidth: 500 });
-      expect(component.sidenavOpened()).toBe(false);
+      expect(component.sidenavOpen()).toBe(false);
     });
 
     it('is true on desktop', () => {
       const { component } = setup();
-      expect(component.sidenavOpened()).toBe(true);
+      expect(component.sidenavOpen()).toBe(true);
     });
   });
 
@@ -91,6 +91,24 @@ describe('AppComponent', () => {
     it('falls back to system preference when no localStorage entry', () => {
       const { component } = setup({ matchMedia: { matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() } });
       expect(component.isDarkMode()).toBe(false);
+    });
+  });
+
+  describe('toggleSidenav()', () => {
+    it('opens the sidenav when it is closed', () => {
+      const { component } = setup({ innerWidth: 500 });
+
+      expect(component.sidenavOpen()).toBe(false);
+      component.toggleSidenav();
+      expect(component.sidenavOpen()).toBe(true);
+    });
+
+    it('closes the sidenav when it is open', () => {
+      const { component } = setup();
+
+      expect(component.sidenavOpen()).toBe(true);
+      component.toggleSidenav();
+      expect(component.sidenavOpen()).toBe(false);
     });
   });
 

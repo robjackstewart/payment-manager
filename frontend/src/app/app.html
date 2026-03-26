@@ -1,5 +1,5 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #sidenav [mode]="sidenavMode()" [opened]="sidenavOpened()" class="sidenav">
+  <mat-sidenav [mode]="sidenavMode()" [opened]="sidenavOpen()" class="sidenav">
     <div class="sidenav-header">
       <mat-icon class="app-icon">account_balance_wallet</mat-icon>
       <span class="app-title">Payment Manager</span>
@@ -31,7 +31,7 @@
   <mat-sidenav-content>
     <mat-toolbar color="primary">
       @if (isMobile()) {
-        <button mat-icon-button (click)="sidenav.toggle()">
+        <button mat-icon-button (click)="toggleSidenav()">
           <mat-icon>menu</mat-icon>
         </button>
       }
