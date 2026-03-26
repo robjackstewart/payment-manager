@@ -1,5 +1,5 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav [mode]="sidenavMode()" [opened]="sidenavOpen()" class="sidenav">
+  <mat-sidenav [mode]="sidenavMode()" [opened]="sidenavOpen()" (openedChange)="sidenavOpen.set($event)" class="sidenav">
     <div class="sidenav-header">
       <mat-icon class="app-icon">account_balance_wallet</mat-icon>
       <span class="app-title">Payment Manager</span>
