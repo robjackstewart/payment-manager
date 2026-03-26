@@ -11,7 +11,7 @@
 } @else {
   <mat-card>
     <mat-card-content>
-      <table mat-table [dataSource]="payees()" class="full-width">
+      <table mat-table [dataSource]="payeesForTable()" class="full-width">
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
           <td mat-cell *matCellDef="let payee">{{ payee.name }}</td>
@@ -30,7 +30,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table>
-      @if (payees().length === 0) {
+      @if (payeesForTable().length === 0) {
         <div class="empty-state">
           <mat-icon>store_mall_directory</mat-icon>
           <p>No payees yet. Create one to get started.</p>

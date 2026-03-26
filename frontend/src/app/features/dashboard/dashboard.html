@@ -33,7 +33,7 @@
         </mat-card-header>
         <mat-card-content>
           @if (summary.pieSlices.length > 1) {
-            <app-source-pie-chart [slices]="summary.pieSlices" [currency]="summary.currency" />
+            <app-payments-pie-chart [slices]="summary.pieSlices" [currency]="summary.currency" />
           }
           <div class="summary-section">
             <p class="summary-section-title">Overall</p>
@@ -95,6 +95,11 @@
       <mat-card-subtitle>{{ selectedMonthLabel() }}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
+      @for (group of schedulePayeeSlices(); track group.currency) {
+        @if (group.slices.length > 1) {
+          <app-payments-pie-chart [slices]="group.slices" [currency]="group.currency" />
+        }
+      }
       @if (occurrencesViewModel().length === 0) {
         <div class="schedule-empty">
           <mat-icon>event_busy</mat-icon>

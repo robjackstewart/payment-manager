@@ -47,3 +47,5 @@ jobs:
         run: devcontainer exec --workspace-folder . -- task frontend:build
       - name: Lint
         run: devcontainer exec --workspace-folder . -- task frontend:lint
+      - name: Test
+        run: devcontainer exec --workspace-folder . -- task frontend:test

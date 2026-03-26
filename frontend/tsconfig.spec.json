@@ -9,6 +9,7 @@
     ]
   },
   "include": [
+    "test-setup.ts",
     "src/**/*.d.ts",
     "src/**/*.spec.ts"
   ]

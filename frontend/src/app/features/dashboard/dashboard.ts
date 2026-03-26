@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MAT_DATE_FORMATS, provideNativeDateAdapter } from '@angular/material/core';
 import { MatCard, MatCardHeader, MatCardAvatar, MatCardTitle, MatCardSubtitle, MatCardContent } from '@angular/material/card';
@@ -14,12 +14,9 @@ import { PaymentSourceService } from '../../core/services/payment-source.service
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { ContactService } from '../../core/services/contact.service';
-import { OccurrenceSummary, PaymentOccurrence } from '../../core/models/payment.model';
-import { Payee } from '../../core/models/payee.model';
-import { PaymentSource } from '../../core/models/payment-source.model';
-import { Contact } from '../../core/models/contact.model';
 import { forkJoin } from 'rxjs';
-import { SourcePieChartComponent, PieSlice } from './source-pie-chart';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { PaymentsPieChartComponent, PieSlice } from './payments-pie-chart';
 
 interface OccurrenceViewModel {
   formattedDate: string;
@@ -41,6 +38,11 @@ interface PaymentSourceSummaryVm {
   totalAmount: string;
   userTotal: string;
   contacts: SummaryContactRow[];
+}
+
+interface PayeeSliceGroup {
+  currency: string;
+  slices: PieSlice[];
 }
 
 interface SummaryViewModel {
@@ -102,12 +104,12 @@ interface SummaryViewModel {
     MatDatepickerToggle,
     MatDivider,
     ReactiveFormsModule,
-    SourcePieChartComponent,
+    PaymentsPieChartComponent,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   private readonly paymentSourceService = inject(PaymentSourceService);
   private readonly payeeService = inject(PayeeService);
   private readonly paymentService = inject(PaymentService);
@@ -115,22 +117,25 @@ export class DashboardComponent implements OnInit {
   private readonly currencyPipe = inject(CurrencyPipe);
   private readonly datePipe = inject(DatePipe);
 
-  readonly loading = signal(false);
+  private readonly refDataResource = rxResource({
+    stream: () => forkJoin({
+      paymentSources: this.paymentSourceService.getAll(),
+      payees: this.payeeService.getAll(),
+      contacts: this.contactService.getAll(),
+    })
+  });
 
-  readonly occurrences = signal<PaymentOccurrence[]>([]);
-  readonly occurrencesSummary = signal<OccurrenceSummary[]>([]);
-  readonly prevOccurrencesSummary = signal<OccurrenceSummary[]>([]);
-  readonly occurrencesLoading = signal(false);
-  readonly payees = signal<Payee[]>([]);
-  readonly contacts = signal<Contact[]>([]);
+  readonly loading = computed(() => this.refDataResource.isLoading());
+
+  readonly payees = computed(() => this.refDataResource.value()?.payees ?? []);
+  readonly paymentSources = computed(() => this.refDataResource.value()?.paymentSources ?? []);
+  readonly contacts = computed(() => this.refDataResource.value()?.contacts ?? []);
 
   private readonly payeesMap = computed(() => {
     const map: Record<string, string> = {};
     for (const p of this.payees()) map[p.id] = p.name;
     return map;
   });
-
-  readonly paymentSources = signal<PaymentSource[]>([]);
 
   private readonly paymentSourcesMap = computed(() => {
     const map: Record<string, string> = {};
@@ -218,51 +223,45 @@ export class DashboardComponent implements OnInit {
     this.datePipe.transform(this.selectedMonth(), 'MMMM yyyy') ?? ''
   );
 
-  ngOnInit(): void {
-    this.loading.set(true);
-    forkJoin({
-      paymentSources: this.paymentSourceService.getAll(),
-      payees: this.payeeService.getAll(),
-      contacts: this.contactService.getAll(),
-    }).subscribe({
-      next: ({ paymentSources, payees, contacts }) => {
-        this.payees.set(payees);
-        this.paymentSources.set(paymentSources);
-        this.contacts.set(contacts);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
+  private readonly occurrencesResource = rxResource({
+    params: () => {
+      const date = this.selectedMonth();
+      const from = new Date(date.getFullYear(), date.getMonth(), 1);
+      const to = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      const prevFrom = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+      const prevTo = new Date(date.getFullYear(), date.getMonth(), 0);
+      return { from, to, prevFrom, prevTo };
+    },
+    stream: ({ params: { from, to, prevFrom, prevTo } }) => forkJoin({
+      current: this.paymentService.getOccurrences(this.toDateString(from), this.toDateString(to)),
+      previous: this.paymentService.getOccurrences(this.toDateString(prevFrom), this.toDateString(prevTo)),
+    })
+  });
 
-    this.loadOccurrences(new Date());
-  }
+  readonly occurrencesLoading = computed(() => this.occurrencesResource.isLoading());
+
+  readonly occurrences = computed(() => this.occurrencesResource.value()?.current.occurrences ?? []);
+  readonly occurrencesSummary = computed(() => this.occurrencesResource.value()?.current.summary ?? []);
+  readonly prevOccurrencesSummary = computed(() => this.occurrencesResource.value()?.previous.summary ?? []);
+
+  readonly schedulePayeeSlices = computed<PayeeSliceGroup[]>(() => {
+    const byCurrency = new Map<string, Map<string, number>>();
+    for (const o of this.occurrences()) {
+      if (!byCurrency.has(o.currency)) byCurrency.set(o.currency, new Map());
+      const name = this.payeesMap()[o.payeeId] ?? o.payeeId;
+      const curr = byCurrency.get(o.currency)!;
+      curr.set(name, (curr.get(name) ?? 0) + o.amount);
+    }
+    return [...byCurrency.entries()].map(([currency, totals]) => ({
+      currency,
+      slices: [...totals.entries()].map(([label, amount]) => ({ label, amount })),
+    }));
+  });
 
   onMonthSelected(date: Date, picker: MatDatepicker<Date>): void {
     this.monthControl.setValue(date);
     this.selectedMonth.set(date);
     picker.close();
-    this.loadOccurrences(date);
-  }
-
-  private loadOccurrences(date: Date): void {
-    const from = new Date(date.getFullYear(), date.getMonth(), 1);
-    const to = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    const prevFrom = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-    const prevTo = new Date(date.getFullYear(), date.getMonth(), 0);
-
-    this.occurrencesLoading.set(true);
-    forkJoin({
-      current: this.paymentService.getOccurrences(this.toDateString(from), this.toDateString(to)),
-      previous: this.paymentService.getOccurrences(this.toDateString(prevFrom), this.toDateString(prevTo)),
-    }).subscribe({
-      next: ({ current, previous }) => {
-        this.occurrences.set(current.occurrences);
-        this.occurrencesSummary.set(current.summary);
-        this.prevOccurrencesSummary.set(previous.summary);
-        this.occurrencesLoading.set(false);
-      },
-      error: () => this.occurrencesLoading.set(false),
-    });
   }
 
   private toDateString(date: Date): string {
