@@ -114,25 +114,25 @@ describe('AppComponent', () => {
 
   describe('dark mode effect', () => {
     it('adds "dark-theme" class to body when isDarkMode is true', () => {
-      const { fixture } = setup({ theme: 'dark' });
-      TestBed.flushEffects();
+      setup({ theme: 'dark' });
+      TestBed.tick();
 
       expect(document.body.classList.contains('dark-theme')).toBe(true);
     });
 
     it('removes "dark-theme" class from body when isDarkMode is false', () => {
-      const { fixture } = setup({ addDarkThemeToBody: true, theme: 'light' });
-      TestBed.flushEffects();
+      setup({ addDarkThemeToBody: true, theme: 'light' });
+      TestBed.tick();
 
       expect(document.body.classList.contains('dark-theme')).toBe(false);
     });
 
     it('persists theme to localStorage via effect', () => {
       const { fixture } = setup({ theme: 'dark' });
-      TestBed.flushEffects();
+      TestBed.tick();
 
       fixture.componentInstance.toggleDarkMode();
-      TestBed.flushEffects();
+      TestBed.tick();
 
       expect(localStorage.getItem('theme')).toBe('light');
     });
