@@ -257,6 +257,96 @@ describe('DashboardComponent', () => {
     });
   });
 
+  describe('schedulePayeeSlices', () => {
+    it('returns empty array when there are no occurrences', async () => {
+      const mock = vi.fn().mockReturnValue(of({ occurrences: [], summary: [] }));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(component.schedulePayeeSlices()).toEqual([]);
+    });
+
+    it('returns one group with a single slice for a single payee', async () => {
+      const { fixture, component } = setup();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const groups = component.schedulePayeeSlices();
+      expect(groups).toHaveLength(1);
+      expect(groups[0].currency).toBe('USD');
+      expect(groups[0].slices).toEqual([{ label: 'Alice', amount: 100 }]);
+    });
+
+    it('sums amounts for the same payee across multiple occurrences', async () => {
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
+        { ...mockOccurrence, id: 'o1', amount: 60 },
+        { ...mockOccurrence, id: 'o2', amount: 40 },
+      ])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const [group] = component.schedulePayeeSlices();
+      expect(group.slices).toEqual([{ label: 'Alice', amount: 100 }]);
+    });
+
+    it('returns separate slices for different payees in the same currency', async () => {
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
+        { ...mockOccurrence, id: 'o1', payeeId: 'py1', amount: 100 },
+        { ...mockOccurrence, id: 'o2', payeeId: 'py2', amount: 200 },
+      ])));
+      const mockPayeeService2 = { getAll: vi.fn().mockReturnValue(of([mockPayee, { id: 'py2', name: 'Carol' }])) };
+      TestBed.resetTestingModule();
+      vi.spyOn(AgCharts, 'create').mockReturnValue({ update: vi.fn().mockResolvedValue(undefined), destroy: vi.fn() } as unknown as ReturnType<typeof AgCharts.create>);
+      TestBed.configureTestingModule({
+        imports: [DashboardComponent],
+        providers: [
+          { provide: PaymentService, useValue: { getOccurrences: mock } },
+          { provide: PayeeService, useValue: mockPayeeService2 },
+          { provide: PaymentSourceService, useValue: { getAll: vi.fn().mockReturnValue(of([mockPaymentSource])) } },
+          { provide: ContactService, useValue: { getAll: vi.fn().mockReturnValue(of([mockContact])) } },
+          provideNativeDateAdapter(),
+        ],
+        schemas: [NO_ERRORS_SCHEMA],
+      });
+      const fixture = TestBed.createComponent(DashboardComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const [group] = fixture.componentInstance.schedulePayeeSlices();
+      expect(group.slices).toContainEqual({ label: 'Alice', amount: 100 });
+      expect(group.slices).toContainEqual({ label: 'Carol', amount: 200 });
+    });
+
+    it('returns separate groups for occurrences in different currencies', async () => {
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
+        { ...mockOccurrence, id: 'o1', currency: 'USD', amount: 100 },
+        { ...mockOccurrence, id: 'o2', currency: 'EUR', amount: 50 },
+      ])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const groups = component.schedulePayeeSlices();
+      expect(groups).toHaveLength(2);
+      expect(groups.map(g => g.currency)).toContain('USD');
+      expect(groups.map(g => g.currency)).toContain('EUR');
+    });
+
+    it('falls back to payeeId when payee is not in the map', async () => {
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
+        { ...mockOccurrence, payeeId: 'unknown-py' },
+      ])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const [group] = component.schedulePayeeSlices();
+      expect(group.slices[0].label).toBe('unknown-py');
+    });
+  });
+
   describe('onMonthSelected()', () => {
     it('updates the private selectedMonth signal', async () => {
       const { fixture, component } = setup();

@@ -40,6 +40,11 @@ interface PaymentSourceSummaryVm {
   contacts: SummaryContactRow[];
 }
 
+interface PayeeSliceGroup {
+  currency: string;
+  slices: PieSlice[];
+}
+
 interface SummaryViewModel {
   currency: string;
   totalAmount: string;
@@ -238,6 +243,20 @@ export class DashboardComponent {
   readonly occurrences = computed(() => this.occurrencesResource.value()?.current.occurrences ?? []);
   readonly occurrencesSummary = computed(() => this.occurrencesResource.value()?.current.summary ?? []);
   readonly prevOccurrencesSummary = computed(() => this.occurrencesResource.value()?.previous.summary ?? []);
+
+  readonly schedulePayeeSlices = computed<PayeeSliceGroup[]>(() => {
+    const byCurrency = new Map<string, Map<string, number>>();
+    for (const o of this.occurrences()) {
+      if (!byCurrency.has(o.currency)) byCurrency.set(o.currency, new Map());
+      const name = this.payeesMap()[o.payeeId] ?? o.payeeId;
+      const curr = byCurrency.get(o.currency)!;
+      curr.set(name, (curr.get(name) ?? 0) + o.amount);
+    }
+    return [...byCurrency.entries()].map(([currency, totals]) => ({
+      currency,
+      slices: [...totals.entries()].map(([label, amount]) => ({ label, amount })),
+    }));
+  });
 
   onMonthSelected(date: Date, picker: MatDatepicker<Date>): void {
     this.monthControl.setValue(date);
