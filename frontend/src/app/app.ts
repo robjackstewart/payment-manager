@@ -10,6 +10,7 @@ import { MatDivider } from '@angular/material/divider';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatTooltip } from '@angular/material/tooltip';
 import { filter } from 'rxjs';
+import { BreakpointService } from './core/services/breakpoint.service';
 
 @Component({
   selector: 'app-root',
@@ -37,9 +38,10 @@ import { filter } from 'rxjs';
 })
 export class AppComponent {
   private readonly router = inject(Router);
-  readonly isMobile = signal(window.innerWidth < 768);
+  private readonly breakpointService = inject(BreakpointService);
+  readonly isMobile = this.breakpointService.isMobile;
   readonly sidenavMode = computed(() => this.isMobile() ? 'over' : 'side');
-  readonly sidenavOpen = signal(window.innerWidth >= 768);
+  readonly sidenavOpen = signal(!this.isMobile());
 
   readonly isDarkMode = signal(
     localStorage.getItem('theme') === 'dark' ||
@@ -55,10 +57,8 @@ export class AppComponent {
   );
 
   constructor() {
-    window.addEventListener('resize', () => {
-      const mobile = window.innerWidth < 768;
-      this.isMobile.set(mobile);
-      this.sidenavOpen.set(!mobile);
+    effect(() => {
+      this.sidenavOpen.set(!this.isMobile());
     });
 
     effect(() => {

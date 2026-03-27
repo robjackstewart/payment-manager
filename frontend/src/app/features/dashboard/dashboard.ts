@@ -14,6 +14,7 @@ import { PaymentSourceService } from '../../core/services/payment-source.service
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { ContactService } from '../../core/services/contact.service';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { forkJoin } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { PaymentsPieChartComponent, PieSlice } from './payments-pie-chart';
@@ -116,6 +117,7 @@ export class DashboardComponent {
   private readonly contactService = inject(ContactService);
   private readonly currencyPipe = inject(CurrencyPipe);
   private readonly datePipe = inject(DatePipe);
+  readonly breakpointService = inject(BreakpointService);
 
   private readonly refDataResource = rxResource({
     stream: () => forkJoin({

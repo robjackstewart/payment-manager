@@ -1,17 +1,19 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 import { AppComponent } from './app';
+import { BreakpointService } from './core/services/breakpoint.service';
 
 interface SetupOptions {
-  innerWidth?: number;
+  isMobile?: boolean;
   theme?: string;
   addDarkThemeToBody?: boolean;
   matchMedia?: { matches: boolean; addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> };
 }
 
-function setup({ innerWidth = 1024, theme, addDarkThemeToBody = false, matchMedia: matchMediaResult }: SetupOptions = {}) {
+function setup({ isMobile = false, theme, addDarkThemeToBody = false, matchMedia: matchMediaResult }: SetupOptions = {}) {
   localStorage.clear();
   document.body.classList.remove('dark-theme');
   if (theme !== undefined) localStorage.setItem('theme', theme);
@@ -26,36 +28,40 @@ function setup({ innerWidth = 1024, theme, addDarkThemeToBody = false, matchMedi
     ),
   });
 
-  Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: innerWidth });
+  const isMobileSignal = signal(isMobile);
+  const breakpointService = { isMobile: isMobileSignal };
 
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     imports: [AppComponent],
-    providers: [provideRouter([])],
+    providers: [
+      provideRouter([]),
+      { provide: BreakpointService, useValue: breakpointService },
+    ],
     schemas: [NO_ERRORS_SCHEMA],
   });
 
   const fixture = TestBed.createComponent(AppComponent);
   fixture.detectChanges();
-  return { fixture, component: fixture.componentInstance };
+  return { fixture, component: fixture.componentInstance, isMobileSignal };
 }
 
 describe('AppComponent', () => {
   describe('isMobile', () => {
-    it('is true when innerWidth < 768', () => {
-      const { component } = setup({ innerWidth: 500 });
+    it('is true when BreakpointService reports mobile', () => {
+      const { component } = setup({ isMobile: true });
       expect(component.isMobile()).toBe(true);
     });
 
-    it('is false when innerWidth >= 768', () => {
-      const { component } = setup({ innerWidth: 1024 });
+    it('is false when BreakpointService reports desktop', () => {
+      const { component } = setup({ isMobile: false });
       expect(component.isMobile()).toBe(false);
     });
   });
 
   describe('sidenavMode', () => {
     it('is "over" when isMobile is true', () => {
-      const { component } = setup({ innerWidth: 500 });
+      const { component } = setup({ isMobile: true });
       expect(component.sidenavMode()).toBe('over');
     });
 
@@ -67,12 +73,32 @@ describe('AppComponent', () => {
 
   describe('sidenavOpen', () => {
     it('is false on mobile', () => {
-      const { component } = setup({ innerWidth: 500 });
+      const { component } = setup({ isMobile: true });
       expect(component.sidenavOpen()).toBe(false);
     });
 
     it('is true on desktop', () => {
       const { component } = setup();
+      expect(component.sidenavOpen()).toBe(true);
+    });
+
+    it('closes when breakpoint changes from desktop to mobile', () => {
+      const { component, isMobileSignal } = setup({ isMobile: false });
+      expect(component.sidenavOpen()).toBe(true);
+
+      isMobileSignal.set(true);
+      TestBed.tick();
+
+      expect(component.sidenavOpen()).toBe(false);
+    });
+
+    it('opens when breakpoint changes from mobile to desktop', () => {
+      const { component, isMobileSignal } = setup({ isMobile: true });
+      expect(component.sidenavOpen()).toBe(false);
+
+      isMobileSignal.set(false);
+      TestBed.tick();
+
       expect(component.sidenavOpen()).toBe(true);
     });
   });
@@ -96,7 +122,7 @@ describe('AppComponent', () => {
 
   describe('toggleSidenav()', () => {
     it('opens the sidenav when it is closed', () => {
-      const { component } = setup({ innerWidth: 500 });
+      const { component } = setup({ isMobile: true });
 
       expect(component.sidenavOpen()).toBe(false);
       component.toggleSidenav();

@@ -1,10 +1,12 @@
+import { describe, it, expect, vi } from 'vitest';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { describe, it, expect, vi } from 'vitest';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PayeeListComponent } from './payee-list';
 import { PayeeService } from '../../../core/services/payee.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { Payee } from '../../../core/models/payee.model';
 
 const mockPayees: Payee[] = [
@@ -16,7 +18,8 @@ function buildMockDialogRef(closeValue: unknown) {
   return { afterClosed: vi.fn().mockReturnValue(of(closeValue)) };
 }
 
-function setup() {
+function setup(isMobile = false) {
+  TestBed.resetTestingModule();
   const payeeService = {
     getAll: vi.fn().mockReturnValue(of(mockPayees)),
     create: vi.fn().mockReturnValue(of({ id: '3', userId: 'u1', name: 'Charlie' })),
@@ -25,6 +28,8 @@ function setup() {
   };
   const dialog = { open: vi.fn() };
   const snackBar = { open: vi.fn() };
+  const isMobileSignal = signal(isMobile);
+  const breakpointService = { isMobile: isMobileSignal };
 
   TestBed.configureTestingModule({
     imports: [PayeeListComponent],
@@ -32,11 +37,12 @@ function setup() {
       { provide: PayeeService, useValue: payeeService },
       { provide: MatDialog, useValue: dialog },
       { provide: MatSnackBar, useValue: snackBar },
+      { provide: BreakpointService, useValue: breakpointService },
     ],
   });
 
   const fixture = TestBed.createComponent(PayeeListComponent);
-  return { fixture, component: fixture.componentInstance, payeeService, dialog, snackBar };
+  return { fixture, component: fixture.componentInstance, payeeService, dialog, snackBar, isMobileSignal };
 }
 
 describe('PayeeListComponent', () => {
@@ -149,6 +155,52 @@ describe('PayeeListComponent', () => {
       await fixture.componentInstance.deletePayee(payee);
 
       expect(payeeService.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('responsive rendering', () => {
+    it('on desktop renders a table and no mobile cards', async () => {
+      const { fixture } = setup(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const nativeEl: HTMLElement = fixture.nativeElement;
+      expect(nativeEl.querySelector('table[mat-table]')).not.toBeNull();
+      expect(nativeEl.querySelector('.mobile-card-list')).toBeNull();
+    });
+
+    it('on mobile renders cards and no table', async () => {
+      const { fixture } = setup(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const nativeEl: HTMLElement = fixture.nativeElement;
+      expect(nativeEl.querySelector('table[mat-table]')).toBeNull();
+      expect(nativeEl.querySelector('.mobile-card-list')).not.toBeNull();
+    });
+
+    it('on mobile renders one card per payee', async () => {
+      const { fixture } = setup(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const cards = fixture.nativeElement.querySelectorAll('.mobile-card');
+      expect(cards.length).toBe(mockPayees.length);
+    });
+
+    it('on mobile each card shows the payee name', async () => {
+      const { fixture } = setup(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const titles = Array.from(fixture.nativeElement.querySelectorAll('.card-title') as NodeListOf<HTMLElement>)
+        .map(el => el.textContent?.trim());
+      expect(titles).toContain('Alice');
+      expect(titles).toContain('Bob');
     });
   });
 });

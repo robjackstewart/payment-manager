@@ -13,6 +13,7 @@ import { PaymentService } from '../../../core/services/payment.service';
 import { PaymentSourceService } from '../../../core/services/payment-source.service';
 import { PayeeService } from '../../../core/services/payee.service';
 import { ContactService } from '../../../core/services/contact.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { AddPaymentValueRequest, Payment, UpdatePaymentRequest } from '../../../core/models/payment.model';
 import { PAYMENT_FREQUENCY_LABELS, PaymentFrequency } from '../../../core/models/payment-frequency.enum';
 import { firstValueFrom, forkJoin, of } from 'rxjs';
@@ -63,6 +64,7 @@ export class PaymentListComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly currencyPipe = inject(CurrencyPipe);
   private readonly datePipe = inject(DatePipe);
+  readonly breakpointService = inject(BreakpointService);
 
   private readonly reloadTrigger = signal(0);
 
