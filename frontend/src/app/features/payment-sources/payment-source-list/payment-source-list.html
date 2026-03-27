@@ -20,19 +20,17 @@
         } @else {
           <div class="mobile-card-list">
             @for (ps of paymentSourcesForTable(); track ps.id) {
-              <mat-card class="mobile-card">
-                <mat-card-content>
-                  <div class="card-title">{{ ps.name }}</div>
-                  <div class="card-actions">
-                    <button mat-icon-button color="primary" (click)="openEditDialog(ps)" matTooltip="Edit">
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button mat-icon-button color="warn" (click)="deletePaymentSource(ps)" matTooltip="Delete">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
-                </mat-card-content>
-              </mat-card>
+              <div class="mobile-card">
+                <div class="card-title">{{ ps.name }}</div>
+                <div class="card-actions">
+                  <button mat-icon-button color="primary" (click)="openEditDialog(ps)" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deletePaymentSource(ps)" matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
             }
           </div>
         }

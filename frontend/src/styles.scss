@@ -59,13 +59,18 @@ body.dark-theme {
   }
 }
 
-// Mobile card list — one card per data row shown instead of the table.
+// Mobile card list — one flat row per data item shown instead of the table.
 .mobile-card-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 
   .mobile-card {
+    padding: 20px 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--mat-sys-outline-variant);
+    }
+
     .card-title {
       font-size: 16px;
       font-weight: 500;
