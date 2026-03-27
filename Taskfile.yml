@@ -64,3 +64,9 @@ tasks:
       REPOSITORY: '{{.REPOSITORY | default "payment-manager"}}'
     cmds:
       - docker build -t {{.REPOSITORY}}:{{.TAG}} .
+
+  checkout:main:
+    cmds:
+      - git fetch
+      - git checkout main
+      - git reset --hard origin/main

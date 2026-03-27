@@ -10,6 +10,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 import { PayeeService } from '../../../core/services/payee.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { Payee } from '../../../core/models/payee.model';
 import { LOADING, LoadingState, isLoaded } from '../../../core/utils/loading.utils';
 
@@ -42,6 +43,7 @@ export class PayeeListComponent {
   private readonly payeeService = inject(PayeeService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  readonly breakpointService = inject(BreakpointService);
 
   private readonly reloadTrigger = signal(0);
 

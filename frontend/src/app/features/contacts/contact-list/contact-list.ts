@@ -10,6 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { ContactService } from '../../../core/services/contact.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { Contact } from '../../../core/models/contact.model';
 import { LOADING, LoadingState, isLoaded } from '../../../core/utils/loading.utils';
 
@@ -42,6 +43,7 @@ export class ContactListComponent {
   private readonly contactService = inject(ContactService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  readonly breakpointService = inject(BreakpointService);
 
   private readonly reloadTrigger = signal(0);
 

@@ -11,30 +11,57 @@
 } @else {
   <mat-card>
     <mat-card-content>
-      <table mat-table [dataSource]="contactsForTable()" class="full-width">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let c">{{ c.name }}</td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="actions-header">Actions</th>
-          <td mat-cell *matCellDef="let c" class="actions-cell">
-            <button mat-icon-button color="primary" (click)="openEditDialog(c)" matTooltip="Edit">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" (click)="deleteContact(c)" matTooltip="Delete">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-      @if (contactsForTable().length === 0) {
-        <div class="empty-state">
-          <mat-icon>group</mat-icon>
-          <p>No contacts yet. Add contacts to split bills with others.</p>
-        </div>
+      @if (breakpointService.isMobile()) {
+        @if (contactsForTable().length === 0) {
+          <div class="empty-state">
+            <mat-icon>group</mat-icon>
+            <p>No contacts yet. Add contacts to split bills with others.</p>
+          </div>
+        } @else {
+          <div class="mobile-card-list">
+            @for (c of contactsForTable(); track c.id) {
+              <mat-card class="mobile-card">
+                <mat-card-content>
+                  <div class="card-title">{{ c.name }}</div>
+                  <div class="card-actions">
+                    <button mat-icon-button color="primary" (click)="openEditDialog(c)" matTooltip="Edit">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="deleteContact(c)" matTooltip="Delete">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        }
+      } @else {
+        <table mat-table [dataSource]="contactsForTable()" class="full-width">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let c">{{ c.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-header">Actions</th>
+            <td mat-cell *matCellDef="let c" class="actions-cell">
+              <button mat-icon-button color="primary" (click)="openEditDialog(c)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteContact(c)" matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        @if (contactsForTable().length === 0) {
+          <div class="empty-state">
+            <mat-icon>group</mat-icon>
+            <p>No contacts yet. Add contacts to split bills with others.</p>
+          </div>
+        }
       }
     </mat-card-content>
   </mat-card>

@@ -105,6 +105,36 @@
           <mat-icon>event_busy</mat-icon>
           <p>No payments scheduled for this month.</p>
         </div>
+      } @else if (breakpointService.isMobile()) {
+        <div class="mobile-card-list">
+          @for (vm of occurrencesViewModel(); track vm.formattedDate + vm.payeeName + vm.sourceName) {
+            <mat-card class="mobile-card">
+              <mat-card-content>
+                <div class="card-title">{{ vm.formattedDate }}</div>
+                <div class="card-field">
+                  <span class="card-label">Payee</span>
+                  <span class="card-value">{{ vm.payeeName }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="card-label">Source</span>
+                  <span class="card-value">{{ vm.sourceName }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="card-label">Amount</span>
+                  <span class="card-value">{{ vm.formattedAmount }} {{ vm.currency }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="card-label">Your Share</span>
+                  <span class="card-value">{{ vm.yourShareDisplay }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="card-label">Description</span>
+                  <span class="card-value">{{ vm.descriptionDisplay }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
       } @else {
         <table mat-table [dataSource]="occurrencesViewModel()" class="full-width">
           <ng-container matColumnDef="date">
