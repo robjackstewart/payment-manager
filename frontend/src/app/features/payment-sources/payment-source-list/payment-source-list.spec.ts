@@ -182,7 +182,7 @@ describe('PaymentSourceListComponent', () => {
       await fixture.whenStable();
       fixture.detectChanges();
 
-      const titles = Array.from(fixture.nativeElement.querySelectorAll<HTMLElement>('.card-title'))
+      const titles = Array.from(fixture.nativeElement.querySelectorAll('.card-title') as NodeListOf<HTMLElement>)
         .map(el => el.textContent?.trim());
       expect(titles).toContain('Main Account');
       expect(titles).toContain('Savings');
