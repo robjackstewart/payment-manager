@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Subject } from 'rxjs';
 import { BreakpointService } from './breakpoint.service';
 
-function setup(initialMatches = false) {
+function setup() {
   TestBed.resetTestingModule();
 
   const state$ = new Subject<BreakpointState>();
