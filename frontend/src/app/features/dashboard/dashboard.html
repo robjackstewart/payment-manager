@@ -109,10 +109,10 @@
         <div class="mobile-card-list">
           @for (vm of occurrencesViewModel(); track vm.formattedDate + vm.payeeName + vm.sourceName) {
             <div class="mobile-card">
-              <div class="card-title">{{ vm.formattedDate }}</div>
+              <div class="card-title">{{ vm.payeeName }}</div>
               <div class="card-field">
-                <span class="card-label">Payee</span>
-                <span class="card-value">{{ vm.payeeName }}</span>
+                <span class="card-label">Date</span>
+                <span class="card-value">{{ vm.formattedDate }}</span>
               </div>
               <div class="card-field">
                 <span class="card-label">Source</span>
