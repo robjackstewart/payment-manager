@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepicker } from '@angular/material/datepicker';
@@ -9,6 +9,7 @@ import { ContactService } from '../../core/services/contact.service';
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentSourceService } from '../../core/services/payment-source.service';
 import { PaymentService } from '../../core/services/payment.service';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { DashboardComponent } from './dashboard';
 
 const mockPayee = { id: 'py1', name: 'Alice' };
@@ -38,7 +39,7 @@ function makeOccurrenceResponse(
   return { occurrences, summary: [summary] };
 }
 
-function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
+function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>, isMobile = false) {
   TestBed.resetTestingModule();
   vi.spyOn(AgCharts, 'create').mockReturnValue({
     update: vi.fn().mockResolvedValue(undefined),
@@ -51,6 +52,7 @@ function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
   const mockPayeeService = { getAll: vi.fn().mockReturnValue(of([mockPayee])) };
   const mockPaymentSourceService = { getAll: vi.fn().mockReturnValue(of([mockPaymentSource])) };
   const mockContactService = { getAll: vi.fn().mockReturnValue(of([mockContact])) };
+  const isMobileSignal = signal(isMobile);
 
   TestBed.configureTestingModule({
     imports: [DashboardComponent],
@@ -59,13 +61,14 @@ function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>) {
       { provide: PayeeService, useValue: mockPayeeService },
       { provide: PaymentSourceService, useValue: mockPaymentSourceService },
       { provide: ContactService, useValue: mockContactService },
+      { provide: BreakpointService, useValue: { isMobile: isMobileSignal } },
       provideNativeDateAdapter(),
     ],
     schemas: [NO_ERRORS_SCHEMA],
   });
 
   const fixture = TestBed.createComponent(DashboardComponent);
-  return { fixture, component: fixture.componentInstance, mockPaymentService };
+  return { fixture, component: fixture.componentInstance, mockPaymentService, isMobileSignal };
 }
 
 describe('DashboardComponent', () => {
@@ -307,6 +310,7 @@ describe('DashboardComponent', () => {
           { provide: PayeeService, useValue: mockPayeeService2 },
           { provide: PaymentSourceService, useValue: { getAll: vi.fn().mockReturnValue(of([mockPaymentSource])) } },
           { provide: ContactService, useValue: { getAll: vi.fn().mockReturnValue(of([mockContact])) } },
+          { provide: BreakpointService, useValue: { isMobile: signal(false) } },
           provideNativeDateAdapter(),
         ],
         schemas: [NO_ERRORS_SCHEMA],
@@ -380,6 +384,54 @@ describe('DashboardComponent', () => {
       component.onMonthSelected(new Date(2024, 5, 1), picker);
 
       expect(picker.close).toHaveBeenCalled();
+    });
+  });
+
+  describe('responsive rendering — payment schedule', () => {
+    it('on desktop renders the schedule table and no mobile card list', async () => {
+      const { fixture } = setup(undefined, false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const nativeEl: HTMLElement = fixture.nativeElement;
+      expect(nativeEl.querySelector('table[mat-table]')).not.toBeNull();
+      expect(nativeEl.querySelector('.mobile-card-list')).toBeNull();
+    });
+
+    it('on mobile renders the card list and no schedule table', async () => {
+      const { fixture } = setup(undefined, true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const nativeEl: HTMLElement = fixture.nativeElement;
+      expect(nativeEl.querySelector('table[mat-table]')).toBeNull();
+      expect(nativeEl.querySelector('.mobile-card-list')).not.toBeNull();
+    });
+
+    it('on mobile each occurrence card shows the payee name as the card title', async () => {
+      const { fixture } = setup(undefined, true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const titles = Array.from(
+        fixture.nativeElement.querySelectorAll('.card-title') as NodeListOf<HTMLElement>,
+      ).map(el => el.textContent?.trim());
+      expect(titles).toContain('Alice');
+    });
+
+    it('on mobile the date appears as a card-field, not the card title', async () => {
+      const { fixture } = setup(undefined, true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const dateField = Array.from(
+        fixture.nativeElement.querySelectorAll('.card-field .card-label') as NodeListOf<HTMLElement>,
+      ).find(el => el.textContent?.trim() === 'Date');
+      expect(dateField).not.toBeUndefined();
     });
   });
 });
