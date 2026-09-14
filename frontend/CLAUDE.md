@@ -1,8 +1,4 @@
----
-applyTo: frontend/**
----
-
-# Frontend Coding Instructions
+# Frontend
 
 ## Framework
 
@@ -142,51 +138,6 @@ readonly title = this.data.payment ? 'Edit Payment' : 'New Payment';
 readonly submitLabel = this.data.payment ? 'Save' : 'Create';
 ```
 
-Prefer Angular **signals** over RxJS observables and subscriptions wherever possible.
-
-```typescript
-// ✅ Prefer signals for component state
-export class PaymentsComponent {
-  payments = signal<Payment[]>([]);
-  isLoading = signal(false);
-  selectedPayment = signal<Payment | null>(null);
-
-  filteredPayments = computed(() =>
-    this.payments().filter(p => p.status === 'active')
-  );
-}
-
-// ❌ Avoid subscriptions for local component state
-export class PaymentsComponent implements OnInit, OnDestroy {
-  payments: Payment[] = [];
-  private subscription: Subscription;   // avoid
-
-  ngOnInit() {
-    this.subscription = this.service.getPayments().subscribe(...);
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
-}
-```
-
-### Guidelines
-- Use `signal()` for mutable state, `computed()` for derived state, and `effect()` for side effects.
-- Use `toSignal()` from `@angular/core/rxjs-interop` when you must consume an Observable (e.g. router events, HTTP responses from the api-client) — this bridges RxJS to signals cleanly.
-- Use `input()` and `output()` signal-based APIs for component inputs and outputs instead of `@Input()` / `@Output()`.
-- Template binding works natively with signals — call the signal as a function in templates: `{{ payments() }}`.
-- Services that hold shared state should expose signals (or `readonly` signal views) rather than BehaviorSubjects.
-
-```typescript
-// ✅ Service exposing signal-based state
-@Injectable({ providedIn: 'root' })
-export class PaymentService {
-  private readonly _payments = signal<Payment[]>([]);
-  readonly payments = this._payments.asReadonly();
-}
-```
-
 ## API Client
 
 **All interaction with the backend Web API must go through the generated `api-client`.**
@@ -286,7 +237,7 @@ npm run analyze
 
 This builds with source maps and opens `source-map-explorer` to show exactly which files and packages are contributing to each chunk.
 
-
+## Testing
 
 **Framework:** Vitest + JSDOM
 

@@ -1,8 +1,4 @@
----
-applyTo: host/**
----
-
-# Host Coding Instructions
+# Host
 
 ## Purpose
 
