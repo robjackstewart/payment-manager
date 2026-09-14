@@ -1,8 +1,4 @@
----
-applyTo: backend/**
----
-
-# Backend Coding Instructions
+# Backend
 
 ## Architecture
 
