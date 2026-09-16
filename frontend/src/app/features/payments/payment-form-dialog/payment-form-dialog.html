@@ -2,28 +2,40 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="form-grid">
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Payment Source</mat-label>
+      <mat-label>{{ paymentSourceLabel }}</mat-label>
       <mat-select formControlName="paymentSourceId">
         @for (ps of data.paymentSources; track ps.id) {
           <mat-option [value]="ps.id">{{ ps.name }}</mat-option>
         }
       </mat-select>
       @if (form.controls.paymentSourceId.hasError('required')) {
-        <mat-error>Payment source is required</mat-error>
+        <mat-error>This field is required</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Payee</mat-label>
+      <mat-label>{{ payeeLabel }}</mat-label>
       <mat-select formControlName="payeeId">
         @for (payee of data.payees; track payee.id) {
           <mat-option [value]="payee.id">{{ payee.name }}</mat-option>
         }
       </mat-select>
       @if (form.controls.payeeId.hasError('required')) {
-        <mat-error>Payee is required</mat-error>
+        <mat-error>This field is required</mat-error>
       }
     </mat-form-field>
+
+    @if (!isIncoming) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Payer Group (optional)</mat-label>
+        <mat-select formControlName="payerGroupId">
+          <mat-option [value]="null">None (split with individuals)</mat-option>
+          @for (group of payerGroups; track group.id) {
+            <mat-option [value]="group.id">{{ group.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Currency</mat-label>
@@ -70,7 +82,7 @@
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Description (optional)</mat-label>
-      <textarea matInput formControlName="description" rows="3" placeholder="What is this payment for?"></textarea>
+      <textarea matInput formControlName="description" rows="3" [placeholder]="descriptionPlaceholder"></textarea>
       @if (form.controls.description.hasError('maxlength')) {
         <mat-error>Description cannot exceed 500 characters</mat-error>
       }
@@ -130,24 +142,23 @@
       }
     </div>
 
-    <!-- Bill Split Section -->
+    <!-- Split Section — splits are the only link between a payment and its people (PaymentSplitGuard) -->
     <div class="split-section">
       <div class="split-header">
-        <span class="split-title">Bill Split</span>
-        <span class="your-share">Your share: <strong>{{ yourShareDisplay() }}</strong></span>
+        <span class="split-title">{{ splitSectionTitle }}</span>
       </div>
 
-      @if (data.contacts.length === 0) {
-        <p class="split-hint">Add contacts first in the Contacts page to split bills.</p>
+      @if (splitPersonOptions().length === 0) {
+        <p class="split-hint">{{ splitHint() }}</p>
       } @else {
         <div formArrayName="splits">
           @for (ctrl of splitControls; track $index) {
             <div [formGroupName]="$index" class="split-row">
               <mat-form-field appearance="outline" class="split-contact">
-                <mat-label>Contact</mat-label>
-                <mat-select formControlName="contactId">
-                  @for (c of data.contacts; track c.id) {
-                    <mat-option [value]="c.id">{{ c.name }}</mat-option>
+                <mat-label>Person</mat-label>
+                <mat-select formControlName="personId">
+                  @for (person of splitPersonOptions(); track person.id) {
+                    <mat-option [value]="person.id">{{ person.name }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -164,13 +175,22 @@
         <button mat-stroked-button type="button" (click)="addSplit()" class="add-split-btn">
           <mat-icon>add</mat-icon> Add person
         </button>
+        <p class="split-total" [class.split-total--invalid]="!splitsSumValid()">
+          Total: <strong>{{ splitsTotalDisplay() }}</strong>
+          @if (!splitsSumValid()) {
+            <span> — splits must total exactly 100%</span>
+          }
+          @if (hasDuplicatePeople()) {
+            <span> — each person can only appear once</span>
+          }
+        </p>
       }
     </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button [mat-dialog-close]="null">Cancel</button>
-  <button mat-raised-button color="primary" (click)="submit()" [disabled]="form.invalid">
+  <button mat-raised-button color="primary" (click)="submit()" [disabled]="submitDisabled()">
     {{ submitLabel }}
   </button>
 </mat-dialog-actions>

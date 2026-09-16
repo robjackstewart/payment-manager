@@ -29,32 +29,29 @@ public record GetPayment(Guid Id) : IRequest<Response>
                 .ToArrayAsync(cancellationToken);
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var currentAmount = effectiveValues.Where(v => v.EffectiveDate <= today).LastOrDefault()?.Amount
-                ?? payment.InitialAmount;
+            var currentAmount = EffectiveValueResolver.Resolve(effectiveValues, today, payment.InitialAmount);
 
             var splitRows = await context.PaymentSplits
                 .Where(s => s.PaymentId == request.Id)
-                .Select(s => new { s.ContactId, s.Percentage })
+                .Select(s => new { s.PersonId, s.Percentage })
                 .ToArrayAsync(cancellationToken);
 
-            var splits = splitRows
-                .Select(s => new Response.SplitDto(s.ContactId, s.Percentage,
-                    SplitPaymentCalculator.CalculateValue(currentAmount, s.Percentage)))
+            var splits = SplitPaymentCalculator.AllocateValues(
+                    currentAmount,
+                    splitRows.Select(s => (s.PersonId, s.Percentage)).ToArray())
+                .Select(s => new Response.SplitDto(s.PersonId, s.Percentage, s.Value))
                 .ToArray();
-
-            var userSharePct = SplitPaymentCalculator.UserSharePercentage(splits.Select(s => s.Percentage));
-            var userShare = new UserShareDto(userSharePct, SplitPaymentCalculator.UserShareValue(currentAmount, splits.Select(s => s.Value)));
 
             var valueDtos = effectiveValues.Select(v => new Response.ValueDto(v.EffectiveDate, v.Amount)).ToArray();
 
             logger.LogInformation("Successfully fetched payment '{Id}'", payment.Id);
-            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, currentAmount, payment.InitialAmount, valueDtos, payment.Currency, payment.Frequency, payment.StartDate, payment.EndDate, payment.Description, userShare, splits);
+            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, currentAmount, payment.InitialAmount, valueDtos, payment.Currency, payment.Frequency, payment.Direction, payment.StartDate, payment.EndDate, payment.Description, payment.PayerGroupId, splits);
         }
     }
 
-    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal CurrentAmount, decimal InitialAmount, ICollection<Response.ValueDto> Values, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description, UserShareDto UserShare, ICollection<Response.SplitDto> Splits)
+    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal CurrentAmount, decimal InitialAmount, ICollection<Response.ValueDto> Values, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId, ICollection<Response.SplitDto> Splits)
     {
         public record ValueDto(DateOnly EffectiveDate, decimal Amount);
-        public record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
+        public record SplitDto(Guid PersonId, decimal Percentage, decimal Value);
     }
 }

@@ -1,0 +1,74 @@
+<div class="page-header">
+  <button mat-raised-button color="primary" (click)="openCreateDialog()">
+    <mat-icon>add</mat-icon> New Payer Group
+  </button>
+</div>
+
+@if (isLoading()) {
+  <div class="loading-container">
+    <mat-spinner />
+  </div>
+} @else {
+  <mat-card>
+    <mat-card-content>
+      @if (breakpointService.isMobile()) {
+        @if (payerGroupsForTable().length === 0) {
+          <div class="empty-state">
+            <mat-icon>groups</mat-icon>
+            <p>No payer groups yet. Create one to split bills and income by percentage with others.</p>
+          </div>
+        } @else {
+          <div class="mobile-card-list">
+            @for (vm of payerGroupsForTable(); track vm._raw.id) {
+              <div class="mobile-card">
+                <div class="card-title">{{ vm._raw.name }}</div>
+                <div class="card-field">
+                  <span class="card-label">Members</span>
+                  <span class="card-value">{{ vm.memberNames }}</span>
+                </div>
+                <div class="card-actions">
+                  <button mat-icon-button color="primary" (click)="openEditDialog(vm._raw)" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deletePayerGroup(vm._raw)" matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        <table mat-table [dataSource]="payerGroupsForTable()" class="full-width">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let vm">{{ vm._raw.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="members">
+            <th mat-header-cell *matHeaderCellDef>Members</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.memberNames }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-header">Actions</th>
+            <td mat-cell *matCellDef="let vm" class="actions-cell">
+              <button mat-icon-button color="primary" (click)="openEditDialog(vm._raw)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deletePayerGroup(vm._raw)" matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        @if (payerGroupsForTable().length === 0) {
+          <div class="empty-state">
+            <mat-icon>groups</mat-icon>
+            <p>No payer groups yet. Create one to split bills and income by percentage with others.</p>
+          </div>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+}

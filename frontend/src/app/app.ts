@@ -8,7 +8,6 @@ import { MatIcon } from '@angular/material/icon';
 import { MatIconButton } from '@angular/material/button';
 import { MatDivider } from '@angular/material/divider';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
-import { MatTooltip } from '@angular/material/tooltip';
 import { filter } from 'rxjs';
 import { BreakpointService } from './core/services/breakpoint.service';
 
@@ -31,7 +30,6 @@ import { BreakpointService } from './core/services/breakpoint.service';
     MatIconButton,
     MatDivider,
     MatSlideToggle,
-    MatTooltip,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'

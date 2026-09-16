@@ -9,7 +9,9 @@ public interface IReadOnlyPaymentManagerContext
     public IQueryable<PaymentSource> PaymentSources { get; }
     public IQueryable<Payee> Payees { get; }
     public IQueryable<Payment> Payments { get; }
-    public IQueryable<Contact> Contacts { get; }
+    public IQueryable<Person> People { get; }
+    public IQueryable<PayerGroupMember> PayerGroupMembers { get; }
+    public IQueryable<PayerGroup> PayerGroups { get; }
     public IQueryable<PaymentSplit> PaymentSplits { get; }
     public IQueryable<EffectivePaymentValue> EffectivePaymentValues { get; }
 }

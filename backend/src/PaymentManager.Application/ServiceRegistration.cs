@@ -27,8 +27,11 @@ public static class ServiceRegistration
             .AddTransient<IValidator<UpdatePaymentSource>, UpdatePaymentSource.Validator>()
             .AddTransient<IValidator<CreatePayee>, CreatePayee.Validator>()
             .AddTransient<IValidator<UpdatePayee>, UpdatePayee.Validator>()
-            .AddTransient<IValidator<CreateContact>, CreateContact.Validator>()
-            .AddTransient<IValidator<UpdateContact>, UpdateContact.Validator>()
+            .AddTransient<IValidator<CreatePerson>, CreatePerson.Validator>()
+            .AddTransient<IValidator<UpdatePerson>, UpdatePerson.Validator>()
+            .AddTransient<IValidator<CreatePayerGroup>, CreatePayerGroup.Validator>()
+            .AddTransient<IValidator<UpdatePayerGroup>, UpdatePayerGroup.Validator>()
+            .AddTransient<IValidator<SetPayerGroupMembers>, SetPayerGroupMembers.Validator>()
             .AddTransient<IValidator<CreatePayment>, CreatePayment.Validator>()
             .AddTransient<IValidator<UpdatePayment>, UpdatePayment.Validator>();
 }

@@ -8,8 +8,8 @@
  * Do not edit the class manually.
  */
 import { UpdatePaymentResponseSplitDto } from './update-payment-response-split-dto';
-import { UserShareDto } from './user-share-dto';
-import { EffectivePaymentValueDto } from './effective-payment-value-dto';
+import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { UpdatePaymentResponseValueDto } from './update-payment-response-value-dto';
 
 
 export interface UpdatePaymentResponse { 
@@ -17,15 +17,16 @@ export interface UpdatePaymentResponse {
     userId: string;
     paymentSourceId: string;
     payeeId: string;
-    currentAmount: any | null;
-    initialAmount: any | null;
-    values: Array<EffectivePaymentValueDto>;
+    currentAmount: AddPaymentValueResponseAmount;
+    initialAmount: AddPaymentValueResponseAmount;
+    values: Array<UpdatePaymentResponseValueDto>;
     currency: string;
     frequency: number;
+    direction: number;
     startDate: string;
     endDate: string | null;
     description: string | null;
-    userShare: UserShareDto;
+    payerGroupId: string | null;
     splits: Array<UpdatePaymentResponseSplitDto>;
 }
 

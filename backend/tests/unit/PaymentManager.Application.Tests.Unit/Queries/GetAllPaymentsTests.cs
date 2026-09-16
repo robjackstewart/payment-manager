@@ -31,6 +31,7 @@ internal sealed class GetAllPaymentsTests
                 InitialAmount = 100m,
                 Currency = "USD",
                 Frequency = PaymentFrequency.Monthly,
+                Direction = PaymentDirection.Outgoing,
                 StartDate = new DateOnly(2025, 1, 1),
                 EndDate = new DateOnly(2025, 12, 31)
             },
@@ -43,6 +44,7 @@ internal sealed class GetAllPaymentsTests
                 InitialAmount = 50m,
                 Currency = "USD",
                 Frequency = PaymentFrequency.Once,
+                Direction = PaymentDirection.Outgoing,
                 StartDate = new DateOnly(2025, 6, 1),
                 EndDate = null
             },
@@ -55,6 +57,7 @@ internal sealed class GetAllPaymentsTests
                 InitialAmount = 200m,
                 Currency = "USD",
                 Frequency = PaymentFrequency.Annually,
+                Direction = PaymentDirection.Outgoing,
                 StartDate = new DateOnly(2025, 1, 1),
                 EndDate = new DateOnly(2026, 1, 1)
             }
@@ -93,13 +96,14 @@ internal sealed class GetAllPaymentsTests
     }
 
     [Test]
-    public async Task Handler_Handle_Should_Compute_UserShareAndSplitValues_For_PaymentWithSplits()
+    public async Task Handler_Handle_Should_Compute_SplitValues_For_PaymentWithSplits()
     {
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
         var userId = Guid.NewGuid();
-        var contactId1 = Guid.NewGuid();
-        var contactId2 = Guid.NewGuid();
+        var personId1 = Guid.NewGuid();
+        var personId2 = Guid.NewGuid();
+        var personId3 = Guid.NewGuid();
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
@@ -109,12 +113,14 @@ internal sealed class GetAllPaymentsTests
             InitialAmount = 200m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
         };
         var splits = new[]
         {
-            new PaymentSplit { PaymentId = payment.Id, ContactId = contactId1, Percentage = 30m },
-            new PaymentSplit { PaymentId = payment.Id, ContactId = contactId2, Percentage = 20m },
+            new PaymentSplit { PaymentId = payment.Id, PersonId = personId1, Percentage = 30m },
+            new PaymentSplit { PaymentId = payment.Id, PersonId = personId2, Percentage = 20m },
+            new PaymentSplit { PaymentId = payment.Id, PersonId = personId3, Percentage = 50m },
         };
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
@@ -130,14 +136,15 @@ internal sealed class GetAllPaymentsTests
 
         // Assert
         var dto = result.Payments.Single();
-        dto.UserShare.Percentage.ShouldBe(50m);      // 100 - 30 - 20
-        dto.UserShare.Value.ShouldBe(100m);           // 200 * 50 / 100
-        dto.Splits.Count.ShouldBe(2);
-        var alice = dto.Splits.Single(s => s.ContactId == contactId1);
+        dto.Splits.Count.ShouldBe(3);
+        var alice = dto.Splits.Single(s => s.PersonId == personId1);
         alice.Percentage.ShouldBe(30m);
         alice.Value.ShouldBe(60m);                   // 200 * 30 / 100
-        var bob = dto.Splits.Single(s => s.ContactId == contactId2);
+        var bob = dto.Splits.Single(s => s.PersonId == personId2);
         bob.Percentage.ShouldBe(20m);
         bob.Value.ShouldBe(40m);                     // 200 * 20 / 100
+        var carol = dto.Splits.Single(s => s.PersonId == personId3);
+        carol.Percentage.ShouldBe(50m);
+        carol.Value.ShouldBe(100m);                  // 200 * 50 / 100
     }
 }

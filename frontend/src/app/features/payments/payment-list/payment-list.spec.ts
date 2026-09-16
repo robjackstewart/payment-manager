@@ -8,14 +8,19 @@ import { PaymentListComponent } from './payment-list';
 import { PaymentService } from '../../../core/services/payment.service';
 import { PaymentSourceService } from '../../../core/services/payment-source.service';
 import { PayeeService } from '../../../core/services/payee.service';
-import { ContactService } from '../../../core/services/contact.service';
+import { PersonService } from '../../../core/services/person.service';
+import { PayerGroupService } from '../../../core/services/payer-group.service';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { Payment } from '../../../core/models/payment.model';
 import { PaymentFrequency } from '../../../core/models/payment-frequency.enum';
+import { PaymentDirection } from '../../../core/models/payment-direction.enum';
 
 const mockPayee = { id: 'py1', name: 'Alice' };
 const mockPaymentSource = { id: 'ps1', name: 'Bank' };
-const mockContact = { id: 'c1', name: 'Bob' };
+const mockCurrentUser = { id: 'self', userId: 'u1', name: 'Current User' };
+const mockBob = { id: 'c1', userId: 'u1', name: 'Bob' };
+const mockPeople = [mockCurrentUser, mockBob];
+const mockPayerGroup = { id: 'g1', userId: 'u1', name: 'Family', memberPersonIds: ['self', 'c1'] };
 
 const mockPayment: Payment = {
   id: 'p1',
@@ -27,9 +32,12 @@ const mockPayment: Payment = {
   values: [],
   currency: 'USD',
   frequency: PaymentFrequency.Monthly,
+  direction: PaymentDirection.Outgoing,
   startDate: '2024-01-01',
-  userShare: { percentage: 50, value: 50 },
-  splits: [],
+  splits: [
+    { personId: 'self', percentage: 50 },
+    { personId: 'c1', percentage: 50 },
+  ],
   description: 'Rent',
 };
 
@@ -46,7 +54,8 @@ function setup(isMobile = false, paymentOverride?: Partial<Payment>) {
   };
   const paymentSourceService = { getAll: vi.fn().mockReturnValue(of([mockPaymentSource])) };
   const payeeService = { getAll: vi.fn().mockReturnValue(of([mockPayee])) };
-  const contactService = { getAll: vi.fn().mockReturnValue(of([mockContact])) };
+  const personService = { getAll: vi.fn().mockReturnValue(of(mockPeople)) };
+  const payerGroupService = { getAll: vi.fn().mockReturnValue(of([mockPayerGroup])) };
   const dialogRef = { afterClosed: vi.fn().mockReturnValue(of(null)) };
   const dialog = { open: vi.fn().mockReturnValue(dialogRef) };
   const snackBar = { open: vi.fn() };
@@ -59,7 +68,8 @@ function setup(isMobile = false, paymentOverride?: Partial<Payment>) {
       { provide: PaymentService, useValue: paymentService },
       { provide: PaymentSourceService, useValue: paymentSourceService },
       { provide: PayeeService, useValue: payeeService },
-      { provide: ContactService, useValue: contactService },
+      { provide: PersonService, useValue: personService },
+      { provide: PayerGroupService, useValue: payerGroupService },
       { provide: MatDialog, useValue: dialog },
       { provide: MatSnackBar, useValue: snackBar },
       { provide: BreakpointService, useValue: breakpointService },
@@ -94,14 +104,24 @@ describe('PaymentListComponent', () => {
       expect(vm[0].formattedAmount).toMatch(/\$100/);
     });
 
-    it('renders integer percentage without decimal places', async () => {
+    it('renders every split with its person name and percentage', async () => {
       const vm = await resolvedViewModel();
-      expect(vm[0].yourShareDisplay).toBe('50%');
+      expect(vm[0].splitDisplay).toBe('Current User 50% · Bob 50%');
     });
 
-    it('renders fractional percentage with two decimal places', async () => {
-      const vm = await resolvedViewModel({ userShare: { percentage: 33.33, value: 33.33 } });
-      expect(vm[0].yourShareDisplay).toBe('33.33%');
+    it('renders fractional split percentages with two decimal places', async () => {
+      const vm = await resolvedViewModel({
+        splits: [
+          { personId: 'self', percentage: 33.33 },
+          { personId: 'c1', percentage: 66.67 },
+        ],
+      });
+      expect(vm[0].splitDisplay).toBe('Current User 33.33% · Bob 66.67%');
+    });
+
+    it('renders an em dash for the group when the payment is ungrouped', async () => {
+      const vm = await resolvedViewModel({ payerGroupId: null });
+      expect(vm[0].groupName).toBe('—');
     });
 
     it('shows the frequency label from PAYMENT_FREQUENCY_LABELS', async () => {

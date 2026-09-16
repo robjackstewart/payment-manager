@@ -30,15 +30,16 @@ internal sealed class PaymentEndpointTests
         var amount = 100.50m;
         var currency = "USD";
         var frequency = PaymentFrequency.Monthly;
+        var direction = PaymentDirection.Outgoing;
         var startDate = new DateOnly(2025, 1, 1);
         var endDate = new DateOnly(2025, 12, 31);
-        var request = new PaymentEndpoints.CreateRequest(paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
+        var request = new PaymentEndpoints.CreateRequest(paymentSourceId, payeeId, amount, currency, frequency, direction, startDate, endDate);
         var responseId = Guid.NewGuid();
         var sender = A.Fake<ISender>();
         var userService = CreateUserService(userId);
         var responseValues = new List<CreatePayment.Response.ValueDto> { new(startDate, amount) };
         A.CallTo(() => sender.Send(A<CreatePayment>._, A<CancellationToken>._))
-            .Returns(new CreatePayment.Response(responseId, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, startDate, endDate, null, new UserShareDto(100m, amount), []));
+            .Returns(new CreatePayment.Response(responseId, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, direction, startDate, endDate, null, null, []));
 
         var result = await PaymentEndpoints.HandleCreate(request, sender, userService, cancellationToken);
 
@@ -70,13 +71,13 @@ internal sealed class PaymentEndpointTests
         var startDate2 = new DateOnly(2025, 6, 1);
         var payments = new List<GetAllPayments.Response.PaymentDto>
         {
-            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 50.00m, 50.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate1, 50.00m)], "USD", PaymentFrequency.Once, startDate1, null, null, new UserShareDto(100m, 50.00m), []),
-            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 200.00m, 200.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate2, 200.00m)], "USD", PaymentFrequency.Annually, startDate2, new DateOnly(2026, 6, 1), null, new UserShareDto(100m, 200.00m), [])
+            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 50.00m, 50.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate1, 50.00m)], "USD", PaymentFrequency.Once, PaymentDirection.Outgoing, startDate1, null, null, null, []),
+            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 200.00m, 200.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate2, 200.00m)], "USD", PaymentFrequency.Annually, PaymentDirection.Outgoing, startDate2, new DateOnly(2026, 6, 1), null, null, [])
         };
         A.CallTo(() => sender.Send(A<GetAllPayments>._, A<CancellationToken>._))
             .Returns(new GetAllPayments.Response(payments));
 
-        var result = await PaymentEndpoints.HandleGetAll(sender, userService, cancellationToken);
+        var result = await PaymentEndpoints.HandleGetAll(null, sender, userService, cancellationToken);
 
         result.ShouldNotBeNull();
         result.ShouldBeOfType<Microsoft.AspNetCore.Http.HttpResults.Ok<GetAllPayments.Response>>();
@@ -102,7 +103,7 @@ internal sealed class PaymentEndpointTests
         var sender = A.Fake<ISender>();
         var responseValues = new List<GetPayment.Response.ValueDto> { new(startDate, amount) };
         A.CallTo(() => sender.Send(A<GetPayment>._, A<CancellationToken>._))
-            .Returns(new GetPayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, startDate, endDate, null, new UserShareDto(100m, amount), []));
+            .Returns(new GetPayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, PaymentDirection.Outgoing, startDate, endDate, null, null, []));
 
         var result = await PaymentEndpoints.HandleGet(id, sender, cancellationToken);
 
@@ -133,14 +134,15 @@ internal sealed class PaymentEndpointTests
         var amount = 150.00m;
         var currency = "EUR";
         var frequency = PaymentFrequency.Annually;
+        var direction = PaymentDirection.Outgoing;
         var startDate = new DateOnly(2025, 1, 1);
         var endDate = new DateOnly(2026, 1, 1);
-        var request = new PaymentEndpoints.UpdateRequest(paymentSourceId, payeeId, amount, currency, frequency, startDate, endDate);
+        var request = new PaymentEndpoints.UpdateRequest(paymentSourceId, payeeId, amount, currency, frequency, direction, startDate, endDate);
         var sender = A.Fake<ISender>();
         var userService = CreateUserService(userId);
         var responseValues = new List<UpdatePayment.Response.ValueDto> { new(startDate, amount) };
         A.CallTo(() => sender.Send(A<UpdatePayment>._, A<CancellationToken>._))
-            .Returns(new UpdatePayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, startDate, endDate, null, new UserShareDto(100m, amount), []));
+            .Returns(new UpdatePayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, direction, startDate, endDate, null, null, []));
 
         var result = await PaymentEndpoints.HandleUpdate(id, request, sender, userService, cancellationToken);
 

@@ -1,26 +1,49 @@
 namespace PaymentManager.Application.Common;
 
-public record UserShareDto(decimal Percentage, decimal Value);
-
 internal static class SplitPaymentCalculator
 {
-    /// <summary>Returns the owner's share percentage: 100 minus the sum of all contact split percentages.</summary>
-    public static decimal UserSharePercentage(IEnumerable<decimal> contactSplitPercentages) =>
-        100m - contactSplitPercentages.Sum();
-
     /// <summary>
-    /// Returns the owner's share value as the remainder after subtracting all contact split values from
-    /// the total amount. This guarantees the shares always sum to exactly the original amount, regardless
-    /// of rounding on individual contact splits.
-    /// </summary>
-    public static decimal UserShareValue(decimal amount, IEnumerable<decimal> contactSplitValues) =>
-        amount - contactSplitValues.Sum();
-
-    /// <summary>
-    /// Returns the monetary value of a given percentage of an amount, truncated (floored) to 2 decimal
-    /// places. Truncation ensures contacts never round up, so the user (bill owner) absorbs any
-    /// sub-penny remainder via <see cref="UserShareValue"/>.
+    /// Returns the monetary value of a given percentage of an amount, truncated (floored) to
+    /// 2 decimal places.
     /// </summary>
     public static decimal CalculateValue(decimal amount, decimal percentage) =>
         Math.Floor(amount * percentage / 100m * 100m) / 100m;
+
+    /// <summary>
+    /// Apportions <paramref name="amount"/> across splits whose percentages total 100.
+    /// Every share is floored to 2dp and the leftover pennies are given to the largest share,
+    /// so the shares always sum to exactly <paramref name="amount"/>. Ties are broken by the
+    /// order supplied, which keeps the result deterministic.
+    /// </summary>
+    public static IReadOnlyList<(Guid PersonId, decimal Percentage, decimal Value)> AllocateValues(
+        decimal amount,
+        IReadOnlyList<(Guid PersonId, decimal Percentage)> splits)
+    {
+        if (splits.Count == 0)
+        {
+            return [];
+        }
+
+        var allocated = splits
+            .Select(s => (s.PersonId, s.Percentage, Value: CalculateValue(amount, s.Percentage)))
+            .ToArray();
+
+        var remainder = amount - allocated.Sum(a => a.Value);
+        if (remainder == 0m)
+        {
+            return allocated;
+        }
+
+        var largestIndex = 0;
+        for (var i = 1; i < allocated.Length; i++)
+        {
+            if (allocated[i].Percentage > allocated[largestIndex].Percentage)
+            {
+                largestIndex = i;
+            }
+        }
+
+        allocated[largestIndex].Value += remainder;
+        return allocated;
+    }
 }

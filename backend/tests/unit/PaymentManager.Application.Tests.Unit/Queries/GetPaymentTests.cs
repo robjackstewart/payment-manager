@@ -28,6 +28,7 @@ internal sealed class GetPaymentTests
             InitialAmount = 250.50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             EndDate = new DateOnly(2025, 12, 31)
         };
@@ -40,6 +41,7 @@ internal sealed class GetPaymentTests
             InitialAmount = 99m,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 6, 1),
             EndDate = null
         };
@@ -71,8 +73,6 @@ internal sealed class GetPaymentTests
         result.Frequency.ShouldBe(matchingPayment.Frequency);
         result.StartDate.ShouldBe(matchingPayment.StartDate);
         result.EndDate.ShouldBe(matchingPayment.EndDate);
-        result.UserShare.Percentage.ShouldBe(100m);   // no splits → user owns 100%
-        result.UserShare.Value.ShouldBe(250.50m);
         result.Splits.ShouldBeEmpty();
     }
 
@@ -90,6 +90,7 @@ internal sealed class GetPaymentTests
             InitialAmount = 99m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             EndDate = new DateOnly(2025, 12, 31)
         };
@@ -126,6 +127,7 @@ internal sealed class GetPaymentTests
             InitialAmount = 75m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
         };
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
@@ -140,16 +142,16 @@ internal sealed class GetPaymentTests
         // Assert
         result.CurrentAmount.ShouldBe(75m);
         result.Values.ShouldBeEmpty();
-        result.UserShare.Percentage.ShouldBe(100m);
-        result.UserShare.Value.ShouldBe(75m);
+        result.Splits.ShouldBeEmpty();
     }
 
     [Test]
-    public async Task Handler_Handle_Should_Compute_UserShareAndSplitValues_For_PaymentWithSplits()
+    public async Task Handler_Handle_Should_Compute_SplitValues_For_PaymentWithSplits()
     {
         // Arrange
         var cancellationToken = TestContext.CurrentContext.CancellationToken;
-        var contactId = Guid.NewGuid();
+        var personId = Guid.NewGuid();
+        var otherPersonId = Guid.NewGuid();
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
@@ -159,9 +161,14 @@ internal sealed class GetPaymentTests
             InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
         };
-        var splits = new[] { new PaymentSplit { PaymentId = payment.Id, ContactId = contactId, Percentage = 40m } };
+        var splits = new[]
+        {
+            new PaymentSplit { PaymentId = payment.Id, PersonId = personId, Percentage = 40m },
+            new PaymentSplit { PaymentId = payment.Id, PersonId = otherPersonId, Percentage = 60m },
+        };
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
@@ -175,10 +182,8 @@ internal sealed class GetPaymentTests
         var result = await handler.Handle(new GetPayment(payment.Id), cancellationToken);
 
         // Assert
-        result.UserShare.Percentage.ShouldBe(60m);    // 100 - 40
-        result.UserShare.Value.ShouldBe(60m);          // 100 * 60 / 100
-        result.Splits.Single().Percentage.ShouldBe(40m);
-        result.Splits.Single().Value.ShouldBe(40m);   // 100 * 40 / 100
+        result.Splits.Single(s => s.PersonId == personId).Value.ShouldBe(40m);
+        result.Splits.Single(s => s.PersonId == otherPersonId).Value.ShouldBe(60m);
     }
 
     [Test]
@@ -194,6 +199,7 @@ internal sealed class GetPaymentTests
             InitialAmount = 10m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2024, 1, 1),
         };
         // Two EPVs — both in the past relative to today (2026-03-23)
@@ -227,6 +233,7 @@ internal sealed class GetPaymentTests
             InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2024, 1, 1),
         };
         // EPV in the far future — should not affect CurrentAmount
@@ -260,6 +267,7 @@ internal sealed class GetPaymentTests
             InitialAmount = 10m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2024, 1, 1),
         };
         var pastValue = new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 20m };

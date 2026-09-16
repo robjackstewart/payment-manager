@@ -27,8 +27,10 @@ public abstract class IntegrationTestBase
 
         var context = _scope.ServiceProvider.GetRequiredService<IPaymentManagerContext>();
         await context.PaymentSplits.ExecuteDeleteAsync();
+        await context.PayerGroupMembers.ExecuteDeleteAsync();
         await context.Payments.ExecuteDeleteAsync();
-        await context.Contacts.ExecuteDeleteAsync();
+        await context.People.ExecuteDeleteAsync();
+        await context.PayerGroups.ExecuteDeleteAsync();
         await context.Payees.ExecuteDeleteAsync();
         await context.PaymentSources.ExecuteDeleteAsync();
         await context.Users.Where(u => u.Id != DefaultUserService.DefaultUserId).ExecuteDeleteAsync();

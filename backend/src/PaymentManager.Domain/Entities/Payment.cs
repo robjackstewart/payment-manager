@@ -11,7 +11,9 @@ public record Payment()
     public required decimal InitialAmount { get; init; }
     public required string Currency { get; init; }
     public required PaymentFrequency Frequency { get; init; }
+    public required PaymentDirection Direction { get; init; }
     public required DateOnly StartDate { get; init; }
     public DateOnly? EndDate { get; init; }
     public string? Description { get; init; }
+    public Guid? PayerGroupId { get; init; }
 }

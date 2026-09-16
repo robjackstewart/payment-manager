@@ -37,7 +37,8 @@ public static class ApplicationConfiguration
         UserEndpoints.Map(app);
         PaymentSourceEndpoints.Map(app);
         PayeeEndpoints.Map(app);
-        ContactEndpoints.Map(app);
+        PersonEndpoints.Map(app);
+        PayerGroupEndpoints.Map(app);
         PaymentEndpoints.Map(app);
         return app;
     }

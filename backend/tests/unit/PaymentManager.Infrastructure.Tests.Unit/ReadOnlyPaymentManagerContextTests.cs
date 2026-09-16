@@ -90,6 +90,7 @@ internal sealed class ReadOnlyPaymentManagerContextTests
             InitialAmount = 100m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = DateOnly.FromDateTime(DateTime.Today)
         };
         var payments = new[] { payment };

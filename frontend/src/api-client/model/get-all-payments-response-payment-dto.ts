@@ -7,9 +7,9 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { GetAllPaymentsResponsePaymentDtoValueDto } from './get-all-payments-response-payment-dto-value-dto';
 import { GetAllPaymentsResponsePaymentDtoSplitDto } from './get-all-payments-response-payment-dto-split-dto';
-import { UserShareDto } from './user-share-dto';
-import { EffectivePaymentValueDto } from './effective-payment-value-dto';
+import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
 
 
 export interface GetAllPaymentsResponsePaymentDto { 
@@ -17,15 +17,16 @@ export interface GetAllPaymentsResponsePaymentDto {
     userId: string;
     paymentSourceId: string;
     payeeId: string;
-    currentAmount: any | null;
-    initialAmount: any | null;
-    values: Array<EffectivePaymentValueDto>;
+    currentAmount: AddPaymentValueResponseAmount;
+    initialAmount: AddPaymentValueResponseAmount;
+    values: Array<GetAllPaymentsResponsePaymentDtoValueDto>;
     currency: string;
     frequency: number;
+    direction: number;
     startDate: string;
     endDate: string | null;
     description: string | null;
-    userShare: UserShareDto;
+    payerGroupId: string | null;
     splits: Array<GetAllPaymentsResponsePaymentDtoSplitDto>;
 }
 

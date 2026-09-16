@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { PaymentDirection } from './core/models/payment-direction.enum';
 
 export const routes: Routes = [
   {
@@ -24,14 +25,28 @@ export const routes: Routes = [
   {
     path: 'payments',
     title: 'Payments',
+    data: { direction: PaymentDirection.Outgoing },
     loadComponent: () =>
       import('./features/payments/payment-list/payment-list').then(m => m.PaymentListComponent)
   },
   {
-    path: 'contacts',
-    title: 'Contacts',
+    path: 'income',
+    title: 'Income',
+    data: { direction: PaymentDirection.Incoming },
     loadComponent: () =>
-      import('./features/contacts/contact-list/contact-list').then(m => m.ContactListComponent)
+      import('./features/payments/payment-list/payment-list').then(m => m.PaymentListComponent)
+  },
+  {
+    path: 'people',
+    title: 'People',
+    loadComponent: () =>
+      import('./features/people/person-list/person-list').then(m => m.PersonListComponent)
+  },
+  {
+    path: 'payer-groups',
+    title: 'Payer Groups',
+    loadComponent: () =>
+      import('./features/payer-groups/payer-group-list/payer-group-list').then(m => m.PayerGroupListComponent)
   },
   { path: '**', redirectTo: '' }
 ];

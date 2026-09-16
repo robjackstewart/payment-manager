@@ -7,12 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GetPaymentOccurrencesResponseSummaryDto } from './get-payment-occurrences-response-summary-dto';
 import { GetPaymentOccurrencesResponseOccurrenceDto } from './get-payment-occurrences-response-occurrence-dto';
+import { GetPaymentOccurrencesResponsePersonCommitmentDto } from './get-payment-occurrences-response-person-commitment-dto';
+import { GetPaymentOccurrencesResponseGroupSummaryDto } from './get-payment-occurrences-response-group-summary-dto';
 
 
 export interface GetPaymentOccurrencesResponse { 
     occurrences: Array<GetPaymentOccurrencesResponseOccurrenceDto>;
-    summary: Array<GetPaymentOccurrencesResponseSummaryDto>;
+    summary: Array<GetPaymentOccurrencesResponseGroupSummaryDto>;
+    people: Array<GetPaymentOccurrencesResponsePersonCommitmentDto>;
 }
 
