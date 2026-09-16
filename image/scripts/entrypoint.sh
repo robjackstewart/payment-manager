@@ -25,8 +25,12 @@ export BasePath="${BASE_PATH}"
 
 # Apply pending EF Core migrations using the pre-built bundle.
 # The bundle checks __EFMigrationsHistory and is safe to run on any database state.
+# Foreign key enforcement is disabled for the migration connection: SQLite table rebuilds
+# emit PRAGMA foreign_keys = 0, which is a no-op inside a transaction, so migrations that
+# drop a table referenced by another table fail. Microsoft.Data.Sqlite applies the keyword
+# on open, before EF starts its transaction. The app's own connection string is unaffected.
 echo "[migrate] Applying migrations to ${DB_PATH}..."
-/scripts/efbundle --connection "Data Source=${DB_PATH}"
+/scripts/efbundle --connection "Data Source=${DB_PATH};Foreign Keys=False"
 echo "[migrate] Done."
 
 # Write the crontab using the configured schedule
