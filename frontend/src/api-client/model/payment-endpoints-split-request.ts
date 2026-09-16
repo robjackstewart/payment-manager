@@ -7,10 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
 
 
 export interface PaymentEndpointsSplitRequest { 
-    contactId: string;
-    percentage: any | null;
+    personId: string;
+    percentage: AddPaymentValueResponseAmount;
 }
 

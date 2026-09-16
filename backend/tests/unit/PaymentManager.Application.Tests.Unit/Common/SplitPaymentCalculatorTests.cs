@@ -1,32 +1,11 @@
 using NUnit.Framework;
 using PaymentManager.Application.Common;
-using PaymentManager.Application.Common.Dispatch;
 using Shouldly;
 
 namespace PaymentManager.Application.Tests.Unit.Common;
 
 internal sealed class SplitPaymentCalculatorTests
 {
-    // ── UserSharePercentage ───────────────────────────────────────────────────
-
-    [Test]
-    public void UserSharePercentage_Should_Return100_When_NoSplits()
-    {
-        SplitPaymentCalculator.UserSharePercentage([]).ShouldBe(100m);
-    }
-
-    [Test]
-    public void UserSharePercentage_Should_ReturnRemainder_When_SplitsPresent()
-    {
-        SplitPaymentCalculator.UserSharePercentage([30m, 20m]).ShouldBe(50m);
-    }
-
-    [Test]
-    public void UserSharePercentage_Should_ReturnZero_When_SplitsTotalIs100()
-    {
-        SplitPaymentCalculator.UserSharePercentage([60m, 40m]).ShouldBe(0m);
-    }
-
     // ── CalculateValue ────────────────────────────────────────────────────────
 
     [Test]
@@ -54,51 +33,60 @@ internal sealed class SplitPaymentCalculatorTests
         SplitPaymentCalculator.CalculateValue(500m, 0m).ShouldBe(0m);
     }
 
-    // ── Combined usage ────────────────────────────────────────────────────────
+    // ── AllocateValues ────────────────────────────────────────────────────────
 
     [Test]
-    public void Combined_Should_ProduceConsistentUserShareAndSplitValues()
+    public void AllocateValues_Should_ReturnEmpty_When_NoSplits()
     {
-        const decimal amount = 400m;
-        decimal[] contactPercentages = [25m, 25m]; // total 50% to contacts
-
-        var splitValues = contactPercentages.Select(p => SplitPaymentCalculator.CalculateValue(amount, p)).ToArray();
-        var userSharePct = SplitPaymentCalculator.UserSharePercentage(contactPercentages);
-        var userShareValue = SplitPaymentCalculator.UserShareValue(amount, splitValues);
-
-        splitValues.ShouldBe([100m, 100m]);
-        userSharePct.ShouldBe(50m);
-        userShareValue.ShouldBe(200m);
-
-        // All shares add up to the full amount
-        (splitValues.Sum() + userShareValue).ShouldBe(amount);
-    }
-
-    // ── UserShareValue ────────────────────────────────────────────────────────
-
-    [Test]
-    public void UserShareValue_Should_Return_FullAmount_When_NoSplits()
-    {
-        SplitPaymentCalculator.UserShareValue(15.99m, []).ShouldBe(15.99m);
+        SplitPaymentCalculator.AllocateValues(100m, []).ShouldBeEmpty();
     }
 
     [Test]
-    public void UserShareValue_Should_Return_Remainder_After_ContactSplits()
+    public void AllocateValues_Should_SplitEvenly_When_NoRoundingNeeded()
     {
-        // 200 - 50 - 50 = 100
-        SplitPaymentCalculator.UserShareValue(200m, [50m, 50m]).ShouldBe(100m);
+        var personA = Guid.NewGuid();
+        var personB = Guid.NewGuid();
+        var result = SplitPaymentCalculator.AllocateValues(200m, [(personA, 50m), (personB, 50m)]);
+
+        result.Single(r => r.PersonId == personA).Value.ShouldBe(100m);
+        result.Single(r => r.PersonId == personB).Value.ShouldBe(100m);
     }
 
     [Test]
-    public void UserShareValue_Should_Reconcile_When_Rounding_Would_Otherwise_Overflow()
+    public void AllocateValues_Should_GiveLeftoverPennies_To_LargestSplit()
     {
-        // 15.99 / 50%: truncate(15.99 * 50 / 100) = truncate(7.995) = 7.99
-        // Contact rounds DOWN; user absorbs the remainder (8.00), not the contact.
-        var contactValue = SplitPaymentCalculator.CalculateValue(15.99m, 50m);
-        var userValue = SplitPaymentCalculator.UserShareValue(15.99m, [contactValue]);
+        // 100 split three ways at 33.33/33.33/33.34 truncates to 33.33/33.33/33.34 = 99.99+? work it through:
+        // floor(100*33.33/100*100)/100 = 33.33 for each of the first two; floor(100*33.34/100*100)/100 = 33.34.
+        // Sum = 33.33 + 33.33 + 33.34 = 100.00 exactly, so use a case that actually leaves a remainder.
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        var c = Guid.NewGuid();
+        // 10 split three ways evenly (33.33/33.33/33.34) — each floor(10*33.33/100*100)/100 = 3.33 for the
+        // first two and 3.33 for the third (floor(10*33.34/100*100)/100 = 3.334 -> 3.33), leftover = 0.01.
+        var result = SplitPaymentCalculator.AllocateValues(10m, [(a, 33.33m), (b, 33.33m), (c, 33.34m)]);
 
-        contactValue.ShouldBe(7.99m);
-        userValue.ShouldBe(8.00m);
-        (contactValue + userValue).ShouldBe(15.99m);
+        result.Sum(r => r.Value).ShouldBe(10m);
+        // The leftover penny goes to whichever split has the largest percentage — c (33.34).
+        result.Single(r => r.PersonId == c).Value.ShouldBe(result.Single(r => r.PersonId == a).Value + 0.01m);
+    }
+
+    [Test]
+    public void AllocateValues_Should_GiveFullRemainder_To_SoleSplit()
+    {
+        var person = Guid.NewGuid();
+        var result = SplitPaymentCalculator.AllocateValues(15.99m, [(person, 50m)]);
+
+        // A single split with no one else to absorb the remainder takes all of it.
+        result.Single().Value.ShouldBe(15.99m);
+    }
+
+    [Test]
+    public void AllocateValues_Should_SumToExactAmount_ForFullySpecifiedSplits()
+    {
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        var result = SplitPaymentCalculator.AllocateValues(15.99m, [(a, 50m), (b, 50m)]);
+
+        result.Sum(r => r.Value).ShouldBe(15.99m);
     }
 }

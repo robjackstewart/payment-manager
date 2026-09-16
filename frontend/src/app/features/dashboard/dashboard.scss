@@ -50,9 +50,59 @@
   .full-width {
     width: 100%;
   }
+
+  // ── Signed amounts (income vs bills) ────────────────────────────────────
+
+  .amount-in {
+    color: #2e7d32;
+    font-weight: 500;
+  }
+
+  .amount-out {
+    color: var(--mat-sys-on-surface);
+  }
 }
 
-.summary-card {
+// ── Stat tiles (Income / Outgoings / Left over) ───────────────────────────
+
+.stat-tile-row {
+  display: flex;
+  gap: 12px;
+  margin: 4px 0 16px;
+  flex-wrap: wrap;
+}
+
+.stat-tile {
+  flex: 1 1 120px;
+  padding: 10px 14px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &--overspent {
+    background: color-mix(in srgb, #c62828 12%, var(--mat-sys-surface-container-low));
+    border-color: color-mix(in srgb, #c62828 40%, var(--mat-sys-outline-variant));
+  }
+}
+
+.stat-tile-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat-tile-value {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.group-card, .summary-card {
   margin-top: 24px;
 
   .summary-section {
@@ -93,8 +143,9 @@
       border-bottom: 1px solid var(--mat-sys-outline-variant);
     }
 
-    &--you {
-      background: color-mix(in srgb, var(--mat-sys-primary) 10%, var(--mat-sys-surface-container));
+    &--over {
+      background: color-mix(in srgb, var(--mat-sys-error) 8%, var(--mat-sys-surface-container));
+      box-shadow: inset 3px 0 0 var(--mat-sys-error);
     }
   }
 
@@ -109,16 +160,62 @@
   .summary-person-name {
     flex: 1;
     font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  .summary-person-row--you .summary-person-name {
-    font-weight: 500;
+  .summary-person-currency {
+    font-size: 11px;
+    color: var(--mat-sys-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .summary-person-flag {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--mat-sys-error);
   }
 
   .summary-person-amount {
     font-size: 14px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+  }
+
+  // ── Per-person income/outgoing/net figures (group cards) ─────────────────
+
+  .summary-person-figure {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 64px;
+  }
+
+  .summary-person-figure-label {
+    font-size: 10px;
+    color: var(--mat-sys-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .summary-person-figure-value {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-person-net {
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 72px;
+    text-align: right;
+
+    &--positive { color: #2e7d32; }
+    &--negative { color: #c62828; }
+    &--zero { color: var(--mat-sys-on-surface-variant); }
   }
 
   // ── Payment source panels ─────────────────────────────────────────────────

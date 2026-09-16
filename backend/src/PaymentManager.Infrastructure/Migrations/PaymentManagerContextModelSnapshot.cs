@@ -15,28 +15,7 @@ namespace PaymentManager.Infrastructure.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
-
-            modelBuilder.Entity("PaymentManager.Domain.Entities.Contact", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Contacts");
-                });
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.EffectivePaymentValue", b =>
                 {
@@ -75,6 +54,42 @@ namespace PaymentManager.Infrastructure.Migrations
                     b.ToTable("Payees");
                 });
 
+            modelBuilder.Entity("PaymentManager.Domain.Entities.PayerGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PayerGroups");
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.PayerGroupMember", b =>
+                {
+                    b.Property<Guid>("PayerGroupId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PayerGroupId", "PersonId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("PayerGroupMembers");
+                });
+
             modelBuilder.Entity("PaymentManager.Domain.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -88,6 +103,10 @@ namespace PaymentManager.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly?>("EndDate")
@@ -104,6 +123,9 @@ namespace PaymentManager.Infrastructure.Migrations
                     b.Property<Guid>("PayeeId")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("PayerGroupId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("PaymentSourceId")
                         .HasColumnType("TEXT");
 
@@ -116,6 +138,8 @@ namespace PaymentManager.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PayeeId");
+
+                    b.HasIndex("PayerGroupId");
 
                     b.HasIndex("PaymentSourceId");
 
@@ -149,18 +173,39 @@ namespace PaymentManager.Infrastructure.Migrations
                     b.Property<Guid>("PaymentId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ContactId")
+                    b.Property<Guid>("PersonId")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Percentage")
                         .HasPrecision(5, 2)
                         .HasColumnType("TEXT");
 
-                    b.HasKey("PaymentId", "ContactId");
+                    b.HasKey("PaymentId", "PersonId");
 
-                    b.HasIndex("ContactId");
+                    b.HasIndex("PersonId");
 
                     b.ToTable("PaymentSplits");
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.Person", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("People");
                 });
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.User", b =>
@@ -185,15 +230,6 @@ namespace PaymentManager.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("PaymentManager.Domain.Entities.Contact", b =>
-                {
-                    b.HasOne("PaymentManager.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("PaymentManager.Domain.Entities.EffectivePaymentValue", b =>
                 {
                     b.HasOne("PaymentManager.Domain.Entities.Payment", null)
@@ -212,6 +248,30 @@ namespace PaymentManager.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PaymentManager.Domain.Entities.PayerGroup", b =>
+                {
+                    b.HasOne("PaymentManager.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.PayerGroupMember", b =>
+                {
+                    b.HasOne("PaymentManager.Domain.Entities.PayerGroup", null)
+                        .WithMany()
+                        .HasForeignKey("PayerGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PaymentManager.Domain.Entities.Person", null)
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("PaymentManager.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("PaymentManager.Domain.Entities.Payee", null)
@@ -219,6 +279,11 @@ namespace PaymentManager.Infrastructure.Migrations
                         .HasForeignKey("PayeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("PaymentManager.Domain.Entities.PayerGroup", null)
+                        .WithMany()
+                        .HasForeignKey("PayerGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("PaymentManager.Domain.Entities.PaymentSource", null)
                         .WithMany()
@@ -244,15 +309,24 @@ namespace PaymentManager.Infrastructure.Migrations
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.PaymentSplit", b =>
                 {
-                    b.HasOne("PaymentManager.Domain.Entities.Contact", null)
-                        .WithMany()
-                        .HasForeignKey("ContactId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("PaymentManager.Domain.Entities.Payment", null)
                         .WithMany()
                         .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PaymentManager.Domain.Entities.Person", null)
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.Person", b =>
+                {
+                    b.HasOne("PaymentManager.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

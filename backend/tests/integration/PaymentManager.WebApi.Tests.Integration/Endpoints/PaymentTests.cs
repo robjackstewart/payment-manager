@@ -18,23 +18,23 @@ internal sealed class PaymentTests : IntegrationTestBase
         Guid PaymentSourceId, Guid PayeeId,
         decimal Amount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate, string? Description = null,
-        IReadOnlyList<SplitRequest>? Splits = null);
+        Guid? PayerGroupId = null, IReadOnlyList<SplitRequest>? Splits = null);
 
     private sealed record UpdateRequest(
         Guid PaymentSourceId, Guid PayeeId,
         decimal InitialAmount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate, string? Description = null,
-        IReadOnlyList<SplitRequest>? Splits = null);
+        Guid? PayerGroupId = null, IReadOnlyList<SplitRequest>? Splits = null);
 
-    private sealed record SplitRequest(Guid ContactId, decimal Percentage);
+    private sealed record SplitRequest(Guid PersonId, decimal Percentage);
 
     private sealed record PaymentResponse(
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
         decimal CurrentAmount, decimal InitialAmount, string Currency, PaymentFrequency Frequency,
-        DateOnly StartDate, DateOnly? EndDate, string? Description,
-        UserShareDto UserShare, SplitDto[] Splits, ValueDto[] Values);
+        DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId,
+        SplitDto[] Splits, ValueDto[] Values);
 
-    private sealed record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
+    private sealed record SplitDto(Guid PersonId, decimal Percentage, decimal Value);
 
     private sealed record ValueDto(DateOnly EffectiveDate, decimal Amount);
 
@@ -51,13 +51,29 @@ internal sealed class PaymentTests : IntegrationTestBase
         return (paymentSource.Id, payee.Id);
     }
 
-    private async Task<Guid> SetupContactAsync(string name, CancellationToken ct)
+    private async Task<Guid> SetupPersonAsync(string name, CancellationToken ct)
     {
         var context = GetService<IPaymentManagerContext>();
-        var contact = new Contact { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = name };
-        context.Contacts.Add(contact);
+        var person = new Person { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = name };
+        context.People.Add(person);
         await context.SaveChanges(ct);
-        return contact.Id;
+        return person.Id;
+    }
+
+    private async Task AddGroupMemberAsync(Guid payerGroupId, Guid personId, CancellationToken ct)
+    {
+        var context = GetService<IPaymentManagerContext>();
+        context.PayerGroupMembers.Add(new PayerGroupMember { PayerGroupId = payerGroupId, PersonId = personId });
+        await context.SaveChanges(ct);
+    }
+
+    private async Task<Guid> SetupPayerGroupAsync(string name, CancellationToken ct)
+    {
+        var context = GetService<IPaymentManagerContext>();
+        var payerGroup = new PayerGroup { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = name };
+        context.PayerGroups.Add(payerGroup);
+        await context.SaveChanges(ct);
+        return payerGroup.Id;
     }
 
     private static void AddEffectiveValue(IPaymentManagerContext context, Guid paymentId, DateOnly effectiveDate, decimal amount)
@@ -77,10 +93,11 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null), ct);
+            new DateOnly(2026, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
@@ -90,8 +107,8 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.CurrentAmount.ShouldBe(9.99m);
         body.InitialAmount.ShouldBe(9.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
-        body.UserShare.Percentage.ShouldBe(100m);
-        body.UserShare.Value.ShouldBe(9.99m);
+        body.Splits.Single().PersonId.ShouldBe(ownerId);
+        body.Splits.Single().Value.ShouldBe(9.99m);
     }
 
     [Test]
@@ -110,6 +127,19 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.Errors.ShouldContainKey("Amount");
     }
 
+    [Test]
+    public async Task CreatePayment_Should_Return_BadRequest_When_No_Splits_Provided()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+
+        var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     // ── Get ───────────────────────────────────────────────────────────────────
 
     [Test]
@@ -126,6 +156,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             InitialAmount = 15.99m
         };
@@ -142,8 +173,6 @@ internal sealed class PaymentTests : IntegrationTestBase
         body.CurrentAmount.ShouldBe(15.99m);
         body.InitialAmount.ShouldBe(15.99m);
         body.Frequency.ShouldBe(PaymentFrequency.Monthly);
-        body.UserShare.Percentage.ShouldBe(100m);
-        body.UserShare.Value.ShouldBe(15.99m);
     }
 
     [Test]
@@ -169,10 +198,10 @@ internal sealed class PaymentTests : IntegrationTestBase
         var context = GetService<IPaymentManagerContext>();
         var payments = new[]
         {
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 1, 1), InitialAmount = 10m },
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Annually, StartDate = new DateOnly(2025, 1, 1), InitialAmount = 10m },
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Once, StartDate = new DateOnly(2025, 6, 1), InitialAmount = 10m },
-            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Monthly, StartDate = new DateOnly(2025, 3, 1), InitialAmount = 10m }
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Monthly, Direction = PaymentDirection.Outgoing, StartDate = new DateOnly(2025, 1, 1), InitialAmount = 10m },
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Annually, Direction = PaymentDirection.Outgoing, StartDate = new DateOnly(2025, 1, 1), InitialAmount = 10m },
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Once, Direction = PaymentDirection.Outgoing, StartDate = new DateOnly(2025, 6, 1), InitialAmount = 10m },
+            new Payment { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, PaymentSourceId = paymentSourceId, PayeeId = payeeId, Currency = "USD", Frequency = PaymentFrequency.Monthly, Direction = PaymentDirection.Outgoing, StartDate = new DateOnly(2025, 3, 1), InitialAmount = 10m }
         };
         context.Payments.AddRange(payments);
         await context.SaveChanges(ct);
@@ -193,6 +222,7 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
         var context = GetService<IPaymentManagerContext>();
         var payment = new Payment
         {
@@ -202,6 +232,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             InitialAmount = 9.99m
         };
@@ -210,15 +241,15 @@ internal sealed class PaymentTests : IntegrationTestBase
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{payment.Id}", new UpdateRequest(
             paymentSourceId, payeeId, 9.99m, "EUR", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null), ct);
+            new DateOnly(2026, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.CurrentAmount.ShouldBe(9.99m);
         body.Currency.ShouldBe("EUR");
-        body.UserShare.Percentage.ShouldBe(100m);
-        body.UserShare.Value.ShouldBe(9.99m);
+        body.Splits.Single().PersonId.ShouldBe(ownerId);
+        body.Splits.Single().Value.ShouldBe(9.99m);
     }
 
     [Test]
@@ -226,6 +257,7 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
         var context = GetService<IPaymentManagerContext>();
         var payment = new Payment
         {
@@ -235,6 +267,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             InitialAmount = 9.99m
         };
@@ -243,7 +276,7 @@ internal sealed class PaymentTests : IntegrationTestBase
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{payment.Id}", new UpdateRequest(
             paymentSourceId, payeeId, 14.99m, "EUR", PaymentFrequency.Monthly,
-            new DateOnly(2025, 1, 1), null), ct);
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
@@ -283,6 +316,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             InitialAmount = 50m
         };
@@ -299,17 +333,16 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null, "My streaming service"), ct);
+            new DateOnly(2026, 1, 1), null, "My streaming service", Splits: [new SplitRequest(ownerId, 100m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.Description.ShouldBe("My streaming service");
-        body.UserShare.Percentage.ShouldBe(100m);
-        body.UserShare.Value.ShouldBe(9.99m);
     }
 
     [Test]
@@ -317,6 +350,7 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
         var context = GetService<IPaymentManagerContext>();
         var payment = new Payment
         {
@@ -326,6 +360,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             Description = "Original description",
             InitialAmount = 9.99m
@@ -335,14 +370,12 @@ internal sealed class PaymentTests : IntegrationTestBase
 
         var response = await CreateApiClient().PutAsJsonAsync($"/api/payments/{payment.Id}", new UpdateRequest(
             paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2025, 1, 1), null, "Updated description"), ct);
+            new DateOnly(2025, 1, 1), null, "Updated description", Splits: [new SplitRequest(ownerId, 100m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
         body.Description.ShouldBe("Updated description");
-        body.UserShare.Percentage.ShouldBe(100m);
-        body.UserShare.Value.ShouldBe(9.99m);
     }
 
     // ── Splits ────────────────────────────────────────────────────────────────
@@ -352,52 +385,96 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
-        var contactId = await SetupContactAsync("Derek", ct);
+        var payerGroupId = await SetupPayerGroupAsync("Family", ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
+        var personId = await SetupPersonAsync("Derek", ct);
+        await AddGroupMemberAsync(payerGroupId, ownerId, ct);
+        await AddGroupMemberAsync(payerGroupId, personId, ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null, null,
-            [new SplitRequest(contactId, 30m)]), ct);
+            new DateOnly(2026, 1, 1), null, null, payerGroupId,
+            [new SplitRequest(personId, 30m), new SplitRequest(ownerId, 70m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
-        body.Splits.Length.ShouldBe(1);
-        body.Splits[0].ContactId.ShouldBe(contactId);
-        body.Splits[0].Percentage.ShouldBe(30m);
-        body.Splits[0].Value.ShouldBe(30m);
-        body.UserShare.Percentage.ShouldBe(70m);
-        body.UserShare.Value.ShouldBe(70m);
+        body.Splits.Length.ShouldBe(2);
+        body.Splits.Single(s => s.PersonId == personId).Percentage.ShouldBe(30m);
+        body.Splits.Single(s => s.PersonId == personId).Value.ShouldBe(30m);
+        body.Splits.Single(s => s.PersonId == ownerId).Percentage.ShouldBe(70m);
+        body.Splits.Single(s => s.PersonId == ownerId).Value.ShouldBe(70m);
     }
 
     [Test]
-    public async Task CreatePayment_Should_Return_BadRequest_When_Splits_Exceed_100_Percent()
+    public async Task CreatePayment_Should_Return_BadRequest_When_Splits_Do_Not_Sum_To_100_Percent()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
-        var contactId1 = await SetupContactAsync("Alice", ct);
-        var contactId2 = await SetupContactAsync("Bob", ct);
+        var payerGroupId = await SetupPayerGroupAsync("Family", ct);
+        var personId1 = await SetupPersonAsync("Alice", ct);
+        var personId2 = await SetupPersonAsync("Bob", ct);
+        await AddGroupMemberAsync(payerGroupId, personId1, ct);
+        await AddGroupMemberAsync(payerGroupId, personId2, ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null, null,
-            [new SplitRequest(contactId1, 60m), new SplitRequest(contactId2, 50m)]), ct);
+            new DateOnly(2026, 1, 1), null, null, payerGroupId,
+            [new SplitRequest(personId1, 60m), new SplitRequest(personId2, 50m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Test]
-    public async Task CreatePayment_Should_Return_NotFound_When_ContactId_Does_Not_Exist()
+    public async Task CreatePayment_Should_Return_NotFound_When_PersonId_Does_Not_Exist()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var payerGroupId = await SetupPayerGroupAsync("Family", ct);
 
         var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null, null,
-            [new SplitRequest(Guid.NewGuid(), 30m)]), ct);
+            new DateOnly(2026, 1, 1), null, null, payerGroupId,
+            [new SplitRequest(Guid.NewGuid(), 100m)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task CreatePayment_Should_Allow_Individual_Splits_Without_PayerGroup()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var personId = await SetupPersonAsync("Derek", ct);
+
+        var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, null, null,
+            [new SplitRequest(personId, 100m)]), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.PayerGroupId.ShouldBeNull();
+        body.Splits.Single().PersonId.ShouldBe(personId);
+    }
+
+    [Test]
+    public async Task CreatePayment_Should_Return_BadRequest_When_SplitPerson_Is_Not_A_PayerGroupMember()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var payerGroupId = await SetupPayerGroupAsync("Family", ct);
+        var otherGroupId = await SetupPayerGroupAsync("Housemates", ct);
+        var personInOtherGroup = await SetupPersonAsync("Derek", ct);
+        await AddGroupMemberAsync(otherGroupId, personInOtherGroup, ct);
+
+        var response = await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2026, 1, 1), null, null, payerGroupId,
+            [new SplitRequest(personInOtherGroup, 100m)]), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Test]
@@ -405,31 +482,35 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
-        var contactId1 = await SetupContactAsync("Liz", ct);
-        var contactId2 = await SetupContactAsync("Sam", ct);
+        var payerGroupId = await SetupPayerGroupAsync("Family", ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
+        var personId1 = await SetupPersonAsync("Liz", ct);
+        var personId2 = await SetupPersonAsync("Sam", ct);
+        await AddGroupMemberAsync(payerGroupId, ownerId, ct);
+        await AddGroupMemberAsync(payerGroupId, personId1, ct);
+        await AddGroupMemberAsync(payerGroupId, personId2, ct);
 
         var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null, null,
-            [new SplitRequest(contactId1, 25m)]), ct))
+            new DateOnly(2026, 1, 1), null, null, payerGroupId,
+            [new SplitRequest(personId1, 25m), new SplitRequest(ownerId, 75m)]), ct))
             .Content.ReadFromJsonAsync<PaymentResponse>(ct);
         created.ShouldNotBeNull();
-        created.Splits.Length.ShouldBe(1);
+        created.Splits.Length.ShouldBe(2);
 
         var updateResponse = await CreateApiClient().PutAsJsonAsync($"/api/payments/{created.Id}", new UpdateRequest(
             paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2026, 1, 1), null, null,
-            [new SplitRequest(contactId2, 40m)]), ct);
+            new DateOnly(2026, 1, 1), null, null, payerGroupId,
+            [new SplitRequest(personId2, 40m), new SplitRequest(ownerId, 60m)]), ct);
 
         updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         var body = await updateResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
         body.ShouldNotBeNull();
-        body.Splits.Length.ShouldBe(1);
-        body.Splits[0].ContactId.ShouldBe(contactId2);
-        body.Splits[0].Percentage.ShouldBe(40m);
-        body.Splits[0].Value.ShouldBe(40m);
-        body.UserShare.Percentage.ShouldBe(60m);
-        body.UserShare.Value.ShouldBe(60m);
+        body.Splits.Length.ShouldBe(2);
+        body.Splits.Single(s => s.PersonId == personId2).Percentage.ShouldBe(40m);
+        body.Splits.Single(s => s.PersonId == personId2).Value.ShouldBe(40m);
+        body.Splits.Single(s => s.PersonId == ownerId).Percentage.ShouldBe(60m);
+        body.Splits.Single(s => s.PersonId == ownerId).Value.ShouldBe(60m);
     }
 
     [Test]
@@ -437,23 +518,25 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
-        var contactId = await SetupContactAsync("Frank", ct);
+        var payerGroupId = await SetupPayerGroupAsync("Family", ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
+        var personId = await SetupPersonAsync("Frank", ct);
+        await AddGroupMemberAsync(payerGroupId, ownerId, ct);
+        await AddGroupMemberAsync(payerGroupId, personId, ct);
         await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 50m, "USD", PaymentFrequency.Once,
-            new DateOnly(2026, 1, 1), null, null,
-            [new SplitRequest(contactId, 50m)]), ct);
+            new DateOnly(2026, 1, 1), null, null, payerGroupId,
+            [new SplitRequest(personId, 50m), new SplitRequest(ownerId, 50m)]), ct);
 
         var response = await CreateApiClient().GetAsync("/api/payments", ct);
         var body = await response.Content.ReadFromJsonAsync<GetAllResponse>(ct);
 
         body.ShouldNotBeNull();
         body.Payments.Length.ShouldBe(1);
-        body.Payments[0].Splits.Length.ShouldBe(1);
-        body.Payments[0].Splits[0].ContactId.ShouldBe(contactId);
-        body.Payments[0].Splits[0].Percentage.ShouldBe(50m);
-        body.Payments[0].Splits[0].Value.ShouldBe(25m);
-        body.Payments[0].UserShare.Percentage.ShouldBe(50m);
-        body.Payments[0].UserShare.Value.ShouldBe(25m);
+        body.Payments[0].Splits.Length.ShouldBe(2);
+        body.Payments[0].Splits.Single(s => s.PersonId == personId).Percentage.ShouldBe(50m);
+        body.Payments[0].Splits.Single(s => s.PersonId == personId).Value.ShouldBe(25m);
+        body.Payments[0].Splits.Single(s => s.PersonId == ownerId).Value.ShouldBe(25m);
     }
 
     // ── AddPaymentValue ───────────────────────────────────────────────────────
@@ -463,10 +546,11 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
 
         var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2025, 1, 1), null), ct))
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct))
             .Content.ReadFromJsonAsync<PaymentResponse>(ct);
         created.ShouldNotBeNull();
 
@@ -482,10 +566,11 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
 
         var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2025, 1, 1), null), ct))
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct))
             .Content.ReadFromJsonAsync<PaymentResponse>(ct);
         created.ShouldNotBeNull();
 
@@ -521,10 +606,11 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
 
         var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2025, 6, 1), null), ct))
+            new DateOnly(2025, 6, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct))
             .Content.ReadFromJsonAsync<PaymentResponse>(ct);
         created.ShouldNotBeNull();
 
@@ -541,10 +627,11 @@ internal sealed class PaymentTests : IntegrationTestBase
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
 
         var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
             paymentSourceId, payeeId, 9.99m, "USD", PaymentFrequency.Monthly,
-            new DateOnly(2025, 1, 1), null), ct))
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct))
             .Content.ReadFromJsonAsync<PaymentResponse>(ct);
         created.ShouldNotBeNull();
 
@@ -576,6 +663,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             InitialAmount = 9.99m
         };
@@ -620,6 +708,7 @@ internal sealed class PaymentTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             InitialAmount = 9.99m
         };

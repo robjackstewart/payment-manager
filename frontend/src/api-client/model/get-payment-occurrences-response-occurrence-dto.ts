@@ -8,21 +8,22 @@
  * Do not edit the class manually.
  */
 import { GetPaymentOccurrencesResponseOccurrenceDtoSplitDto } from './get-payment-occurrences-response-occurrence-dto-split-dto';
-import { UserShareDto } from './user-share-dto';
+import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
 
 
 export interface GetPaymentOccurrencesResponseOccurrenceDto { 
     paymentId: string;
     paymentSourceId: string;
     payeeId: string;
-    amount: any | null;
+    amount: AddPaymentValueResponseAmount;
     currency: string;
     frequency: number;
+    direction: number;
     occurrenceDate: string;
     startDate: string;
     endDate: string | null;
     description: string | null;
-    userShare: UserShareDto;
+    payerGroupId: string | null;
     splits: Array<GetPaymentOccurrencesResponseOccurrenceDtoSplitDto>;
 }
 

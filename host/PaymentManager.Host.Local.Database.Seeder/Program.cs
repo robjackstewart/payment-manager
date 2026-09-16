@@ -35,6 +35,36 @@ foreach (var user in Seed.Users)
 }
 await context.SaveChanges(CancellationToken.None);
 
+foreach (var payerGroup in Seed.PayerGroups)
+{
+    if (!await context.PayerGroups.AnyAsync(h => h.Id == payerGroup.Id))
+    {
+        context.PayerGroups.Add(payerGroup);
+        logger.LogInformation("Seeded payer group: {Name}", payerGroup.Name);
+    }
+}
+await context.SaveChanges(CancellationToken.None);
+
+foreach (var person in Seed.People)
+{
+    if (!await context.People.AnyAsync(p => p.Id == person.Id))
+    {
+        context.People.Add(person);
+        logger.LogInformation("Seeded person: {Name}", person.Name);
+    }
+}
+await context.SaveChanges(CancellationToken.None);
+
+foreach (var member in Seed.PayerGroupMembers)
+{
+    if (!await context.PayerGroupMembers.AnyAsync(m => m.PayerGroupId == member.PayerGroupId && m.PersonId == member.PersonId))
+    {
+        context.PayerGroupMembers.Add(member);
+        logger.LogInformation("Seeded payer group member: ({PayerGroupId}, {PersonId})", member.PayerGroupId, member.PersonId);
+    }
+}
+await context.SaveChanges(CancellationToken.None);
+
 foreach (var paymentSource in Seed.PaymentSources)
 {
     if (!await context.PaymentSources.AnyAsync(ps => ps.Id == paymentSource.Id))
@@ -61,6 +91,16 @@ foreach (var payment in Seed.Payments)
     {
         context.Payments.Add(payment);
         logger.LogInformation("Seeded payment: {Id}", payment.Id);
+    }
+}
+await context.SaveChanges(CancellationToken.None);
+
+foreach (var split in Seed.PaymentSplits)
+{
+    if (!await context.PaymentSplits.AnyAsync(s => s.PaymentId == split.PaymentId && s.PersonId == split.PersonId))
+    {
+        context.PaymentSplits.Add(split);
+        logger.LogInformation("Seeded payment split: ({PaymentId}, {PersonId})", split.PaymentId, split.PersonId);
     }
 }
 await context.SaveChanges(CancellationToken.None);

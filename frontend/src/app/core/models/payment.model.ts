@@ -1,13 +1,10 @@
 import { PaymentFrequency } from './payment-frequency.enum';
-
-export interface UserShare {
-  percentage: number;
-  value: number;
-}
+import { PaymentDirection } from './payment-direction.enum';
 
 export interface PaymentSplit {
-  contactId: string;
+  personId: string;
   percentage: number;
+  value?: number;
 }
 
 export interface EffectivePaymentValue {
@@ -30,10 +27,11 @@ export interface Payment {
   values: EffectivePaymentValue[];
   currency: string;
   frequency: PaymentFrequency;
+  direction: PaymentDirection;
   startDate: string;
   endDate?: string;
   description?: string;
-  userShare: UserShare;
+  payerGroupId?: string | null;
   splits: PaymentSplit[];
 }
 
@@ -43,9 +41,11 @@ export interface CreatePaymentRequest {
   amount: number;
   currency: string;
   frequency: PaymentFrequency;
+  direction: PaymentDirection;
   startDate: string;
   endDate?: string;
   description?: string;
+  payerGroupId?: string | null;
   splits?: PaymentSplit[];
 }
 
@@ -55,9 +55,11 @@ export interface UpdatePaymentRequest {
   initialAmount: number;
   currency: string;
   frequency: PaymentFrequency;
+  direction: PaymentDirection;
   startDate: string;
   endDate?: string;
   description?: string;
+  payerGroupId?: string | null;
   splits?: PaymentSplit[];
 }
 
@@ -68,36 +70,72 @@ export interface PaymentOccurrence {
   amount: number;
   currency: string;
   frequency: PaymentFrequency;
+  direction: PaymentDirection;
   occurrenceDate: string;
   startDate: string;
   endDate?: string;
   description?: string;
-  userShare: UserShare;
+  payerGroupId?: string | null;
   splits: PaymentSplit[];
 }
 
-export interface OccurrenceSummaryContactAmount {
-  contactId: string;
+export interface OccurrenceSummaryPersonAmount {
+  personId: string;
+  amount: number;
+}
+
+export interface OccurrenceSummaryPayeeAmount {
+  payeeId: string;
   amount: number;
 }
 
 export interface OccurrenceSummaryPaymentSourceBreakdown {
   paymentSourceId: string;
   totalAmount: number;
-  userTotal: number;
-  contactTotals: OccurrenceSummaryContactAmount[];
+  personTotals: OccurrenceSummaryPersonAmount[];
 }
 
-export interface OccurrenceSummary {
-  currency: string;
+/** Totals for one direction (outgoing or incoming) within a currency. */
+export interface DirectionTotals {
   totalAmount: number;
-  userTotal: number;
-  contactTotals: OccurrenceSummaryContactAmount[];
+  personTotals: OccurrenceSummaryPersonAmount[];
   byPaymentSource: OccurrenceSummaryPaymentSourceBreakdown[];
+}
+
+/** Incoming minus outgoing — the "available cash" figure. */
+export interface NetTotals {
+  totalAmount: number;
+  personTotals: OccurrenceSummaryPersonAmount[];
+}
+
+export interface CurrencySummary {
+  currency: string;
+  outgoing: DirectionTotals;
+  incoming: DirectionTotals;
+  net: NetTotals;
+  outgoingByPayee: OccurrenceSummaryPayeeAmount[];
+}
+
+/** One entry per real payer group with payments in range. Ungrouped payments are not a group —
+ * their per-person shares appear in the `people` commitments. */
+export interface GroupSummary {
+  payerGroupId: string;
+  currencies: CurrencySummary[];
+}
+
+/** A person's income, committed outgoing share, and headroom across every payer group they
+ * belong to plus any personal payments, for one currency. */
+export interface PersonCommitment {
+  personId: string;
+  currency: string;
+  income: number;
+  committed: number;
+  remaining: number;
+  isOverCommitted: boolean;
 }
 
 export interface PaymentOccurrencesResponse {
   occurrences: PaymentOccurrence[];
-  summary: OccurrenceSummary[];
+  summary: GroupSummary[];
+  people: PersonCommitment[];
 }
-

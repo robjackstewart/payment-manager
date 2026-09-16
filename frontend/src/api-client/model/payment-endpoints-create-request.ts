@@ -7,18 +7,21 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
 import { PaymentEndpointsSplitRequest } from './payment-endpoints-split-request';
 
 
 export interface PaymentEndpointsCreateRequest { 
     paymentSourceId: string;
     payeeId: string;
-    amount: number;
+    amount: AddPaymentValueResponseAmount;
     currency: string;
     frequency: number;
+    direction: number;
     startDate: string;
     endDate: string | null;
     description?: string | null;
+    payerGroupId?: string | null;
     splits?: Array<PaymentEndpointsSplitRequest> | null;
 }
 

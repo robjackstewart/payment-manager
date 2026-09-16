@@ -1,6 +1,6 @@
 <div class="page-header">
   <button mat-raised-button color="primary" (click)="openCreateDialog()">
-    <mat-icon>add</mat-icon> New Payment
+    <mat-icon>add</mat-icon> {{ newButtonLabel() }}
   </button>
 </div>
 
@@ -15,7 +15,7 @@
         @if (payments().length === 0) {
           <div class="empty-state">
             <mat-icon>payments</mat-icon>
-            <p>No payments yet. Create one to get started.</p>
+            <p>{{ emptyStateMessage() }}</p>
           </div>
         } @else {
           <div class="mobile-card-list">
@@ -23,12 +23,16 @@
               <div class="mobile-card">
                 <div class="card-title">{{ vm.payeeName }}</div>
                 <div class="card-field">
+                  <span class="card-label">Group</span>
+                  <span class="card-value">{{ vm.groupName }}</span>
+                </div>
+                <div class="card-field">
                   <span class="card-label">Amount</span>
                   <span class="card-value">{{ vm.formattedAmount }}</span>
                 </div>
                 <div class="card-field">
-                  <span class="card-label">Your Share</span>
-                  <span class="card-value">{{ vm.yourShareDisplay }}</span>
+                  <span class="card-label">Split</span>
+                  <span class="card-value">{{ vm.splitDisplay }}</span>
                 </div>
                 <div class="card-field">
                   <span class="card-label">Frequency</span>
@@ -61,8 +65,12 @@
       } @else {
         <table mat-table [dataSource]="paymentsViewModel()" class="full-width">
           <ng-container matColumnDef="payee">
-            <th mat-header-cell *matHeaderCellDef>Payee</th>
+            <th mat-header-cell *matHeaderCellDef>{{ payeeColumnLabel() }}</th>
             <td mat-cell *matCellDef="let vm">{{ vm.payeeName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="group">
+            <th mat-header-cell *matHeaderCellDef>Group</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.groupName }}</td>
           </ng-container>
           <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef>Description</th>
@@ -72,9 +80,9 @@
             <th mat-header-cell *matHeaderCellDef>Amount</th>
             <td mat-cell *matCellDef="let vm">{{ vm.formattedAmount }}</td>
           </ng-container>
-          <ng-container matColumnDef="yourShare">
-            <th mat-header-cell *matHeaderCellDef>Your Share</th>
-            <td mat-cell *matCellDef="let vm">{{ vm.yourShareDisplay }}</td>
+          <ng-container matColumnDef="split">
+            <th mat-header-cell *matHeaderCellDef>Split</th>
+            <td mat-cell *matCellDef="let vm">{{ vm.splitDisplay }}</td>
           </ng-container>
           <ng-container matColumnDef="frequency">
             <th mat-header-cell *matHeaderCellDef>Frequency</th>
@@ -105,7 +113,7 @@
         @if (payments().length === 0) {
           <div class="empty-state">
             <mat-icon>payments</mat-icon>
-            <p>No payments yet. Create one to get started.</p>
+            <p>{{ emptyStateMessage() }}</p>
           </div>
         }
       }

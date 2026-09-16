@@ -25,6 +25,7 @@ internal sealed class RemovePaymentValueTests
         InitialAmount = 100m,
         Currency = "USD",
         Frequency = PaymentFrequency.Monthly,
+        Direction = PaymentDirection.Outgoing,
         StartDate = new DateOnly(2025, 1, 1)
     };
 

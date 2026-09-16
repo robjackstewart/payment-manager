@@ -7,13 +7,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GetPaymentOccurrencesResponseContactAmountDto } from './get-payment-occurrences-response-contact-amount-dto';
+import { GetPaymentOccurrencesResponsePersonAmountDto } from './get-payment-occurrences-response-person-amount-dto';
+import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
 
 
 export interface GetPaymentOccurrencesResponsePaymentSourceBreakdownDto { 
     paymentSourceId: string;
-    totalAmount: any | null;
-    userTotal: any | null;
-    contactTotals: Array<GetPaymentOccurrencesResponseContactAmountDto>;
+    totalAmount: AddPaymentValueResponseAmount;
+    personTotals: Array<GetPaymentOccurrencesResponsePersonAmountDto>;
 }
 

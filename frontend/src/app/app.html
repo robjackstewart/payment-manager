@@ -22,9 +22,17 @@
         <mat-icon matListItemIcon>payments</mat-icon>
         <span matListItemTitle>Payments</span>
       </a>
-      <a mat-list-item routerLink="/contacts" routerLinkActive="active-link">
+      <a mat-list-item routerLink="/income" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>attach_money</mat-icon>
+        <span matListItemTitle>Income</span>
+      </a>
+      <a mat-list-item routerLink="/people" routerLinkActive="active-link">
         <mat-icon matListItemIcon>group</mat-icon>
-        <span matListItemTitle>Contacts</span>
+        <span matListItemTitle>People</span>
+      </a>
+      <a mat-list-item routerLink="/payer-groups" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>groups</mat-icon>
+        <span matListItemTitle>Payer Groups</span>
       </a>
     </mat-nav-list>
   </mat-sidenav>
@@ -41,7 +49,7 @@
       <mat-slide-toggle
         [checked]="isDarkMode()"
         (change)="toggleDarkMode()"
-        matTooltip="Toggle dark mode"
+        title="Toggle dark mode"
         aria-label="Toggle dark mode"
         class="theme-toggle"
       />

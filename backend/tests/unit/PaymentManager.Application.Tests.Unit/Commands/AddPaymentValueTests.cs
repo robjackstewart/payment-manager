@@ -82,6 +82,7 @@ internal sealed class AddPaymentValueTests
             InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1)
         };
         var (context, _, valuesDbSet) = CreateFakeContext(payment, []);
@@ -114,6 +115,7 @@ internal sealed class AddPaymentValueTests
             InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1)
         };
         var existingValue = new EffectivePaymentValue
@@ -165,6 +167,7 @@ internal sealed class AddPaymentValueTests
             InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 3, 1)
         };
         var (context, _, _) = CreateFakeContext(payment, []);
@@ -188,6 +191,7 @@ internal sealed class AddPaymentValueTests
             InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             EndDate = new DateOnly(2025, 6, 30)
         };
@@ -212,6 +216,7 @@ internal sealed class AddPaymentValueTests
             InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 3, 1)
         };
         var (context, _, _) = CreateFakeContext(payment, []);
@@ -235,6 +240,7 @@ internal sealed class AddPaymentValueTests
             InitialAmount = 50m,
             Currency = "USD",
             Frequency = PaymentFrequency.Monthly,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 1),
             EndDate = null   // no upper bound
         };

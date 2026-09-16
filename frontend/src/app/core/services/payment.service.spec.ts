@@ -3,23 +3,26 @@ import { of, firstValueFrom } from 'rxjs';
 import { vi, describe, it, expect } from 'vitest';
 import { PaymentManagerWebApiService } from '../../../api-client';
 import { PaymentFrequency } from '../models/payment-frequency.enum';
+import { PaymentDirection } from '../models/payment-direction.enum';
 import { PaymentSplit } from '../models/payment.model';
 import { PaymentService } from './payment.service';
 
 const mockPaymentDto = {
   id: '1',
+  userId: 'u1',
   paymentSourceId: 'ps1',
   payeeId: 'py1',
   currency: 'USD',
   frequency: 'Monthly',
+  direction: PaymentDirection.Outgoing,
   startDate: '2024-01-01',
   endDate: null,
   description: null,
+  payerGroupId: null,
   currentAmount: '100.50',
   initialAmount: '100.50',
   values: [{ effectiveDate: '2024-01-01', amount: '100.50' }],
-  userShare: { percentage: '50', value: '50.25' },
-  splits: [],
+  splits: [{ personId: 'c1', percentage: '40', value: '40.20' }],
 };
 
 function setup() {
@@ -59,10 +62,10 @@ describe('PaymentService', () => {
       expect(payment.initialAmount).toBe(100.5);
       expect(typeof payment.values[0].amount).toBe('number');
       expect(payment.values[0].amount).toBe(100.5);
-      expect(typeof payment.userShare.percentage).toBe('number');
-      expect(payment.userShare.percentage).toBe(50);
-      expect(typeof payment.userShare.value).toBe('number');
-      expect(payment.userShare.value).toBe(50.25);
+      expect(typeof payment.splits[0].percentage).toBe('number');
+      expect(payment.splits[0].percentage).toBe(40);
+      expect(typeof payment.splits[0].value).toBe('number');
+      expect(payment.splits[0].value).toBe(40.2);
     });
 
     it('returns an empty array when there are no payments', async () => {
@@ -97,10 +100,10 @@ describe('PaymentService', () => {
       expect(payment.initialAmount).toBe(100.5);
       expect(typeof payment.values[0].amount).toBe('number');
       expect(payment.values[0].amount).toBe(100.5);
-      expect(typeof payment.userShare.percentage).toBe('number');
-      expect(payment.userShare.percentage).toBe(50);
-      expect(typeof payment.userShare.value).toBe('number');
-      expect(payment.userShare.value).toBe(50.25);
+      expect(typeof payment.splits[0].percentage).toBe('number');
+      expect(payment.splits[0].percentage).toBe(40);
+      expect(typeof payment.splits[0].value).toBe('number');
+      expect(payment.splits[0].value).toBe(40.2);
     });
   });
 
@@ -112,31 +115,54 @@ describe('PaymentService', () => {
       amount: '200.00',
       currency: 'USD',
       frequency: 'Monthly',
+      direction: PaymentDirection.Outgoing,
       occurrenceDate: '2024-03-01',
       startDate: '2024-01-01',
-      userShare: { percentage: '50', value: '100.00' },
-      splits: [],
+      payerGroupId: null,
+      splits: [{ personId: 'c1', percentage: '50', value: '100.00' }],
     };
 
-    const mockSummaryDto = {
-      currency: 'USD',
+    const mockDirectionTotalsDto = {
       totalAmount: '400.00',
-      userTotal: '200.00',
-      contactTotals: [{ contactId: 'c1', amount: '200.00' }],
+      personTotals: [{ personId: 'c1', amount: '200.00' }],
       byPaymentSource: [
         {
           paymentSourceId: 'ps1',
           totalAmount: '400.00',
-          userTotal: '200.00',
-          contactTotals: [{ contactId: 'c1', amount: '200.00' }],
+          personTotals: [{ personId: 'c1', amount: '200.00' }],
         },
       ],
+    };
+
+    const mockGroupSummaryDto = {
+      payerGroupId: 'g1',
+      currencies: [
+        {
+          currency: 'USD',
+          outgoing: mockDirectionTotalsDto,
+          incoming: { totalAmount: '0', personTotals: [], byPaymentSource: [] },
+          net: {
+            totalAmount: '-400.00',
+            personTotals: [{ personId: 'c1', amount: '-200.00' }],
+          },
+          outgoingByPayee: [{ payeeId: 'py1', amount: '400.00' }],
+        },
+      ],
+    };
+
+    const mockPersonCommitmentDto = {
+      personId: 'c1',
+      currency: 'USD',
+      income: '0.00',
+      committed: '200.00',
+      remaining: '-200.00',
+      isOverCommitted: true,
     };
 
     it('passes from and to strings to the API', async () => {
       const { service, apiSpy } = setup();
       apiSpy['getPaymentOccurrences'].mockReturnValue(
-        of({ occurrences: [], summary: [] })
+        of({ occurrences: [], summary: [], people: [] })
       );
 
       await firstValueFrom(service.getOccurrences('2024-01-01', '2024-03-31'));
@@ -150,7 +176,7 @@ describe('PaymentService', () => {
     it('converts occurrence string amounts to numbers', async () => {
       const { service, apiSpy } = setup();
       apiSpy['getPaymentOccurrences'].mockReturnValue(
-        of({ occurrences: [mockOccurrenceDto], summary: [] })
+        of({ occurrences: [mockOccurrenceDto], summary: [], people: [] })
       );
 
       const result = await firstValueFrom(
@@ -160,37 +186,48 @@ describe('PaymentService', () => {
 
       expect(typeof occ.amount).toBe('number');
       expect(occ.amount).toBe(200);
-      expect(typeof occ.userShare.percentage).toBe('number');
-      expect(occ.userShare.percentage).toBe(50);
-      expect(typeof occ.userShare.value).toBe('number');
-      expect(occ.userShare.value).toBe(100);
+      expect(typeof occ.splits[0].percentage).toBe('number');
+      expect(occ.splits[0].percentage).toBe(50);
+      expect(typeof occ.splits[0].value).toBe('number');
+      expect(occ.splits[0].value).toBe(100);
     });
 
     it('converts summary string amounts to numbers', async () => {
       const { service, apiSpy } = setup();
       apiSpy['getPaymentOccurrences'].mockReturnValue(
-        of({ occurrences: [], summary: [mockSummaryDto] })
+        of({ occurrences: [], summary: [mockGroupSummaryDto], people: [mockPersonCommitmentDto] })
       );
 
       const result = await firstValueFrom(
         service.getOccurrences('2024-01-01', '2024-03-31')
       );
-      const summary = result.summary[0];
+      const group = result.summary[0];
+      expect(group.payerGroupId).toBe('g1');
+      const currency = group.currencies[0];
 
-      expect(typeof summary.totalAmount).toBe('number');
-      expect(summary.totalAmount).toBe(400);
-      expect(typeof summary.userTotal).toBe('number');
-      expect(summary.userTotal).toBe(200);
-      expect(typeof summary.contactTotals[0].amount).toBe('number');
-      expect(summary.contactTotals[0].amount).toBe(200);
+      expect(typeof currency.outgoing.totalAmount).toBe('number');
+      expect(currency.outgoing.totalAmount).toBe(400);
+      expect(typeof currency.outgoing.personTotals[0].amount).toBe('number');
+      expect(currency.outgoing.personTotals[0].amount).toBe(200);
 
-      const ps = summary.byPaymentSource[0];
+      const ps = currency.outgoing.byPaymentSource[0];
       expect(typeof ps.totalAmount).toBe('number');
       expect(ps.totalAmount).toBe(400);
-      expect(typeof ps.userTotal).toBe('number');
-      expect(ps.userTotal).toBe(200);
-      expect(typeof ps.contactTotals[0].amount).toBe('number');
-      expect(ps.contactTotals[0].amount).toBe(200);
+      expect(typeof ps.personTotals[0].amount).toBe('number');
+      expect(ps.personTotals[0].amount).toBe(200);
+
+      expect(typeof currency.net.totalAmount).toBe('number');
+      expect(currency.net.totalAmount).toBe(-400);
+      expect(typeof currency.outgoingByPayee[0].amount).toBe('number');
+      expect(currency.outgoingByPayee[0].amount).toBe(400);
+
+      const commitment = result.people[0];
+      expect(commitment.personId).toBe('c1');
+      expect(typeof commitment.committed).toBe('number');
+      expect(commitment.committed).toBe(200);
+      expect(typeof commitment.remaining).toBe('number');
+      expect(commitment.remaining).toBe(-200);
+      expect(commitment.isOverCommitted).toBe(true);
     });
   });
 
@@ -201,6 +238,7 @@ describe('PaymentService', () => {
       amount: 100.5,
       currency: 'USD',
       frequency: PaymentFrequency.Monthly,
+      direction: PaymentDirection.Outgoing,
       startDate: '2024-01-01',
     };
 
@@ -260,10 +298,10 @@ describe('PaymentService', () => {
       expect(payment.currentAmount).toBe(100.5);
       expect(typeof payment.initialAmount).toBe('number');
       expect(payment.initialAmount).toBe(100.5);
-      expect(typeof payment.userShare.percentage).toBe('number');
-      expect(payment.userShare.percentage).toBe(50);
-      expect(typeof payment.userShare.value).toBe('number');
-      expect(payment.userShare.value).toBe(50.25);
+      expect(typeof payment.splits[0].percentage).toBe('number');
+      expect(payment.splits[0].percentage).toBe(40);
+      expect(typeof payment.splits[0].value).toBe('number');
+      expect(payment.splits[0].value).toBe(40.2);
     });
   });
 
@@ -274,6 +312,7 @@ describe('PaymentService', () => {
       initialAmount: 100.5,
       currency: 'USD',
       frequency: PaymentFrequency.Monthly,
+      direction: PaymentDirection.Outgoing,
       startDate: '2024-01-01',
     };
 
@@ -349,8 +388,8 @@ describe('PaymentService', () => {
 
       expect(typeof payment.currentAmount).toBe('number');
       expect(payment.currentAmount).toBe(100.5);
-      expect(typeof payment.userShare.percentage).toBe('number');
-      expect(payment.userShare.percentage).toBe(50);
+      expect(typeof payment.splits[0].percentage).toBe('number');
+      expect(payment.splits[0].percentage).toBe(40);
     });
   });
 

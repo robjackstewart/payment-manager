@@ -175,3 +175,13 @@ body.dark-theme {
 .add-split-btn {
   margin-top: 4px;
 }
+
+.split-total {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 8px 0 0;
+}
+
+.split-total--invalid {
+  color: var(--mat-sys-error);
+}

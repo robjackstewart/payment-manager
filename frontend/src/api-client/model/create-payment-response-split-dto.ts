@@ -7,11 +7,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
 
 
 export interface CreatePaymentResponseSplitDto { 
-    contactId: string;
-    percentage: any | null;
-    value: any | null;
+    personId: string;
+    percentage: AddPaymentValueResponseAmount;
+    value: AddPaymentValueResponseAmount;
 }
 

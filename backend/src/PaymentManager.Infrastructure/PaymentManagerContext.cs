@@ -14,7 +14,9 @@ internal class PaymentManagerContext(DbContextOptions<PaymentManagerContext> opt
     public DbSet<PaymentSource> PaymentSources { get; set; }
     public DbSet<Payee> Payees { get; set; }
     public DbSet<Payment> Payments { get; set; }
-    public DbSet<Contact> Contacts { get; set; }
+    public DbSet<Person> People { get; set; }
+    public DbSet<PayerGroupMember> PayerGroupMembers { get; set; }
+    public DbSet<PayerGroup> PayerGroups { get; set; }
     public DbSet<PaymentSplit> PaymentSplits { get; set; }
     public DbSet<EffectivePaymentValue> EffectivePaymentValues { get; set; }
 

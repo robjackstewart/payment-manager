@@ -5,38 +5,70 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepicker } from '@angular/material/datepicker';
 import { of } from 'rxjs';
 import { AgCharts } from 'ag-charts-community';
-import { ContactService } from '../../core/services/contact.service';
+import { PersonService } from '../../core/services/person.service';
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentSourceService } from '../../core/services/payment-source.service';
 import { PaymentService } from '../../core/services/payment.service';
+import { PayerGroupService } from '../../core/services/payer-group.service';
 import { BreakpointService } from '../../core/services/breakpoint.service';
+import { PaymentDirection } from '../../core/models/payment-direction.enum';
 import { DashboardComponent } from './dashboard';
 
 const mockPayee = { id: 'py1', name: 'Alice' };
 const mockPaymentSource = { id: 'ps1', name: 'Bank' };
-const mockContact = { id: 'c1', name: 'Bob' };
+const mockCurrentUser = { id: 'self', userId: 'u1', name: 'Current User' };
+const mockBob = { id: 'c1', userId: 'u1', name: 'Bob' };
+const mockPeople = [mockCurrentUser, mockBob];
+const mockPayerGroup = { id: 'g1', userId: 'u1', name: 'Family', memberPersonIds: ['self', 'c1'] };
 
 const mockOccurrence = {
-  id: 'o1', paymentSourceId: 'ps1', payeeId: 'py1',
+  paymentId: 'o1', paymentSourceId: 'ps1', payeeId: 'py1',
   occurrenceDate: '2024-03-15', currency: 'USD',
-  amount: 100, description: 'Rent',
-  userShare: { percentage: 50, value: 50 },
+  amount: 100, direction: PaymentDirection.Outgoing, payerGroupId: null as string | null,
+  description: 'Rent',
+  splits: [
+    { personId: 'self', percentage: 50 },
+    { personId: 'c1', percentage: 50 },
+  ],
 };
 
-const mockSummary = {
-  currency: 'USD', totalAmount: 200, userTotal: 100,
-  contactTotals: [{ contactId: 'c1', amount: 50 }],
-  byPaymentSource: [{
-    paymentSourceId: 'ps1', totalAmount: 200, userTotal: 100,
-    contactTotals: [{ contactId: 'c1', amount: 50 }],
-  }],
+function makePersonAmounts(amounts: Record<string, number>) {
+  return Object.entries(amounts).map(([personId, amount]) => ({ personId, amount }));
+}
+
+function makeDirectionTotals(totalAmount: number, personAmounts: Record<string, number> = {}) {
+  return { totalAmount, personTotals: makePersonAmounts(personAmounts), byPaymentSource: [] };
+}
+
+function makeNetTotals(totalAmount: number, personAmounts: Record<string, number> = {}) {
+  return { totalAmount, personTotals: makePersonAmounts(personAmounts) };
+}
+
+const mockCurrencySummary = {
+  currency: 'USD',
+  outgoing: makeDirectionTotals(200, { self: 100, c1: 100 }),
+  incoming: makeDirectionTotals(0, {}),
+  net: makeNetTotals(-200, { self: -100, c1: -100 }),
+  outgoingByPayee: [{ payeeId: 'py1', amount: 200 }],
 };
+
+const mockGroupSummary = { payerGroupId: 'g1', currencies: [mockCurrencySummary] };
+
+interface MockCommitment {
+  personId: string;
+  currency: string;
+  income: number;
+  committed: number;
+  remaining: number;
+  isOverCommitted: boolean;
+}
 
 function makeOccurrenceResponse(
-  summary = mockSummary,
+  summary = [mockGroupSummary],
   occurrences = [mockOccurrence],
+  people: MockCommitment[] = [],
 ) {
-  return { occurrences, summary: [summary] };
+  return { occurrences, summary, people };
 }
 
 function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>, isMobile = false) {
@@ -51,7 +83,8 @@ function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>, isMobile = false) 
   };
   const mockPayeeService = { getAll: vi.fn().mockReturnValue(of([mockPayee])) };
   const mockPaymentSourceService = { getAll: vi.fn().mockReturnValue(of([mockPaymentSource])) };
-  const mockContactService = { getAll: vi.fn().mockReturnValue(of([mockContact])) };
+  const mockPersonService = { getAll: vi.fn().mockReturnValue(of(mockPeople)) };
+  const mockPayerGroupService = { getAll: vi.fn().mockReturnValue(of([mockPayerGroup])) };
   const isMobileSignal = signal(isMobile);
 
   TestBed.configureTestingModule({
@@ -60,7 +93,8 @@ function setup(getOccurrencesMock?: ReturnType<typeof vi.fn>, isMobile = false) 
       { provide: PaymentService, useValue: mockPaymentService },
       { provide: PayeeService, useValue: mockPayeeService },
       { provide: PaymentSourceService, useValue: mockPaymentSourceService },
-      { provide: ContactService, useValue: mockContactService },
+      { provide: PersonService, useValue: mockPersonService },
+      { provide: PayerGroupService, useValue: mockPayerGroupService },
       { provide: BreakpointService, useValue: { isMobile: isMobileSignal } },
       provideNativeDateAdapter(),
     ],
@@ -89,12 +123,20 @@ describe('DashboardComponent', () => {
       expect(component.paymentSources()).toEqual([mockPaymentSource]);
     });
 
-    it('exposes contacts after loading', async () => {
+    it('exposes people after loading', async () => {
       const { fixture, component } = setup();
       fixture.detectChanges();
       await fixture.whenStable();
 
-      expect(component.contacts()).toEqual([mockContact]);
+      expect(component.people()).toEqual(mockPeople);
+    });
+
+    it('exposes payerGroups after loading', async () => {
+      const { fixture, component } = setup();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(component.payerGroups()).toEqual([mockPayerGroup]);
     });
   });
 
@@ -129,7 +171,7 @@ describe('DashboardComponent', () => {
 
     it('uses em dash as descriptionDisplay when description is falsy', async () => {
       const mock = vi.fn().mockReturnValue(
-        of(makeOccurrenceResponse(mockSummary, [{ ...mockOccurrence, description: '' }])),
+        of(makeOccurrenceResponse([mockGroupSummary], [{ ...mockOccurrence, description: '' }])),
       );
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
@@ -143,127 +185,296 @@ describe('DashboardComponent', () => {
       expect(vm[0].formattedAmount).toMatch(/\$100/);
     });
 
-    it('renders integer percentage without decimal places', async () => {
+    it('renders every split with its person name and percentage', async () => {
       const vm = await resolvedViewModel();
-      expect(vm[0].yourShareDisplay).toBe('50%');
+      expect(vm[0].splitDisplay).toBe('Current User 50% · Bob 50%');
     });
 
-    it('renders fractional percentage with two decimal places', async () => {
+    it('renders fractional split percentages with two decimal places', async () => {
       const mock = vi.fn().mockReturnValue(
-        of(makeOccurrenceResponse(mockSummary, [
-          { ...mockOccurrence, userShare: { percentage: 33.33, value: 33.33 } },
+        of(makeOccurrenceResponse([mockGroupSummary], [
+          {
+            ...mockOccurrence,
+            splits: [
+              { personId: 'self', percentage: 33.33 },
+              { personId: 'c1', percentage: 66.67 },
+            ],
+          },
         ])),
       );
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
       await fixture.whenStable();
 
-      expect(component.occurrencesViewModel()[0].yourShareDisplay).toBe('33.33%');
+      expect(component.occurrencesViewModel()[0].splitDisplay).toBe('Current User 33.33% · Bob 66.67%');
+    });
+
+    it('marks an outgoing occurrence with the amount-out class and a minus sign', async () => {
+      const vm = await resolvedViewModel();
+      expect(vm[0].directionClass).toBe('amount-out');
+      expect(vm[0].signedAmountDisplay).toMatch(/^−/);
+    });
+
+    it('marks an incoming occurrence with the amount-in class and a plus sign', async () => {
+      const mock = vi.fn().mockReturnValue(
+        of(makeOccurrenceResponse([mockGroupSummary], [
+          { ...mockOccurrence, direction: PaymentDirection.Incoming },
+        ])),
+      );
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const vm = component.occurrencesViewModel();
+      expect(vm[0].directionClass).toBe('amount-in');
+      expect(vm[0].signedAmountDisplay).toMatch(/^\+/);
     });
   });
 
-  describe('summaryViewModel — delta calculation', () => {
-    it('sets deltaState to "same" when current and previous totals are equal', async () => {
-      // forkJoin calls getOccurrences twice: first for current, second for previous
-      const mock = vi.fn()
-        .mockReturnValueOnce(of(makeOccurrenceResponse({ ...mockSummary, totalAmount: 200 })))
-        .mockReturnValueOnce(of(makeOccurrenceResponse({ ...mockSummary, totalAmount: 200 })));
+  describe('groupCardViewModels', () => {
+    it('resolves the payer group name for the summary entry', async () => {
+      const { fixture, component } = setup();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(component.groupCardViewModels()[0].title).toBe('Family — USD');
+    });
+
+    it('falls back to the payer group id when the group name is unknown', async () => {
+      const unknown = { payerGroupId: 'g-unknown', currencies: [mockCurrencySummary] };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([unknown])));
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const vm = component.summaryViewModel();
-      expect(vm[0].deltaState).toBe('same');
-      expect(vm[0].delta).toBe('— Same as last month');
+      expect(component.groupCardViewModels()[0].title).toBe('g-unknown — USD');
     });
 
-    it('sets deltaState to "increase" and prefixes delta with ▲ when current > previous', async () => {
-      const mock = vi.fn()
-        .mockReturnValueOnce(of(makeOccurrenceResponse({ ...mockSummary, totalAmount: 300 })))
-        .mockReturnValueOnce(of(makeOccurrenceResponse({ ...mockSummary, totalAmount: 200 })));
+    it('shows income and outgoing tiles formatted as currency', async () => {
+      const summary = {
+        ...mockGroupSummary,
+        currencies: [{
+          ...mockCurrencySummary,
+          incoming: makeDirectionTotals(500, { self: 500 }),
+          outgoing: makeDirectionTotals(200, { self: 100, c1: 100 }),
+        }],
+      };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([summary])));
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const vm = component.summaryViewModel();
-      expect(vm[0].deltaState).toBe('increase');
-      expect(vm[0].delta).toMatch(/^▲/);
+      const card = component.groupCardViewModels()[0];
+      expect(card.incomeDisplay).toMatch(/\$500/);
+      expect(card.outgoingDisplay).toMatch(/\$200/);
     });
 
-    it('sets deltaState to "decrease" and prefixes delta with ▼ when current < previous', async () => {
-      const mock = vi.fn()
-        .mockReturnValueOnce(of(makeOccurrenceResponse({ ...mockSummary, totalAmount: 100 })))
-        .mockReturnValueOnce(of(makeOccurrenceResponse({ ...mockSummary, totalAmount: 200 })));
+    it('shows "Left Over" when income exceeds outgoings', async () => {
+      const summary = {
+        ...mockGroupSummary,
+        currencies: [{ ...mockCurrencySummary, incoming: makeDirectionTotals(500, { self: 500 }), outgoing: makeDirectionTotals(200, { self: 100 }) }],
+      };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([summary])));
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const vm = component.summaryViewModel();
-      expect(vm[0].deltaState).toBe('decrease');
-      expect(vm[0].delta).toMatch(/^▼/);
+      const card = component.groupCardViewModels()[0];
+      expect(card.isOverspent).toBe(false);
+      expect(card.thirdTileLabel).toBe('Left Over');
+      expect(card.thirdTileValue).toMatch(/\$300/);
     });
 
-    it('sets delta and deltaState to null when there is no previous month summary', async () => {
+    it('shows "Overspent" when outgoings exceed income', async () => {
+      const summary = {
+        ...mockGroupSummary,
+        currencies: [{ ...mockCurrencySummary, incoming: makeDirectionTotals(100, { self: 100 }), outgoing: makeDirectionTotals(300, { self: 300 }) }],
+      };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([summary])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const card = component.groupCardViewModels()[0];
+      expect(card.isOverspent).toBe(true);
+      expect(card.thirdTileLabel).toBe('Overspent');
+      expect(card.thirdTileValue).toMatch(/\$200/);
+    });
+
+    it('builds donut slices from outgoingByPayee plus a Left Over slice when income exceeds outgoings', async () => {
+      const summary = {
+        ...mockGroupSummary,
+        currencies: [{
+          ...mockCurrencySummary,
+          incoming: makeDirectionTotals(500, { self: 500 }),
+          outgoing: makeDirectionTotals(200, { self: 100 }),
+          outgoingByPayee: [{ payeeId: 'py1', amount: 200 }],
+        }],
+      };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([summary])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const card = component.groupCardViewModels()[0];
+      expect(card.showDonut).toBe(true);
+      expect(card.donutSlices).toContainEqual({ label: 'Alice', amount: 200 });
+      expect(card.donutSlices).toContainEqual({ label: 'Left over', amount: 300 });
+    });
+
+    it('does not show a donut when the group is overspent', async () => {
+      const summary = {
+        ...mockGroupSummary,
+        currencies: [{ ...mockCurrencySummary, incoming: makeDirectionTotals(100, { self: 100 }), outgoing: makeDirectionTotals(300, { self: 300 }), outgoingByPayee: [{ payeeId: 'py1', amount: 300 }] }],
+      };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([summary])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(component.groupCardViewModels()[0].showDonut).toBe(false);
+    });
+
+    it('does not show a donut when there is no income at all', async () => {
+      const { fixture, component } = setup();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // mockCurrencySummary has incoming.totalAmount = 0
+      expect(component.groupCardViewModels()[0].showDonut).toBe(false);
+    });
+
+    it('builds a person row for every participant, with no special-cased user', async () => {
+      const summary = {
+        ...mockGroupSummary,
+        currencies: [
+          {
+            ...mockCurrencySummary,
+            incoming: makeDirectionTotals(0, {}),
+            outgoing: makeDirectionTotals(200, { self: 100, c1: 100 }),
+            net: makeNetTotals(-200, { self: -100, c1: -100 }),
+          },
+        ],
+      };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([summary])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const card = component.groupCardViewModels()[0];
+      expect(card.people).toHaveLength(2);
+      expect(card.people.map(p => p.name)).toEqual(['Current User', 'Bob']);
+      expect(card.people.every(p => p.netState === 'negative')).toBe(true);
+    });
+
+    it('resolves person names and net state on group rows', async () => {
+      const summary = {
+        ...mockGroupSummary,
+        currencies: [{
+          ...mockCurrencySummary,
+          incoming: makeDirectionTotals(0, {}),
+          outgoing: makeDirectionTotals(200, { self: 100, c1: 100 }),
+          net: makeNetTotals(-100, { c1: -100 }),
+        }],
+      };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([summary])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const bob = component.groupCardViewModels()[0].people.find(p => p.personId === 'c1')!;
+      expect(bob.name).toBe('Bob');
+      expect(bob.netState).toBe('negative');
+    });
+
+    it('flags a person as over-committed on the group row and in the global People section', async () => {
+      const people: MockCommitment[] = [
+        { personId: 'c1', currency: 'USD', income: 100, committed: 250, remaining: -150, isOverCommitted: true },
+      ];
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([mockGroupSummary], [mockOccurrence], people)));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const bob = component.groupCardViewModels()[0].people.find(p => p.personId === 'c1')!;
+      expect(bob.isOverCommitted).toBe(true);
+
+      const row = component.commitmentRows()[0];
+      expect(row.name).toBe('Bob');
+      expect(row.isOverCommitted).toBe(true);
+      expect(row.remainingDisplay).toMatch(/-\$150/);
+    });
+
+    it('computes a month-over-month delta on outgoing totals', async () => {
+      const current = { ...mockGroupSummary, currencies: [{ ...mockCurrencySummary, outgoing: makeDirectionTotals(300, { self: 300 }) }] };
+      const previous = { ...mockGroupSummary, currencies: [{ ...mockCurrencySummary, outgoing: makeDirectionTotals(200, { self: 200 }) }] };
+      const mock = vi.fn()
+        .mockReturnValueOnce(of(makeOccurrenceResponse([current])))
+        .mockReturnValueOnce(of(makeOccurrenceResponse([previous])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const card = component.groupCardViewModels()[0];
+      expect(card.deltaState).toBe('increase');
+      expect(card.delta).toMatch(/^▲/);
+    });
+
+    it('leaves delta null when there is no matching group in the previous month', async () => {
       const mock = vi.fn()
         .mockReturnValueOnce(of(makeOccurrenceResponse()))
-        .mockReturnValueOnce(of({ occurrences: [], summary: [] }));
+        .mockReturnValueOnce(of({ occurrences: [], summary: [], people: [] }));
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const vm = component.summaryViewModel();
-      expect(vm[0].delta).toBeNull();
-      expect(vm[0].deltaState).toBeNull();
+      expect(component.groupCardViewModels()[0].delta).toBeNull();
+      expect(component.groupCardViewModels()[0].deltaState).toBeNull();
+    });
+
+    it('renders separate cards for each payer group in the same month', async () => {
+      const family = { payerGroupId: 'g1', currencies: [mockCurrencySummary] };
+      const work = { payerGroupId: 'g2', currencies: [mockCurrencySummary] };
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([family, work])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const titles = component.groupCardViewModels().map(c => c.title);
+      expect(titles).toContain('Family — USD');
+      expect(titles).toContain('g2 — USD');
     });
   });
 
-  describe('summaryViewModel — structure', () => {
-    it('builds contacts array with resolved name and formatted amount', async () => {
+  describe('costBreakdownSlices', () => {
+    it('aggregates outgoing occurrences by payment source', async () => {
       const { fixture, component } = setup();
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const { contacts } = component.summaryViewModel()[0];
-      expect(contacts).toHaveLength(1);
-      expect(contacts[0].name).toBe('Bob');
-      expect(contacts[0].amount).toMatch(/\$50/);
+      const groups = component.costBreakdownSlices();
+      expect(groups).toHaveLength(1);
+      expect(groups[0].currency).toBe('USD');
+      expect(groups[0].slices).toEqual([{ label: 'Bank', amount: 100 }]);
     });
 
-    it('builds byPaymentSource with resolved source name and formatted amounts', async () => {
-      const { fixture, component } = setup();
+    it('excludes incoming occurrences', async () => {
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([mockGroupSummary], [
+        { ...mockOccurrence, paymentId: 'o1', direction: PaymentDirection.Outgoing, amount: 100 },
+        { ...mockOccurrence, paymentId: 'o2', direction: PaymentDirection.Incoming, amount: 3000 },
+      ])));
+      const { fixture, component } = setup(mock);
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const [source] = component.summaryViewModel()[0].byPaymentSource;
-      expect(source.sourceName).toBe('Bank');
-      expect(source.totalAmount).toMatch(/\$200/);
-      expect(source.userTotal).toMatch(/\$100/);
-    });
-
-    it('builds byPaymentSource contacts with resolved name', async () => {
-      const { fixture, component } = setup();
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      const { contacts } = component.summaryViewModel()[0].byPaymentSource[0];
-      expect(contacts[0].name).toBe('Bob');
-      expect(contacts[0].amount).toMatch(/\$50/);
-    });
-
-    it('builds pieSlices with correct label and raw amount', async () => {
-      const { fixture, component } = setup();
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      const [slice] = component.summaryViewModel()[0].pieSlices;
-      expect(slice.label).toBe('Bank');
-      expect(slice.amount).toBe(200);
+      const [group] = component.costBreakdownSlices();
+      expect(group.slices).toEqual([{ label: 'Bank', amount: 100 }]);
     });
   });
 
   describe('schedulePayeeSlices', () => {
     it('returns empty array when there are no occurrences', async () => {
-      const mock = vi.fn().mockReturnValue(of({ occurrences: [], summary: [] }));
+      const mock = vi.fn().mockReturnValue(of({ occurrences: [], summary: [], people: [] }));
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -283,9 +494,22 @@ describe('DashboardComponent', () => {
     });
 
     it('sums amounts for the same payee across multiple occurrences', async () => {
-      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
-        { ...mockOccurrence, id: 'o1', amount: 60 },
-        { ...mockOccurrence, id: 'o2', amount: 40 },
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([mockGroupSummary], [
+        { ...mockOccurrence, paymentId: 'o1', amount: 60 },
+        { ...mockOccurrence, paymentId: 'o2', amount: 40 },
+      ])));
+      const { fixture, component } = setup(mock);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const [group] = component.schedulePayeeSlices();
+      expect(group.slices).toEqual([{ label: 'Alice', amount: 100 }]);
+    });
+
+    it('excludes incoming occurrences from the schedule pie', async () => {
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([mockGroupSummary], [
+        { ...mockOccurrence, paymentId: 'o1', payeeId: 'py1', amount: 100, direction: PaymentDirection.Outgoing },
+        { ...mockOccurrence, paymentId: 'o2', payeeId: 'py1', amount: 5000, direction: PaymentDirection.Incoming },
       ])));
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
@@ -296,9 +520,9 @@ describe('DashboardComponent', () => {
     });
 
     it('returns separate slices for different payees in the same currency', async () => {
-      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
-        { ...mockOccurrence, id: 'o1', payeeId: 'py1', amount: 100 },
-        { ...mockOccurrence, id: 'o2', payeeId: 'py2', amount: 200 },
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([mockGroupSummary], [
+        { ...mockOccurrence, paymentId: 'o1', payeeId: 'py1', amount: 100 },
+        { ...mockOccurrence, paymentId: 'o2', payeeId: 'py2', amount: 200 },
       ])));
       const mockPayeeService2 = { getAll: vi.fn().mockReturnValue(of([mockPayee, { id: 'py2', name: 'Carol' }])) };
       TestBed.resetTestingModule();
@@ -309,7 +533,8 @@ describe('DashboardComponent', () => {
           { provide: PaymentService, useValue: { getOccurrences: mock } },
           { provide: PayeeService, useValue: mockPayeeService2 },
           { provide: PaymentSourceService, useValue: { getAll: vi.fn().mockReturnValue(of([mockPaymentSource])) } },
-          { provide: ContactService, useValue: { getAll: vi.fn().mockReturnValue(of([mockContact])) } },
+          { provide: PersonService, useValue: { getAll: vi.fn().mockReturnValue(of(mockPeople)) } },
+          { provide: PayerGroupService, useValue: { getAll: vi.fn().mockReturnValue(of([mockPayerGroup])) } },
           { provide: BreakpointService, useValue: { isMobile: signal(false) } },
           provideNativeDateAdapter(),
         ],
@@ -325,9 +550,9 @@ describe('DashboardComponent', () => {
     });
 
     it('returns separate groups for occurrences in different currencies', async () => {
-      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
-        { ...mockOccurrence, id: 'o1', currency: 'USD', amount: 100 },
-        { ...mockOccurrence, id: 'o2', currency: 'EUR', amount: 50 },
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([mockGroupSummary], [
+        { ...mockOccurrence, paymentId: 'o1', currency: 'USD', amount: 100 },
+        { ...mockOccurrence, paymentId: 'o2', currency: 'EUR', amount: 50 },
       ])));
       const { fixture, component } = setup(mock);
       fixture.detectChanges();
@@ -340,7 +565,7 @@ describe('DashboardComponent', () => {
     });
 
     it('falls back to payeeId when payee is not in the map', async () => {
-      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse(mockSummary, [
+      const mock = vi.fn().mockReturnValue(of(makeOccurrenceResponse([mockGroupSummary], [
         { ...mockOccurrence, payeeId: 'unknown-py' },
       ])));
       const { fixture, component } = setup(mock);

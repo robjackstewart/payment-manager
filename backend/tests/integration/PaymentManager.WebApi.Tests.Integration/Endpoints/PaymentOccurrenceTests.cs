@@ -14,23 +14,37 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
 {
     private sealed record OccurrenceResponse(
         Guid PaymentId, Guid PaymentSourceId, Guid PayeeId,
-        decimal Amount, string Currency, PaymentFrequency Frequency,
-        DateOnly OccurrenceDate, DateOnly StartDate, DateOnly? EndDate,
-        UserShareDto UserShare, SplitDto[] Splits);
+        decimal Amount, string Currency, PaymentFrequency Frequency, PaymentDirection Direction,
+        DateOnly OccurrenceDate, DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId,
+        SplitDto[] Splits);
 
-    private sealed record SplitDto(Guid ContactId, decimal Percentage, decimal Value);
+    private sealed record SplitDto(Guid PersonId, decimal Percentage, decimal Value);
 
-    private sealed record SummaryDto(
-        string Currency, decimal TotalAmount, decimal UserTotal,
-        ContactAmountDto[] ContactTotals, PaymentSourceBreakdownDto[] ByPaymentSource);
+    private sealed record GroupSummaryDto(Guid PayerGroupId, CurrencySummaryDto[] Currencies);
 
-    private sealed record ContactAmountDto(Guid ContactId, decimal Amount);
+    private sealed record CurrencySummaryDto(
+        string Currency, DirectionTotalsDto Outgoing, DirectionTotalsDto Incoming, NetTotalsDto Net,
+        PayeeAmountDto[] OutgoingByPayee);
+
+    private sealed record DirectionTotalsDto(
+        decimal TotalAmount,
+        PersonAmountDto[] PersonTotals, PaymentSourceBreakdownDto[] ByPaymentSource);
+
+    private sealed record NetTotalsDto(
+        decimal TotalAmount, PersonAmountDto[] PersonTotals);
+
+    private sealed record PersonAmountDto(Guid PersonId, decimal Amount);
+
+    private sealed record PayeeAmountDto(Guid PayeeId, decimal Amount);
 
     private sealed record PaymentSourceBreakdownDto(
-        Guid PaymentSourceId, decimal TotalAmount, decimal UserTotal,
-        ContactAmountDto[] ContactTotals);
+        Guid PaymentSourceId, decimal TotalAmount,
+        PersonAmountDto[] PersonTotals);
 
-    private sealed record GetOccurrencesResponse(OccurrenceResponse[] Occurrences, SummaryDto[] Summary);
+    private sealed record PersonCommitmentDto(
+        Guid PersonId, string Currency, decimal Income, decimal Committed, decimal Remaining, bool IsOverCommitted);
+
+    private sealed record GetOccurrencesResponse(OccurrenceResponse[] Occurrences, GroupSummaryDto[] Summary, PersonCommitmentDto[] People);
 
     private async Task<(Guid PaymentSourceId, Guid PayeeId)> SetupPrerequisitesAsync(CancellationToken ct)
     {
@@ -43,13 +57,13 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         return (paymentSource.Id, payee.Id);
     }
 
-    private async Task<Guid> SetupContactAsync(string name, CancellationToken ct)
+    private async Task<Guid> SetupPersonAsync(string name, CancellationToken ct)
     {
         var context = GetService<IPaymentManagerContext>();
-        var contact = new Contact { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = name };
-        context.Contacts.Add(contact);
+        var person = new Person { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = name };
+        context.People.Add(person);
         await context.SaveChanges(ct);
-        return contact.Id;
+        return person.Id;
     }
 
     private static void AddEffectiveValue(IPaymentManagerContext context, Guid paymentId, DateOnly effectiveDate, decimal amount)
@@ -62,7 +76,7 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         });
     }
 
-    private static Payment MakePayment(Guid userId, Guid psId, Guid payeeId, string currency, PaymentFrequency frequency, DateOnly startDate, DateOnly? endDate = null)
+    private static Payment MakePayment(Guid userId, Guid psId, Guid payeeId, string currency, PaymentFrequency frequency, DateOnly startDate, DateOnly? endDate = null, PaymentDirection direction = PaymentDirection.Outgoing)
         => new()
         {
             Id = Guid.NewGuid(),
@@ -71,6 +85,7 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = currency,
             Frequency = frequency,
+            Direction = direction,
             StartDate = startDate,
             EndDate = endDate,
             InitialAmount = 100m
@@ -91,6 +106,7 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.Occurrences.ShouldBeEmpty();
         body.Summary.ShouldBeEmpty();
+        body.People.ShouldBeEmpty();
     }
 
     // ── InitialAmount fallback ────────────────────────────────────────────────
@@ -109,6 +125,7 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
             PayeeId = payeeId,
             Currency = "USD",
             Frequency = PaymentFrequency.Once,
+            Direction = PaymentDirection.Outgoing,
             StartDate = new DateOnly(2025, 1, 15),
             InitialAmount = 75m
         };
@@ -123,7 +140,6 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.Occurrences.Length.ShouldBe(1);
         body.Occurrences[0].Amount.ShouldBe(75m);
-        body.Occurrences[0].UserShare.Value.ShouldBe(75m);
     }
 
     // ── Once ─────────────────────────────────────────────────────────────────
@@ -149,8 +165,6 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.Occurrences[0].PaymentId.ShouldBe(payment.Id);
         body.Occurrences[0].OccurrenceDate.ShouldBe(new DateOnly(2025, 1, 15));
         body.Occurrences[0].Amount.ShouldBe(50m);
-        body.Occurrences[0].UserShare.Percentage.ShouldBe(100m);
-        body.Occurrences[0].UserShare.Value.ShouldBe(50m);
     }
 
     [Test]
@@ -194,8 +208,6 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.Occurrences.Length.ShouldBe(3);
         body.Occurrences.ShouldAllBe(o => o.PaymentId == payment.Id);
-        body.Occurrences.ShouldAllBe(o => o.UserShare.Percentage == 100m);
-        body.Occurrences.ShouldAllBe(o => o.UserShare.Value == 9.99m);
         var dates = body.Occurrences.Select(o => o.OccurrenceDate).ToArray();
         dates.ShouldContain(new DateOnly(2025, 1, 10));
         dates.ShouldContain(new DateOnly(2025, 2, 10));
@@ -231,16 +243,18 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
     // ── Splits ────────────────────────────────────────────────────────────────
 
     [Test]
-    public async Task GetOccurrences_Should_Include_UserShare_And_SplitValues_When_PaymentHasSplits()
+    public async Task GetOccurrences_Should_Include_SplitValues_When_PaymentHasSplits()
     {
         var ct = TestContext.CurrentContext.CancellationToken;
         var (psId, payeeId) = await SetupPrerequisitesAsync(ct);
-        var contactId = await SetupContactAsync("Alice", ct);
+        var personId1 = await SetupPersonAsync("Alice", ct);
+        var personId2 = await SetupPersonAsync("Bob", ct);
         var context = GetService<IPaymentManagerContext>();
         var payment = MakePayment(DefaultUserService.DefaultUserId, psId, payeeId, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 15));
         context.Payments.Add(payment);
         AddEffectiveValue(context, payment.Id, payment.StartDate, 100m);
-        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment.Id, ContactId = contactId, Percentage = 40m });
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment.Id, PersonId = personId1, Percentage = 40m });
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment.Id, PersonId = personId2, Percentage = 60m });
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient()
@@ -251,12 +265,11 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         body.ShouldNotBeNull();
         body.Occurrences.Length.ShouldBe(1);
         var occurrence = body.Occurrences[0];
-        occurrence.UserShare.Percentage.ShouldBe(60m);
-        occurrence.UserShare.Value.ShouldBe(60m);
-        occurrence.Splits.Length.ShouldBe(1);
-        occurrence.Splits[0].ContactId.ShouldBe(contactId);
-        occurrence.Splits[0].Percentage.ShouldBe(40m);
-        occurrence.Splits[0].Value.ShouldBe(40m);
+        occurrence.Splits.Length.ShouldBe(2);
+        occurrence.Splits.Single(s => s.PersonId == personId1).Percentage.ShouldBe(40m);
+        occurrence.Splits.Single(s => s.PersonId == personId1).Value.ShouldBe(40m);
+        occurrence.Splits.Single(s => s.PersonId == personId2).Percentage.ShouldBe(60m);
+        occurrence.Splits.Single(s => s.PersonId == personId2).Value.ShouldBe(60m);
     }
 
     [Test]
@@ -266,17 +279,21 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         var (psId1, payeeId) = await SetupPrerequisitesAsync(ct);
         var context = GetService<IPaymentManagerContext>();
         var paymentSource2 = new PaymentSource { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Mastercard" };
+        var payerGroup = new PayerGroup { Id = Guid.NewGuid(), UserId = DefaultUserService.DefaultUserId, Name = "Family" };
         context.PaymentSources.Add(paymentSource2);
+        context.PayerGroups.Add(payerGroup);
         await context.SaveChanges(ct);
         var psId2 = paymentSource2.Id;
-        var contactId = await SetupContactAsync("Bob", ct);
+        var personId1 = await SetupPersonAsync("Bob", ct);
+        var personId2 = await SetupPersonAsync("Current User", ct);
 
-        var payment1 = MakePayment(DefaultUserService.DefaultUserId, psId1, payeeId, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 15));
-        var payment2 = MakePayment(DefaultUserService.DefaultUserId, psId2, payeeId, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 20));
+        var payment1 = MakePayment(DefaultUserService.DefaultUserId, psId1, payeeId, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 15)) with { PayerGroupId = payerGroup.Id };
+        var payment2 = MakePayment(DefaultUserService.DefaultUserId, psId2, payeeId, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 20)) with { PayerGroupId = payerGroup.Id };
         context.Payments.AddRange(payment1, payment2);
         AddEffectiveValue(context, payment1.Id, payment1.StartDate, 100m);
         AddEffectiveValue(context, payment2.Id, payment2.StartDate, 50m);
-        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment1.Id, ContactId = contactId, Percentage = 40m });
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment1.Id, PersonId = personId1, Percentage = 40m });
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment1.Id, PersonId = personId2, Percentage = 60m });
         await context.SaveChanges(ct);
 
         var response = await CreateApiClient()
@@ -285,19 +302,50 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
         var body = await response.Content.ReadFromJsonAsync<GetOccurrencesResponse>(ct);
         body.ShouldNotBeNull();
         body.Summary.Length.ShouldBe(1);
-        var usd = body.Summary.Single(s => s.Currency == "USD");
-        usd.TotalAmount.ShouldBe(150m);     // 100 + 50
-        usd.UserTotal.ShouldBe(110m);        // 60 (user share of p1) + 50 (full p2)
-        usd.ContactTotals.Single(c => c.ContactId == contactId).Amount.ShouldBe(40m);
+        body.Summary.Single().PayerGroupId.ShouldBe(payerGroup.Id);
+        var usd = body.Summary.Single().Currencies.Single(c => c.Currency == "USD");
+        usd.Outgoing.TotalAmount.ShouldBe(150m);     // 100 + 50
+        usd.Outgoing.PersonTotals.Single(p => p.PersonId == personId1).Amount.ShouldBe(40m);
+        usd.Outgoing.PersonTotals.Single(p => p.PersonId == personId2).Amount.ShouldBe(60m);
 
-        var ps1 = usd.ByPaymentSource.Single(p => p.PaymentSourceId == psId1);
+        var ps1 = usd.Outgoing.ByPaymentSource.Single(p => p.PaymentSourceId == psId1);
         ps1.TotalAmount.ShouldBe(100m);
-        ps1.UserTotal.ShouldBe(60m);
-        ps1.ContactTotals.Single(c => c.ContactId == contactId).Amount.ShouldBe(40m);
+        ps1.PersonTotals.Single(p => p.PersonId == personId1).Amount.ShouldBe(40m);
+        ps1.PersonTotals.Single(p => p.PersonId == personId2).Amount.ShouldBe(60m);
 
-        var ps2 = usd.ByPaymentSource.Single(p => p.PaymentSourceId == psId2);
+        var ps2 = usd.Outgoing.ByPaymentSource.Single(p => p.PaymentSourceId == psId2);
         ps2.TotalAmount.ShouldBe(50m);
-        ps2.UserTotal.ShouldBe(50m);
-        ps2.ContactTotals.ShouldBeEmpty();
+        ps2.PersonTotals.ShouldBeEmpty();
+
+        usd.Net.TotalAmount.ShouldBe(-150m);
+    }
+
+    // ── Direction ─────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task GetOccurrences_IncomingPayment_Is_Counted_As_Income_Not_Outgoing()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (psId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var context = GetService<IPaymentManagerContext>();
+        var personId = await SetupPersonAsync("Current User", ct);
+        var income = MakePayment(DefaultUserService.DefaultUserId, psId, payeeId, "USD", PaymentFrequency.Once, new DateOnly(2025, 1, 15), direction: PaymentDirection.Incoming);
+        context.Payments.Add(income);
+        AddEffectiveValue(context, income.Id, income.StartDate, 3000m);
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = income.Id, PersonId = personId, Percentage = 100m });
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .GetAsync("/api/payments/occurrences?from=2025-01-01&to=2025-01-31", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetOccurrencesResponse>(ct);
+        body.ShouldNotBeNull();
+        body.Occurrences.Single().Direction.ShouldBe(PaymentDirection.Incoming);
+        var commitment = body.People.Single();
+        commitment.Income.ShouldBe(3000m);
+        commitment.Committed.ShouldBe(0m);
+        // Income belongs to a person, never to a payer group.
+        body.Summary.ShouldBeEmpty();
     }
 }

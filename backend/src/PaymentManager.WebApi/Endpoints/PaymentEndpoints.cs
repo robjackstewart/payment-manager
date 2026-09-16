@@ -12,9 +12,9 @@ namespace PaymentManager.WebApi.Endpoints;
 
 internal static class PaymentEndpoints
 {
-    public record CreateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null, IReadOnlyList<SplitRequest>? Splits = null);
-    public record UpdateRequest(Guid PaymentSourceId, Guid PayeeId, decimal InitialAmount, string Currency, PaymentFrequency Frequency, DateOnly StartDate, DateOnly? EndDate, string? Description = null, IReadOnlyList<SplitRequest>? Splits = null);
-    public record SplitRequest(Guid ContactId, decimal Percentage);
+    public record CreateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description = null, Guid? PayerGroupId = null, IReadOnlyList<SplitRequest>? Splits = null);
+    public record UpdateRequest(Guid PaymentSourceId, Guid PayeeId, decimal InitialAmount, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description = null, Guid? PayerGroupId = null, IReadOnlyList<SplitRequest>? Splits = null);
+    public record SplitRequest(Guid PersonId, decimal Percentage);
     public record EffectiveValueRequest(DateOnly EffectiveDate, decimal Amount);
 
     public static WebApplication Map(WebApplication app)
@@ -24,7 +24,7 @@ internal static class PaymentEndpoints
             .Produces<CreatePayment.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
             .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json);
 
-        app.MapGet("/api/payments", ([FromServices] ISender sender, [FromServices] IUserService userService, CancellationToken cancellationToken) => HandleGetAll(sender, userService, cancellationToken))
+        app.MapGet("/api/payments", ([FromQuery] PaymentDirection? direction, [FromServices] ISender sender, [FromServices] IUserService userService, CancellationToken cancellationToken) => HandleGetAll(direction, sender, userService, cancellationToken))
             .WithName("Get All Payments")
             .Produces<GetAllPayments.Response>((int)HttpStatusCode.OK, MediaTypeNames.Application.Json);
 
@@ -62,13 +62,13 @@ internal static class PaymentEndpoints
 
     internal static async Task<IResult> HandleCreate(CreateRequest request, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreatePayment(userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description, request.Splits?.Select(s => new CreatePayment.SplitRequest(s.ContactId, s.Percentage)).ToList()), cancellationToken);
+        var result = await sender.Send(new CreatePayment(userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.Amount, request.Currency, request.Frequency, request.Direction, request.StartDate, request.EndDate, request.Description, request.PayerGroupId, request.Splits?.Select(s => new CreatePayment.SplitRequest(s.PersonId, s.Percentage)).ToList()), cancellationToken);
         return Results.Created($"/api/payments/{result.Id}", result);
     }
 
-    internal static async Task<IResult> HandleGetAll(ISender sender, IUserService userService, CancellationToken cancellationToken)
+    internal static async Task<IResult> HandleGetAll(PaymentDirection? direction, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetAllPayments(userService.GetCurrentUserId()), cancellationToken);
+        var result = await sender.Send(new GetAllPayments(userService.GetCurrentUserId(), direction), cancellationToken);
         return Results.Ok(result);
     }
 
@@ -86,7 +86,7 @@ internal static class PaymentEndpoints
 
     internal static async Task<IResult> HandleUpdate(Guid id, UpdateRequest request, ISender sender, IUserService userService, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdatePayment(id, userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.InitialAmount, request.Currency, request.Frequency, request.StartDate, request.EndDate, request.Description, request.Splits?.Select(s => new UpdatePayment.SplitRequest(s.ContactId, s.Percentage)).ToList()), cancellationToken);
+        var result = await sender.Send(new UpdatePayment(id, userService.GetCurrentUserId(), request.PaymentSourceId, request.PayeeId, request.InitialAmount, request.Currency, request.Frequency, request.Direction, request.StartDate, request.EndDate, request.Description, request.PayerGroupId, request.Splits?.Select(s => new UpdatePayment.SplitRequest(s.PersonId, s.Percentage)).ToList()), cancellationToken);
         return Results.Ok(result);
     }
 

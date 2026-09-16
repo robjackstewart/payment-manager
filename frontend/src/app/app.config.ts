@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideApi } from '../api-client';
 import { routes } from './app.routes';
@@ -14,7 +14,7 @@ const basePath = baseHref === '/' ? '' : baseHref.replace(/\/$/, '');
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
-    provideRouter(routes),
+    provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withFetch()),
     provideApi(environment.apiBaseUrl ?? (window.location.origin + basePath)),
   ]
