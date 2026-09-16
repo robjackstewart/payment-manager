@@ -8,9 +8,11 @@ using PaymentManager.Infrastructure;
 var builder = Host.CreateApplicationBuilder(args);
 var configuration = builder.Configuration.Get<PaymentManager.Host.Local.Database.Seeder.Configuration>();
 Guard.IsNotNull(configuration);
+// Foreign keys are disabled so SQLite table-rebuild migrations work; PRAGMA foreign_keys
+// is a no-op inside EF's migration transaction, so it is applied via the connection string.
 builder.Services.AddPaymentManagerInfrastructure(new Configuration
 {
-    DatabaseConnectionString = configuration.ConnectionStrings.PaymentManager
+    DatabaseConnectionString = $"{configuration.ConnectionStrings.PaymentManager};Foreign Keys=False"
 });
 
 var host = builder.Build();
