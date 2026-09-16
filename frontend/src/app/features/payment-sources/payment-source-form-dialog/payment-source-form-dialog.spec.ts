@@ -32,9 +32,9 @@ describe('PaymentSourceFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Create');
     });
 
-    it('initialises the name control as empty', () => {
+    it('initialises the name field as empty', () => {
       const { component } = setup();
-      expect(component.form.controls.name.value).toBe('');
+      expect(component.form.name().value()).toBe('');
     });
   });
 
@@ -51,16 +51,16 @@ describe('PaymentSourceFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Save');
     });
 
-    it('pre-fills the name control with the existing value', () => {
+    it('pre-fills the name field with the existing value', () => {
       const { component } = setup({ paymentSource });
-      expect(component.form.controls.name.value).toBe('Main Account');
+      expect(component.form.name().value()).toBe('Main Account');
     });
   });
 
   describe('submit()', () => {
     it('calls dialogRef.close with the form value when the form is valid', () => {
       const { component, dialogRef } = setup();
-      component.form.controls.name.setValue('Savings');
+      component.model.set({ name: 'Savings' });
 
       component.submit();
 
@@ -69,7 +69,7 @@ describe('PaymentSourceFormDialogComponent', () => {
 
     it('does not call dialogRef.close when the form is invalid', () => {
       const { component, dialogRef } = setup();
-      component.form.controls.name.setValue('');
+      component.model.set({ name: '' });
 
       component.submit();
 

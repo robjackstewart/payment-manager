@@ -4,7 +4,7 @@
   <span class="month-filter-label">Showing</span>
   <mat-form-field appearance="outline" class="month-picker-field">
     <mat-label>Month</mat-label>
-    <input matInput [matDatepicker]="picker" [formControl]="monthControl" readonly />
+    <input matInput [matDatepicker]="picker" [formField]="monthForm.month" />
     <mat-datepicker-toggle matIconSuffix [for]="picker" />
     <mat-datepicker #picker
       startView="year"

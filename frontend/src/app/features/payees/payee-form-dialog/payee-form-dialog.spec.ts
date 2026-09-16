@@ -33,9 +33,9 @@ describe('PayeeFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Create');
     });
 
-    it('initialises the name control as empty', () => {
+    it('initialises the name field as empty', () => {
       const { component } = setup();
-      expect(component.form.controls.name.value).toBe('');
+      expect(component.form.name().value()).toBe('');
     });
   });
 
@@ -52,16 +52,16 @@ describe('PayeeFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Save');
     });
 
-    it('pre-fills the name control with the existing value', () => {
+    it('pre-fills the name field with the existing value', () => {
       const { component } = setup({ payee });
-      expect(component.form.controls.name.value).toBe('Alice');
+      expect(component.form.name().value()).toBe('Alice');
     });
   });
 
   describe('submit()', () => {
     it('calls dialogRef.close with the form value when the form is valid', () => {
       const { component, dialogRef } = setup();
-      component.form.controls.name.setValue('Alice');
+      component.model.set({ name: 'Alice' });
 
       component.submit();
 
@@ -70,7 +70,7 @@ describe('PayeeFormDialogComponent', () => {
 
     it('does not call dialogRef.close when the form is invalid', () => {
       const { component, dialogRef } = setup();
-      component.form.controls.name.setValue('');
+      component.model.set({ name: '' });
 
       component.submit();
 

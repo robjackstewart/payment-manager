@@ -31,14 +31,14 @@ describe('PayerGroupFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Create');
     });
 
-    it('initialises name control to empty string', async () => {
+    it('initialises name field to empty string', async () => {
       const { component } = await setup();
-      expect(component.form.controls.name.value).toBe('');
+      expect(component.form.name().value()).toBe('');
     });
 
-    it('initialises personIds control to empty array', async () => {
+    it('initialises personIds field to empty array', async () => {
       const { component } = await setup();
-      expect(component.form.controls.personIds.value).toEqual([]);
+      expect(component.form.personIds().value()).toEqual([]);
     });
   });
 
@@ -55,14 +55,14 @@ describe('PayerGroupFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Save');
     });
 
-    it('pre-fills name control with the payer group name', async () => {
+    it('pre-fills name field with the payer group name', async () => {
       const { component } = await setup({ payerGroup });
-      expect(component.form.controls.name.value).toBe(payerGroup.name);
+      expect(component.form.name().value()).toBe(payerGroup.name);
     });
 
-    it('pre-fills personIds control with the payer group members', async () => {
+    it('pre-fills personIds field with the payer group members', async () => {
       const { component } = await setup({ payerGroup });
-      expect(component.form.controls.personIds.value).toEqual(['p1']);
+      expect(component.form.personIds().value()).toEqual(['p1']);
     });
   });
 
@@ -81,7 +81,7 @@ describe('PayerGroupFormDialogComponent', () => {
   describe('submit()', () => {
     it('closes the dialog with form value when the form is valid', async () => {
       const { component } = await setup();
-      component.form.controls.name.setValue('Family');
+      component.model.set({ name: 'Family', personIds: [] });
       component.submit();
       const dialogRef = TestBed.inject(MatDialogRef);
       expect(dialogRef.close).toHaveBeenCalledWith({ name: 'Family', personIds: [] });
@@ -89,8 +89,7 @@ describe('PayerGroupFormDialogComponent', () => {
 
     it('closes the dialog with the selected members', async () => {
       const { component } = await setup();
-      component.form.controls.name.setValue('Family');
-      component.form.controls.personIds.setValue(['p1']);
+      component.model.set({ name: 'Family', personIds: ['p1'] });
       component.submit();
       const dialogRef = TestBed.inject(MatDialogRef);
       expect(dialogRef.close).toHaveBeenCalledWith({ name: 'Family', personIds: ['p1'] });

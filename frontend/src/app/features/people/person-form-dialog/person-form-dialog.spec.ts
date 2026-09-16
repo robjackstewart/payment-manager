@@ -29,9 +29,9 @@ describe('PersonFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Create');
     });
 
-    it('initialises name control to empty string', async () => {
+    it('initialises name field to empty string', async () => {
       const { component } = await setup();
-      expect(component.form.controls.name.value).toBe('');
+      expect(component.form.name().value()).toBe('');
     });
   });
 
@@ -48,16 +48,16 @@ describe('PersonFormDialogComponent', () => {
       expect(component.submitLabel).toBe('Save');
     });
 
-    it('pre-fills name control with the person name', async () => {
+    it('pre-fills name field with the person name', async () => {
       const { component } = await setup({ person });
-      expect(component.form.controls.name.value).toBe(person.name);
+      expect(component.form.name().value()).toBe(person.name);
     });
   });
 
   describe('submit()', () => {
     it('closes the dialog with form value when the form is valid', async () => {
       const { component } = await setup();
-      component.form.controls.name.setValue('Alice');
+      component.model.set({ name: 'Alice' });
       component.submit();
       const dialogRef = TestBed.inject(MatDialogRef);
       expect(dialogRef.close).toHaveBeenCalledWith({ name: 'Alice' });

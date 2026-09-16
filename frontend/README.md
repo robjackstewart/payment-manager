@@ -1,12 +1,12 @@
 # Payment Manager — Angular Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.2 with [Angular Material](https://material.angular.io) 21.
+This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22 with [Angular Material](https://material.angular.io) 22.
 
 ## API Client Generation
 
 The Angular API client is generated from the backend's OpenAPI 3.0 spec using [OpenAPI Generator](https://openapi-generator.tech/).
 
-**Prerequisites:** Docker must be installed and running.
+**Prerequisites:** Docker or Podman must be installed and running. The script auto-detects `docker`, then `podman`; set `CONTAINER_RUNTIME` (or `CONTAINER_ENGINE`) to force a specific engine.
 
 **Input spec:** `backend/src/PaymentManager.WebApi/PaymentManager.WebApi.json`  
 **Output:** `frontend/src/api-client/` (directory is wiped and regenerated on each run)
@@ -15,13 +15,13 @@ The Angular API client is generated from the backend's OpenAPI 3.0 spec using [O
 npm run generate:api
 ```
 
-The script is `frontend/scripts/generate-api.ts`, executed via [`tsx`](https://tsx.is). It resolves all paths relative to the repo root so it works from any working directory.
+The script is `frontend/scripts/generate-api-client.ts`, executed via [`tsx`](https://tsx.is). It resolves all paths relative to the repo root so it works from any working directory.
 
 ### Generator options
 
 | Option | Value |
 |--------|-------|
-| `ngVersion` | `21.0.0` |
+| `ngVersion` | `22.0.0` |
 | `providedIn` | `root` |
 | `fileNaming` | `kebab-case` |
 | `modelPropertyNaming` | `original` |

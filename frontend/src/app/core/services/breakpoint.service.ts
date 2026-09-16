@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BreakpointService {
   private readonly breakpointObserver = inject(BreakpointObserver);
 

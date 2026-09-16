@@ -13,7 +13,6 @@ import { BreakpointService } from './core/services/breakpoint.service';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [
     RouterOutlet,
     RouterLink,

@@ -1,6 +1,4 @@
-import { Component, computed, effect, inject, untracked } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose, MatDialogRef } from '@angular/material/dialog';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatFormField, MatLabel, MatError, MatSuffix } from '@angular/material/form-field';
@@ -9,7 +7,7 @@ import { MatSelect } from '@angular/material/select';
 import { MatOption, provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepicker, MatDatepickerInput, MatDatepickerToggle } from '@angular/material/datepicker';
 import { MatIcon } from '@angular/material/icon';
-import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, FormRoot, applyEach, form, max, maxLength, min, required } from '@angular/forms/signals';
 import { Payment } from '../../../core/models/payment.model';
 import { PaymentSource } from '../../../core/models/payment-source.model';
 import { Payee } from '../../../core/models/payee.model';
@@ -18,9 +16,34 @@ import { PayerGroup } from '../../../core/models/payer-group.model';
 import { PaymentFrequency, PAYMENT_FREQUENCY_LABELS } from '../../../core/models/payment-frequency.enum';
 import { PaymentDirection } from '../../../core/models/payment-direction.enum';
 
+interface SplitModel {
+  personId: string;
+  percentage: number | null;
+}
+
+interface ValueModel {
+  effectiveDate: Date | null;
+  amount: number | null;
+  isExisting: boolean;
+  originalEffectiveDate: Date | null;
+}
+
+interface PaymentFormModel {
+  paymentSourceId: string;
+  payeeId: string;
+  payerGroupId: string | null;
+  currency: string;
+  frequency: PaymentFrequency | null;
+  startDate: Date | null;
+  endDate: Date | null;
+  description: string;
+  amount: number | null;
+  splits: SplitModel[];
+  values: ValueModel[];
+}
+
 @Component({
   selector: 'app-payment-form-dialog',
-  standalone: true,
   providers: [provideNativeDateAdapter()],
   imports: [
     MatDialogTitle,
@@ -40,7 +63,8 @@ import { PaymentDirection } from '../../../core/models/payment-direction.enum';
     MatDatepickerInput,
     MatDatepickerToggle,
     MatIcon,
-    ReactiveFormsModule
+    FormRoot,
+    FormField
   ],
   templateUrl: './payment-form-dialog.html'
 })
@@ -57,6 +81,7 @@ export class PaymentFormDialogComponent {
 
   readonly direction = this.data.direction ?? PaymentDirection.Outgoing;
   readonly isIncoming = this.direction === PaymentDirection.Incoming;
+  readonly isOutgoing = !this.isIncoming;
 
   readonly title = this.data.payment
     ? (this.isIncoming ? 'Edit Income' : 'Edit Payment')
@@ -83,51 +108,70 @@ export class PaymentFormDialogComponent {
   readonly payerGroups = this.data.payerGroups ?? [];
   readonly people = this.data.people ?? [];
 
-  readonly form = new FormGroup({
-    paymentSourceId: new FormControl(this.data?.payment?.paymentSourceId ?? '', [Validators.required]),
-    payeeId: new FormControl(this.data?.payment?.payeeId ?? '', [Validators.required]),
+  readonly model = signal<PaymentFormModel>({
+    paymentSourceId: this.data?.payment?.paymentSourceId ?? '',
+    payeeId: this.data?.payment?.payeeId ?? '',
     // Income belongs to people, not groups (see PaymentSplitGuard) — it never carries a group.
-    payerGroupId: new FormControl<string | null>(
-      this.isIncoming ? null : (this.data?.payment?.payerGroupId ?? null)
-    ),
-    currency: new FormControl(this.data?.payment?.currency ?? 'USD', [Validators.required]),
-    frequency: new FormControl<PaymentFrequency | null>(
-      this.data?.payment?.frequency ?? null,
-      [Validators.required]
-    ),
-    startDate: new FormControl<Date | null>(
-      this.data?.payment?.startDate ? PaymentFormDialogComponent.parseDateOnly(this.data.payment.startDate) : null,
-      [Validators.required]
-    ),
-    endDate: new FormControl<Date | null>(
-      this.data?.payment?.endDate ? PaymentFormDialogComponent.parseDateOnly(this.data.payment.endDate) : null
-    ),
-    description: new FormControl(this.data?.payment?.description ?? '', [Validators.maxLength(500)]),
-    splits: new FormArray(this.initialSplitRows()),
+    payerGroupId: this.isIncoming ? null : (this.data?.payment?.payerGroupId ?? null),
+    currency: this.data?.payment?.currency ?? 'USD',
+    frequency: this.data?.payment?.frequency ?? null,
+    startDate: this.data?.payment?.startDate ? PaymentFormDialogComponent.parseDateOnly(this.data.payment.startDate) : null,
+    endDate: this.data?.payment?.endDate ? PaymentFormDialogComponent.parseDateOnly(this.data.payment.endDate) : null,
+    description: this.data?.payment?.description ?? '',
     // Amount field: required in both create and edit modes
-    amount: new FormControl<number | null>(
-      this.data?.payment?.initialAmount ?? this.data?.payment?.currentAmount ?? null,
-      [Validators.required, Validators.min(0.01)]
-    ),
-    // Edit mode: all effective values (existing with disabled date + new with editable date)
-    values: new FormArray(
-      this.isEditing
-        ? (this.data.payment?.values ?? []).map(v =>
-            this.createValueRow(PaymentFormDialogComponent.parseDateOnly(v.effectiveDate), v.amount, true))
-        : []
-    )
+    amount: this.data?.payment?.initialAmount ?? this.data?.payment?.currentAmount ?? null,
+    // Edit mode keeps the payment's existing splits. A new payment starts empty — the owner is not
+    // special, so there is no sensible person to pre-select; the user picks the participants.
+    splits: (this.data?.payment?.splits ?? []).map(s => ({ personId: s.personId, percentage: s.percentage })),
+    values: this.isEditing
+      ? (this.data.payment?.values ?? []).map(v =>
+          this.createValueRow(PaymentFormDialogComponent.parseDateOnly(v.effectiveDate), v.amount, true))
+      : []
   });
 
-  private readonly splitsValue = toSignal(
-    this.splits.valueChanges as Observable<{ personId: string; percentage: number | null }[]>,
-    { initialValue: this.splits.value as { personId: string; percentage: number | null }[] }
-  );
+  readonly form = form(this.model, (path) => {
+    required(path.paymentSourceId, { message: 'This field is required' });
+    required(path.payeeId, { message: 'This field is required' });
+    required(path.currency, { message: 'Currency is required' });
+    required(path.frequency, { message: 'Frequency is required' });
+    required(path.startDate, { message: 'Start date is required' });
+    maxLength(path.description, 500, { message: 'Description cannot exceed 500 characters' });
+    required(path.amount, { message: 'Amount is required' });
+    min(path.amount, 0.01, { message: 'Amount must be at least 0.01' });
 
-  private readonly formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
+    applyEach(path.splits, (split) => {
+      required(split.personId);
+      required(split.percentage);
+      min(split.percentage, 0.01);
+      max(split.percentage, 100);
+    });
+
+    applyEach(path.values, (value) => {
+      required(value.effectiveDate);
+      required(value.amount);
+      min(value.amount, 0.01);
+    });
+  });
+
+  readonly paymentSourceError = computed(() => this.form.paymentSourceId().errors()[0]?.message ?? '');
+  readonly payeeError = computed(() => this.form.payeeId().errors()[0]?.message ?? '');
+  readonly currencyError = computed(() => this.form.currency().errors()[0]?.message ?? '');
+  readonly frequencyError = computed(() => this.form.frequency().errors()[0]?.message ?? '');
+  readonly startDateError = computed(() => this.form.startDate().errors()[0]?.message ?? '');
+  readonly descriptionError = computed(() => this.form.description().errors()[0]?.message ?? '');
+  readonly amountError = computed(() => this.form.amount().errors()[0]?.message ?? '');
+
+  private readonly frequency = computed(() => this.model().frequency);
+  private readonly payerGroupId = computed(() => this.model().payerGroupId);
+
+  readonly showEndDate = computed(() => this.frequency() !== PaymentFrequency.Once);
+
+  readonly splits = computed(() => this.model().splits);
+  readonly values = computed(() => this.model().values);
 
   /** Splits sum to exactly 100 (floored to 2dp so 33.33 + 33.33 + 33.34 passes). */
   readonly splitsTotal = computed(() =>
-    this.splitsValue().reduce((sum, s) => sum + (Number(s.percentage) || 0), 0)
+    this.splits().reduce((sum, s) => sum + (Number(s.percentage) || 0), 0)
   );
 
   readonly splitsTotalDisplay = computed(() => {
@@ -136,19 +180,15 @@ export class PaymentFormDialogComponent {
   });
 
   readonly splitsSumValid = computed(() => Math.round(this.splitsTotal() * 100) / 100 === 100);
+  readonly splitsTotalInvalid = computed(() => !this.splitsSumValid());
 
   readonly hasDuplicatePeople = computed(() => {
-    const ids = this.splitsValue().map(s => s.personId).filter(id => !!id);
+    const ids = this.splits().map(s => s.personId).filter(id => !!id);
     return new Set(ids).size !== ids.length;
   });
 
   readonly submitDisabled = computed(() =>
-    this.formStatus() !== 'VALID' || !this.splitsSumValid() || this.hasDuplicatePeople()
-  );
-
-  private readonly payerGroupIdValue = toSignal(
-    this.form.controls.payerGroupId.valueChanges,
-    { initialValue: this.form.controls.payerGroupId.value }
+    this.form().invalid() || !this.splitsSumValid() || this.hasDuplicatePeople()
   );
 
   /**
@@ -156,143 +196,100 @@ export class PaymentFormDialogComponent {
    * group's members; income never carries a group.
    */
   readonly splitPersonOptions = computed<Person[]>(() => {
-    const groupId = this.isIncoming ? null : this.payerGroupIdValue();
+    const groupId = this.isIncoming ? null : this.payerGroupId();
     if (!groupId) return this.people;
     const group = this.payerGroups.find(g => g.id === groupId);
     if (!group) return [];
     return this.people.filter(p => group.memberPersonIds.includes(p.id));
   });
 
+  readonly hasSplitPeople = computed(() => this.splitPersonOptions().length > 0);
+
   readonly splitHint = computed(() => {
-    const groupId = this.isIncoming ? null : this.payerGroupIdValue();
+    const groupId = this.isIncoming ? null : this.payerGroupId();
     return groupId
       ? 'This payer group has no members yet. Add people to it on the People page.'
       : `${this.noGroupHint} Add people on the People page first.`;
   });
 
-  private readonly frequency = toSignal(
-    this.form.controls.frequency.valueChanges,
-    { initialValue: this.form.controls.frequency.value }
-  );
-
-  readonly showEndDate = computed(() => this.frequency() !== PaymentFrequency.Once);
+  private readonly pendingRemovals: string[] = [];
 
   constructor() {
+    // Once-frequency payments have no end date.
     effect(() => {
       if (this.frequency() === PaymentFrequency.Once) {
-        untracked(() => this.form.controls.endDate.setValue(null));
+        untracked(() => {
+          if (this.model().endDate !== null) {
+            this.model.update(m => ({ ...m, endDate: null }));
+          }
+        });
       }
     });
 
     // Changing the group invalidates the current splits (see backend PaymentSplitGuard).
-    // valueChanges never emits for the constructor's initial value, so edit-mode's pre-filled
-    // splits survive until the user picks a different group.
-    this.form.controls.payerGroupId.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.splits.clear());
-  }
-
-  get splits(): FormArray {
-    return this.form.get('splits') as FormArray;
-  }
-
-  get splitControls(): AbstractControl[] {
-    return this.splits.controls;
-  }
-
-  get values(): FormArray {
-    return this.form.get('values') as FormArray;
-  }
-
-  get valueControls(): AbstractControl[] {
-    return this.values.controls;
-  }
-
-  isExistingValue(index: number): boolean {
-    return !!(this.values.at(index) as FormGroup).controls['isExisting']?.value;
-  }
-
-  private static parseDateOnly(value: string): Date {
-    const [y, m, d] = value.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  }
-
-  /**
-   * Edit mode keeps the payment's existing splits. A new payment starts empty — the owner is not
-   * special, so there is no sensible person to pre-select; the user picks the participants.
-   */
-  private initialSplitRows(): FormGroup[] {
-    return (this.data?.payment?.splits ?? []).map(s => this.createSplitRow(s.personId, s.percentage));
-  }
-
-  private createSplitRow(personId = '', percentage: number | null = null): FormGroup {
-    return new FormGroup({
-      personId: new FormControl(personId, [Validators.required]),
-      percentage: new FormControl<number | null>(percentage, [Validators.required, Validators.min(0.01), Validators.max(100)])
-    });
-  }
-
-  private createValueRow(effectiveDate: Date | null = null, amount: number | null = null, isExisting = false): FormGroup {
-    return new FormGroup({
-      effectiveDate: new FormControl<Date | null>(effectiveDate, [Validators.required]),
-      amount: new FormControl<number | null>(amount, [Validators.required, Validators.min(0.01)]),
-      isExisting: new FormControl(isExisting),
-      originalEffectiveDate: new FormControl<Date | null>(effectiveDate),
+    // The first effect run is skipped so edit-mode's pre-filled splits survive until the user
+    // picks a different group.
+    let firstRun = true;
+    effect(() => {
+      this.payerGroupId();
+      if (firstRun) {
+        firstRun = false;
+        return;
+      }
+      untracked(() => {
+        if (this.model().splits.length > 0) {
+          this.model.update(m => ({ ...m, splits: [] }));
+        }
+      });
     });
   }
 
   addSplit(): void {
-    this.splits.push(this.createSplitRow());
+    this.model.update(m => ({ ...m, splits: [...m.splits, { personId: '', percentage: null }] }));
   }
 
   removeSplit(index: number): void {
-    this.splits.removeAt(index);
+    this.model.update(m => ({ ...m, splits: m.splits.filter((_, i) => i !== index) }));
   }
 
   addValue(): void {
-    this.values.push(this.createValueRow());
+    this.model.update(m => ({ ...m, values: [...m.values, this.createValueRow()] }));
   }
 
-  private readonly pendingRemovals: string[] = [];
-
   removeValue(index: number): void {
-    const group = this.values.at(index) as FormGroup;
-    if (group.controls['isExisting']?.value) {
-      const original = group.controls['originalEffectiveDate']?.value as Date | null;
-      if (original) {
-        this.pendingRemovals.push(original.toISOString().split('T')[0]);
-      }
+    const value = this.model().values[index];
+    if (value?.isExisting && value.originalEffectiveDate) {
+      this.pendingRemovals.push(value.originalEffectiveDate.toISOString().split('T')[0]);
     }
-    this.values.removeAt(index);
+    this.model.update(m => ({ ...m, values: m.values.filter((_, i) => i !== index) }));
   }
 
   submit(): void {
     if (this.submitDisabled()) return;
 
-    const raw = this.form.getRawValue();
-    const startDateStr = (raw.startDate as Date).toISOString().split('T')[0];
-    const endDateStr = raw.endDate ? (raw.endDate as Date).toISOString().split('T')[0] : undefined;
-    const splits = (raw.splits as { personId: string; percentage: number }[]).map(s => ({
+    const model = this.model();
+    const startDateStr = (model.startDate as Date).toISOString().split('T')[0];
+    const endDateStr = model.endDate ? model.endDate.toISOString().split('T')[0] : undefined;
+    const splits = model.splits.map(s => ({
       personId: s.personId,
       percentage: Number(s.percentage)
     }));
 
     const metadata = {
-      paymentSourceId: raw.paymentSourceId!,
-      payeeId: raw.payeeId!,
-      currency: raw.currency!,
-      frequency: raw.frequency!,
+      paymentSourceId: model.paymentSourceId,
+      payeeId: model.payeeId,
+      currency: model.currency,
+      frequency: model.frequency!,
       direction: this.direction,
       startDate: startDateStr,
       endDate: endDateStr,
-      description: raw.description || undefined,
-      payerGroupId: this.isIncoming ? null : raw.payerGroupId,
+      description: model.description || undefined,
+      payerGroupId: this.isIncoming ? null : model.payerGroupId,
       splits,
     };
 
     if (this.isEditing) {
-      const allValues = raw.values as { effectiveDate: Date; amount: number; isExisting: boolean; originalEffectiveDate: Date | null }[];
-      const valuesToUpsert = allValues
+      const valuesToUpsert = model.values
         .filter(v => v.effectiveDate != null)
         .map(v => ({
           effectiveDate: (v.effectiveDate as Date).toISOString().split('T')[0],
@@ -300,14 +297,28 @@ export class PaymentFormDialogComponent {
         }));
       const valuesToRemove = [
         ...this.pendingRemovals,
-        ...allValues
+        ...model.values
           .filter(v => v.isExisting && v.originalEffectiveDate != null &&
             (v.effectiveDate as Date).toISOString().split('T')[0] !== (v.originalEffectiveDate as Date).toISOString().split('T')[0])
           .map(v => (v.originalEffectiveDate as Date).toISOString().split('T')[0])
       ];
-      this.dialogRef.close({ metadataRequest: { ...metadata, initialAmount: Number(raw.amount) }, valuesToUpsert, valuesToRemove });
+      this.dialogRef.close({ metadataRequest: { ...metadata, initialAmount: Number(model.amount) }, valuesToUpsert, valuesToRemove });
     } else {
-      this.dialogRef.close({ ...metadata, amount: Number(raw.amount) });
+      this.dialogRef.close({ ...metadata, amount: Number(model.amount) });
     }
+  }
+
+  private static parseDateOnly(value: string): Date {
+    const [y, m, d] = value.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  private createValueRow(effectiveDate: Date | null = null, amount: number | null = null, isExisting = false): ValueModel {
+    return {
+      effectiveDate,
+      amount,
+      isExisting,
+      originalEffectiveDate: effectiveDate,
+    };
   }
 }
