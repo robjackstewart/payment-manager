@@ -33,9 +33,13 @@ internal sealed class PaymentTests : IntegrationTestBase
         Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId,
         decimal CurrentAmount, decimal InitialAmount, string Currency, PaymentFrequency Frequency,
         DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId,
-        SplitDto[] Splits, ValueDto[] Values);
+        SplitDto[] Splits, SplitDto[] InitialSplits, SplitVersionDto[] SplitVersions, ValueDto[] Values);
 
     private sealed record SplitDto(Guid PersonId, decimal Percentage, decimal Value);
+
+    private sealed record SplitVersionDto(DateOnly EffectiveDate, SplitVersionSplitDto[] Splits);
+
+    private sealed record SplitVersionSplitDto(Guid PersonId, decimal Percentage);
 
     private sealed record ValueDto(DateOnly EffectiveDate, decimal Amount);
 
@@ -773,6 +777,134 @@ internal sealed class PaymentTests : IntegrationTestBase
 
         var response = await CreateApiClient()
             .DeleteAsync($"/api/payments/{payment.Id}/values/2026-01-01", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    // ── AddPaymentSplits ──────────────────────────────────────────────────────
+
+    [Test]
+    public async Task AddPaymentSplits_Should_Return_Created_And_Expose_Version()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
+        var friendId = await SetupPersonAsync("Friend", ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 50m), new SplitRequest(friendId, 50m)]), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/splits",
+            new
+            {
+                effectiveDate = "2025-06-01",
+                splits = new[]
+                {
+                    new { personId = ownerId, percentage = 70m },
+                    new { personId = friendId, percentage = 30m }
+                }
+            }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        var getResponse = await CreateApiClient().GetAsync($"/api/payments/{created.Id}", ct);
+        var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.InitialSplits.Length.ShouldBe(2);
+        body.InitialSplits.Single(s => s.PersonId == ownerId).Percentage.ShouldBe(50m);
+        body.SplitVersions.Length.ShouldBe(1);
+        body.SplitVersions[0].EffectiveDate.ShouldBe(new DateOnly(2025, 6, 1));
+        body.SplitVersions[0].Splits.Single(s => s.PersonId == ownerId).Percentage.ShouldBe(70m);
+        // The version took effect in the past, so it is the current split.
+        body.Splits.Single(s => s.PersonId == ownerId).Percentage.ShouldBe(70m);
+        body.Splits.Single(s => s.PersonId == ownerId).Value.ShouldBe(70m);
+        body.Splits.Single(s => s.PersonId == friendId).Value.ShouldBe(30m);
+    }
+
+    [Test]
+    public async Task AddPaymentSplits_Should_Return_BadRequest_When_Not_Totalling_100()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)]), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/splits",
+            new { effectiveDate = "2025-06-01", splits = new[] { new { personId = ownerId, percentage = 40m } } }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(ct);
+        body.ShouldNotBeNull();
+        body.Errors.ShouldContainKey("Splits");
+    }
+
+    [Test]
+    public async Task AddPaymentSplits_Should_Return_BadRequest_For_Income_Payment()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 100m)], Direction: PaymentDirection.Incoming), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        var response = await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/splits",
+            new { effectiveDate = "2025-06-01", splits = new[] { new { personId = ownerId, percentage = 100m } } }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    // ── RemovePaymentSplits ───────────────────────────────────────────────────
+
+    [Test]
+    public async Task RemovePaymentSplits_Should_Return_NoContent()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (paymentSourceId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var ownerId = await SetupPersonAsync("Current User", ct);
+        var friendId = await SetupPersonAsync("Friend", ct);
+
+        var created = await (await CreateApiClient().PostAsJsonAsync("/api/payments", new CreateRequest(
+            paymentSourceId, payeeId, 100m, "USD", PaymentFrequency.Monthly,
+            new DateOnly(2025, 1, 1), null, Splits: [new SplitRequest(ownerId, 50m), new SplitRequest(friendId, 50m)]), ct))
+            .Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        created.ShouldNotBeNull();
+
+        await CreateApiClient().PostAsJsonAsync(
+            $"/api/payments/{created.Id}/splits",
+            new { effectiveDate = "2025-06-01", splits = new[] { new { personId = ownerId, percentage = 70m }, new { personId = friendId, percentage = 30m } } }, ct);
+
+        var response = await CreateApiClient().DeleteAsync($"/api/payments/{created.Id}/splits/2025-06-01", ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        var getResponse = await CreateApiClient().GetAsync($"/api/payments/{created.Id}", ct);
+        var body = await getResponse.Content.ReadFromJsonAsync<PaymentResponse>(ct);
+        body.ShouldNotBeNull();
+        body.SplitVersions.ShouldBeEmpty();
+        // Version removed, so the initial split applies again.
+        body.Splits.Single(s => s.PersonId == ownerId).Percentage.ShouldBe(50m);
+    }
+
+    [Test]
+    public async Task RemovePaymentSplits_Should_Return_NotFound_When_Payment_Does_Not_Exist()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+
+        var response = await CreateApiClient().DeleteAsync($"/api/payments/{Guid.NewGuid()}/splits/2025-06-01", ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }

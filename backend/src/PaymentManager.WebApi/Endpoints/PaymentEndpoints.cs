@@ -15,6 +15,7 @@ internal static class PaymentEndpoints
     public record CreateRequest(Guid PaymentSourceId, Guid PayeeId, decimal Amount, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description = null, Guid? PayerGroupId = null, IReadOnlyList<SplitRequest>? Splits = null);
     public record UpdateRequest(Guid PaymentSourceId, Guid PayeeId, decimal InitialAmount, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description = null, Guid? PayerGroupId = null, IReadOnlyList<SplitRequest>? Splits = null);
     public record SplitRequest(Guid PersonId, decimal Percentage);
+    public record SplitVersionRequest(DateOnly EffectiveDate, IReadOnlyList<SplitRequest> Splits);
     public record EffectiveValueRequest(DateOnly EffectiveDate, decimal Amount);
 
     public static WebApplication Map(WebApplication app)
@@ -54,6 +55,17 @@ internal static class PaymentEndpoints
 
         app.MapDelete("/api/payments/{id:guid}/values/{effectiveDate}", ([FromRoute] Guid id, [FromRoute] DateOnly effectiveDate, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleRemoveValue(id, effectiveDate, sender, cancellationToken))
             .WithName("Remove Payment Value")
+            .Produces((int)HttpStatusCode.NoContent)
+            .Produces<ProblemDetails>((int)HttpStatusCode.NotFound, MediaTypeNames.Application.Json);
+
+        app.MapPost("/api/payments/{id:guid}/splits", ([FromRoute] Guid id, [FromBody] SplitVersionRequest request, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleAddSplits(id, request, sender, cancellationToken))
+            .WithName("Add Payment Splits")
+            .Produces<AddPaymentSplits.Response>((int)HttpStatusCode.Created, MediaTypeNames.Application.Json)
+            .Produces<ProblemDetails>((int)HttpStatusCode.BadRequest, MediaTypeNames.Application.Json)
+            .Produces<ProblemDetails>((int)HttpStatusCode.NotFound, MediaTypeNames.Application.Json);
+
+        app.MapDelete("/api/payments/{id:guid}/splits/{effectiveDate}", ([FromRoute] Guid id, [FromRoute] DateOnly effectiveDate, [FromServices] ISender sender, CancellationToken cancellationToken) => HandleRemoveSplits(id, effectiveDate, sender, cancellationToken))
+            .WithName("Remove Payment Splits")
             .Produces((int)HttpStatusCode.NoContent)
             .Produces<ProblemDetails>((int)HttpStatusCode.NotFound, MediaTypeNames.Application.Json);
 
@@ -105,6 +117,21 @@ internal static class PaymentEndpoints
     internal static async Task<IResult> HandleRemoveValue(Guid id, DateOnly effectiveDate, ISender sender, CancellationToken cancellationToken)
     {
         await sender.Send(new RemovePaymentValue(id, effectiveDate), cancellationToken);
+        return Results.NoContent();
+    }
+
+    internal static async Task<IResult> HandleAddSplits(Guid id, SplitVersionRequest request, ISender sender, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new AddPaymentSplits(id, request.EffectiveDate,
+                [.. request.Splits.Select(s => new AddPaymentSplits.SplitRequest(s.PersonId, s.Percentage))]),
+            cancellationToken);
+        return Results.Created($"/api/payments/{id}/splits", result);
+    }
+
+    internal static async Task<IResult> HandleRemoveSplits(Guid id, DateOnly effectiveDate, ISender sender, CancellationToken cancellationToken)
+    {
+        await sender.Send(new RemovePaymentSplits(id, effectiveDate), cancellationToken);
         return Results.NoContent();
     }
 }

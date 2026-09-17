@@ -34,6 +34,15 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 .GroupBy(s => s.PaymentId)
                 .ToDictionary(g => g.Key, g => g.ToArray());
 
+            var effectiveSplitRows = await context.EffectivePaymentSplits
+                .Where(s => paymentIds.Contains(s.PaymentId))
+                .OrderBy(s => s.EffectiveDate)
+                .ToArrayAsync(cancellationToken);
+
+            var effectiveSplitsByPayment = effectiveSplitRows
+                .GroupBy(s => s.PaymentId)
+                .ToDictionary(g => g.Key, g => g.ToArray());
+
             var effectiveValueRows = await context.EffectivePaymentValues
                 .Where(v => paymentIds.Contains(v.PaymentId))
                 .OrderBy(v => v.EffectiveDate)
@@ -61,14 +70,17 @@ public record GetPaymentOccurrences(Guid UserId, DateOnly From, DateOnly To) : I
                 .SelectMany(p =>
                 {
                     var rows = splitRowsByPayment.GetValueOrDefault(p.Id) ?? [];
+                    var effectiveSplits = effectiveSplitsByPayment.GetValueOrDefault(p.Id) ?? [];
                     var effectiveValues = effectiveValuesByPayment.GetValueOrDefault(p.Id) ?? [];
+                    var initialSplits = rows.Select(s => (s.PersonId, s.Percentage)).ToArray();
                     return PaymentOccurrenceCalculator
                         .GetOccurrences(p.Frequency, p.StartDate, p.EndDate, request.From, request.To)
                         .Select(date =>
                         {
                             var amount = EffectiveValueResolver.Resolve(effectiveValues, date, p.InitialAmount);
+                            var splitSet = EffectiveSplitResolver.Resolve(initialSplits, effectiveSplits, date);
                             var splitDtos = (ICollection<OccurrenceDto.SplitDto>)SplitPaymentCalculator
-                                .AllocateValues(amount, rows.Select(s => (s.PersonId, s.Percentage)).ToArray())
+                                .AllocateValues(amount, splitSet)
                                 .Select(s => new OccurrenceDto.SplitDto(s.PersonId, s.Percentage, s.Value))
                                 .ToArray();
                             return new OccurrenceDto(

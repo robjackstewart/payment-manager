@@ -7,11 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 
 
 export interface GetPaymentResponseValueDto { 
     effectiveDate: string;
-    amount: AddPaymentValueResponseAmount;
+    amount: AddPaymentSplitsResponseSplitDtoPercentage;
 }
 

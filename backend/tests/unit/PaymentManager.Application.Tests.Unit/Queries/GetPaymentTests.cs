@@ -51,6 +51,7 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
             new EffectivePaymentValue { PaymentId = matchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 250.50m }
@@ -100,6 +101,7 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
             new EffectivePaymentValue { PaymentId = nonMatchingPayment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
@@ -133,6 +135,7 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
         var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
 
@@ -172,6 +175,7 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
             new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 100m }
@@ -211,6 +215,7 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(effectiveValues.BuildMockDbSet());
         var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
 
@@ -246,6 +251,7 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[] { futureValue }.BuildMockDbSet());
         var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
 
@@ -275,6 +281,7 @@ internal sealed class GetPaymentTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[] { pastValue, futureValue }.BuildMockDbSet());
         var handler = new GetPayment.Handler(context, new FakeLogger<GetPayment.Handler>());
 

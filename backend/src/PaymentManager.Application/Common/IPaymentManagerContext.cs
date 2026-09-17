@@ -15,6 +15,7 @@ public interface IPaymentManagerContext
     public DbSet<PayerGroupMember> PayerGroupMembers { get; set; }
     public DbSet<PayerGroup> PayerGroups { get; set; }
     public DbSet<PaymentSplit> PaymentSplits { get; set; }
+    public DbSet<EffectivePaymentSplit> EffectivePaymentSplits { get; set; }
     public DbSet<EffectivePaymentValue> EffectivePaymentValues { get; set; }
 
     public DatabaseFacade Database { get; }

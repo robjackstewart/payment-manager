@@ -28,6 +28,13 @@ interface ValueModel {
   originalEffectiveDate: Date | null;
 }
 
+interface SplitVersionModel {
+  effectiveDate: Date | null;
+  splits: SplitModel[];
+  isExisting: boolean;
+  originalEffectiveDate: Date | null;
+}
+
 interface PaymentFormModel {
   paymentSourceId: string;
   payeeId: string;
@@ -40,6 +47,7 @@ interface PaymentFormModel {
   amount: number | null;
   splits: SplitModel[];
   values: ValueModel[];
+  splitVersions: SplitVersionModel[];
 }
 
 @Component({
@@ -126,11 +134,20 @@ export class PaymentFormDialogComponent {
     // PaymentSplitGuard). Bills keep their existing splits; a new bill starts empty because the
     // owner is not special, so there is no sensible person to pre-select.
     splits: this.isIncoming
-      ? [{ personId: this.data?.payment?.splits?.[0]?.personId ?? '', percentage: 100 }]
-      : (this.data?.payment?.splits ?? []).map(s => ({ personId: s.personId, percentage: s.percentage })),
+      ? [{ personId: this.data?.payment?.initialSplits?.[0]?.personId ?? this.data?.payment?.splits?.[0]?.personId ?? '', percentage: 100 }]
+      : (this.data?.payment?.initialSplits ?? []).map(s => ({ personId: s.personId, percentage: s.percentage })),
     values: this.isEditing
       ? (this.data.payment?.values ?? []).map(v =>
           this.createValueRow(PaymentFormDialogComponent.parseDateOnly(v.effectiveDate), v.amount, true))
+      : [],
+    // Dated split changes only apply to existing outgoing payments; a new payment starts with
+    // just its initial split.
+    splitVersions: this.isEditing && this.isOutgoing
+      ? (this.data.payment?.splitVersions ?? []).map(v =>
+          this.createSplitVersionRow(
+            PaymentFormDialogComponent.parseDateOnly(v.effectiveDate),
+            v.splits.map(s => ({ personId: s.personId, percentage: s.percentage })),
+            true))
       : []
   });
 
@@ -156,6 +173,16 @@ export class PaymentFormDialogComponent {
       required(value.amount);
       min(value.amount, 0.01);
     });
+
+    applyEach(path.splitVersions, (version) => {
+      required(version.effectiveDate);
+      applyEach(version.splits, (split) => {
+        required(split.personId);
+        required(split.percentage);
+        min(split.percentage, 0.01);
+        max(split.percentage, 100);
+      });
+    });
   });
 
   readonly paymentSourceError = computed(() => this.form.paymentSourceId().errors()[0]?.message ?? '');
@@ -176,6 +203,7 @@ export class PaymentFormDialogComponent {
 
   readonly splits = computed(() => this.model().splits);
   readonly values = computed(() => this.model().values);
+  readonly splitVersions = computed(() => this.model().splitVersions);
 
   /** Splits sum to exactly 100 (floored to 2dp so 33.33 + 33.33 + 33.34 passes). */
   readonly splitsTotal = computed(() =>
@@ -195,8 +223,33 @@ export class PaymentFormDialogComponent {
     return new Set(ids).size !== ids.length;
   });
 
+  /** Per-version totals, displays and validity for the dated split changes. */
+  private readonly splitVersionTotals = computed(() =>
+    this.splitVersions().map(v => v.splits.reduce((sum, s) => sum + (Number(s.percentage) || 0), 0))
+  );
+
+  readonly splitVersionTotalDisplays = computed(() =>
+    this.splitVersionTotals().map(value => `${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}%`)
+  );
+
+  readonly splitVersionTotalsInvalid = computed(() =>
+    this.splitVersionTotals().map(value => Math.round(value * 100) / 100 !== 100)
+  );
+
+  readonly splitVersionHasDuplicatePeople = computed(() =>
+    this.splitVersions().map(v => {
+      const ids = v.splits.map(s => s.personId).filter(id => !!id);
+      return new Set(ids).size !== ids.length;
+    })
+  );
+
+  readonly splitVersionsValid = computed(() =>
+    this.splitVersionTotalsInvalid().every(invalid => !invalid) &&
+    this.splitVersionHasDuplicatePeople().every(duplicate => !duplicate)
+  );
+
   readonly submitDisabled = computed(() =>
-    this.form().invalid() || !this.splitsSumValid() || this.hasDuplicatePeople()
+    this.form().invalid() || !this.splitsSumValid() || this.hasDuplicatePeople() || !this.splitVersionsValid()
   );
 
   /**
@@ -222,6 +275,7 @@ export class PaymentFormDialogComponent {
   });
 
   private readonly pendingRemovals: string[] = [];
+  private readonly pendingSplitVersionRemovals: string[] = [];
 
   constructor() {
     // Once-frequency payments have no end date.
@@ -246,8 +300,8 @@ export class PaymentFormDialogComponent {
         return;
       }
       untracked(() => {
-        if (this.model().splits.length > 0) {
-          this.model.update(m => ({ ...m, splits: [] }));
+        if (this.model().splits.length > 0 || this.model().splitVersions.length > 0) {
+          this.model.update(m => ({ ...m, splits: [], splitVersions: [] }));
         }
       });
     });
@@ -271,6 +325,36 @@ export class PaymentFormDialogComponent {
       this.pendingRemovals.push(value.originalEffectiveDate.toISOString().split('T')[0]);
     }
     this.model.update(m => ({ ...m, values: m.values.filter((_, i) => i !== index) }));
+  }
+
+  addSplitVersion(): void {
+    this.model.update(m => ({ ...m, splitVersions: [...m.splitVersions, this.createSplitVersionRow()] }));
+  }
+
+  removeSplitVersion(index: number): void {
+    const version = this.model().splitVersions[index];
+    if (version?.isExisting && version.originalEffectiveDate) {
+      this.pendingSplitVersionRemovals.push(version.originalEffectiveDate.toISOString().split('T')[0]);
+    }
+    this.model.update(m => ({ ...m, splitVersions: m.splitVersions.filter((_, i) => i !== index) }));
+  }
+
+  addVersionSplit(versionIndex: number): void {
+    this.model.update(m => ({
+      ...m,
+      splitVersions: m.splitVersions.map((v, i) =>
+        i === versionIndex ? { ...v, splits: [...v.splits, { personId: '', percentage: null }] } : v
+      )
+    }));
+  }
+
+  removeVersionSplit(versionIndex: number, splitIndex: number): void {
+    this.model.update(m => ({
+      ...m,
+      splitVersions: m.splitVersions.map((v, i) =>
+        i === versionIndex ? { ...v, splits: v.splits.filter((_, j) => j !== splitIndex) } : v
+      )
+    }));
   }
 
   submit(): void {
@@ -314,7 +398,28 @@ export class PaymentFormDialogComponent {
             (v.effectiveDate as Date).toISOString().split('T')[0] !== (v.originalEffectiveDate as Date).toISOString().split('T')[0])
           .map(v => (v.originalEffectiveDate as Date).toISOString().split('T')[0])
       ];
-      this.dialogRef.close({ metadataRequest: { ...metadata, initialAmount: Number(model.amount) }, valuesToUpsert, valuesToRemove });
+      const splitVersionsToUpsert = this.isOutgoing
+        ? model.splitVersions
+            .filter(v => v.effectiveDate != null)
+            .map(v => ({
+              effectiveDate: (v.effectiveDate as Date).toISOString().split('T')[0],
+              splits: v.splits.map(s => ({ personId: s.personId, percentage: Number(s.percentage) })),
+            }))
+        : [];
+      const splitVersionsToRemove = [
+        ...this.pendingSplitVersionRemovals,
+        ...model.splitVersions
+          .filter(v => v.isExisting && v.originalEffectiveDate != null &&
+            (v.effectiveDate as Date).toISOString().split('T')[0] !== (v.originalEffectiveDate as Date).toISOString().split('T')[0])
+          .map(v => (v.originalEffectiveDate as Date).toISOString().split('T')[0])
+      ];
+      this.dialogRef.close({
+        metadataRequest: { ...metadata, initialAmount: Number(model.amount) },
+        valuesToUpsert,
+        valuesToRemove,
+        splitVersionsToUpsert,
+        splitVersionsToRemove,
+      });
     } else {
       this.dialogRef.close({ ...metadata, amount: Number(model.amount) });
     }
@@ -329,6 +434,15 @@ export class PaymentFormDialogComponent {
     return {
       effectiveDate,
       amount,
+      isExisting,
+      originalEffectiveDate: effectiveDate,
+    };
+  }
+
+  private createSplitVersionRow(effectiveDate: Date | null = null, splits: SplitModel[] = [], isExisting = false): SplitVersionModel {
+    return {
+      effectiveDate,
+      splits,
       isExisting,
       originalEffectiveDate: effectiveDate,
     };

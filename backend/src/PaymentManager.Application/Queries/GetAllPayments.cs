@@ -32,6 +32,15 @@ public record GetAllPayments(Guid UserId, PaymentDirection? Direction = null) : 
                 .GroupBy(s => s.PaymentId)
                 .ToDictionary(g => g.Key, g => g.ToArray());
 
+            var effectiveSplitRows = await context.EffectivePaymentSplits
+                .Where(s => paymentIds.Contains(s.PaymentId))
+                .OrderBy(s => s.EffectiveDate)
+                .ToArrayAsync(cancellationToken);
+
+            var effectiveSplitsByPayment = effectiveSplitRows
+                .GroupBy(s => s.PaymentId)
+                .ToDictionary(g => g.Key, g => g.ToArray());
+
             var effectiveValueRows = await context.EffectivePaymentValues
                 .Where(v => paymentIds.Contains(v.PaymentId))
                 .OrderBy(v => v.EffectiveDate)
@@ -50,16 +59,24 @@ public record GetAllPayments(Guid UserId, PaymentDirection? Direction = null) : 
                     var values = effectiveValuesByPayment.GetValueOrDefault(p.Id) ?? [];
                     var currentAmount = EffectiveValueResolver.Resolve(values, today, p.InitialAmount);
                     var rows = splitRowsByPayment.GetValueOrDefault(p.Id) ?? [];
-                    var splitDtos = SplitPaymentCalculator.AllocateValues(
-                            currentAmount,
-                            rows.Select(s => (s.PersonId, s.Percentage)).ToArray())
+                    var effectiveSplits = effectiveSplitsByPayment.GetValueOrDefault(p.Id) ?? [];
+                    var initialSplits = rows.Select(s => (s.PersonId, s.Percentage)).ToArray();
+                    var currentSplits = EffectiveSplitResolver.Resolve(initialSplits, effectiveSplits, today);
+                    var splitDtos = SplitPaymentCalculator.AllocateValues(currentAmount, currentSplits)
                         .Select(s => new PaymentDto.SplitDto(s.PersonId, s.Percentage, s.Value))
+                        .ToArray();
+                    var initialSplitDtos = SplitPaymentCalculator.AllocateValues(p.InitialAmount, initialSplits)
+                        .Select(s => new PaymentDto.SplitDto(s.PersonId, s.Percentage, s.Value))
+                        .ToArray();
+                    var splitVersionDtos = EffectiveSplitResolver.GroupVersions(effectiveSplits)
+                        .Select(v => new PaymentDto.SplitVersionDto(v.EffectiveDate,
+                            [.. v.Splits.Select(s => new PaymentDto.SplitVersionDto.SplitDto(s.PersonId, s.Percentage))]))
                         .ToArray();
                     var valueDtos = values.Select(v => new PaymentDto.ValueDto(v.EffectiveDate, v.Amount)).ToArray();
                     return new PaymentDto(
                         p.Id, p.UserId, p.PaymentSourceId, p.PayeeId,
                         currentAmount, p.InitialAmount, valueDtos, p.Currency, p.Frequency, p.Direction, p.StartDate, p.EndDate, p.Description,
-                        p.PayerGroupId, splitDtos);
+                        p.PayerGroupId, splitDtos, initialSplitDtos, splitVersionDtos);
                 })
                 .ToArray();
 
@@ -70,10 +87,14 @@ public record GetAllPayments(Guid UserId, PaymentDirection? Direction = null) : 
 
     public record Response(ICollection<PaymentDto> Payments)
     {
-        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal CurrentAmount, decimal InitialAmount, ICollection<PaymentDto.ValueDto> Values, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId, ICollection<PaymentDto.SplitDto> Splits)
+        public record PaymentDto(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal CurrentAmount, decimal InitialAmount, ICollection<PaymentDto.ValueDto> Values, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId, ICollection<PaymentDto.SplitDto> Splits, ICollection<PaymentDto.SplitDto> InitialSplits, ICollection<PaymentDto.SplitVersionDto> SplitVersions)
         {
             public record ValueDto(DateOnly EffectiveDate, decimal Amount);
             public record SplitDto(Guid PersonId, decimal Percentage, decimal Value);
+            public record SplitVersionDto(DateOnly EffectiveDate, ICollection<SplitVersionDto.SplitDto> Splits)
+            {
+                public record SplitDto(Guid PersonId, decimal Percentage);
+            }
         }
     }
 }

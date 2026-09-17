@@ -139,6 +139,7 @@ internal sealed class DeletePersonTests
         A.CallTo(() => context.People).Returns(new[] { existing }.BuildMockDbSet());
         A.CallTo(() => context.People.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns(new ValueTask<Person?>(existing));
         A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.PayerGroupMembers).Returns(new[] { membership }.BuildMockDbSet());
         var logger = new FakeLogger<DeletePerson.Handler>();
         var request = new DeletePerson(existing.Id);
@@ -175,6 +176,31 @@ internal sealed class DeletePersonTests
         A.CallTo(() => context.People).Returns(new[] { existing }.BuildMockDbSet());
         A.CallTo(() => context.People.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns(new ValueTask<Person?>(existing));
         A.CallTo(() => context.PaymentSplits).Returns(new[] { split }.BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
+        var logger = new FakeLogger<DeletePerson.Handler>();
+        var request = new DeletePerson(existing.Id);
+        var handler = new DeletePerson.Handler(context, logger);
+
+        await Should.ThrowAsync<ValidationException>(() => handler.Handle(request, cancellationToken));
+    }
+
+    [Test]
+    public async Task Handler_Handle_Should_ThrowValidationException_When_PersonHoldsEffectiveSplits()
+    {
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var existing = new Person { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), Name = "Alice" };
+        var split = new EffectivePaymentSplit
+        {
+            PaymentId = Guid.NewGuid(),
+            EffectiveDate = new DateOnly(2025, 6, 1),
+            PersonId = existing.Id,
+            Percentage = 50m
+        };
+        var context = A.Fake<IPaymentManagerContext>();
+        A.CallTo(() => context.People).Returns(new[] { existing }.BuildMockDbSet());
+        A.CallTo(() => context.People.FindAsync(A<object[]>._, A<CancellationToken>._)).Returns(new ValueTask<Person?>(existing));
+        A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(new[] { split }.BuildMockDbSet());
         var logger = new FakeLogger<DeletePerson.Handler>();
         var request = new DeletePerson(existing.Id);
         var handler = new DeletePerson.Handler(context, logger);

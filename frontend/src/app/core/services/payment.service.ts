@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PaymentManagerWebApiService } from '../../../api-client';
 import {
+  AddPaymentSplitsRequest,
   AddPaymentValueRequest,
   CreatePaymentRequest,
   CurrencySummary,
@@ -38,6 +39,11 @@ interface ApiPaymentLike {
   description?: string | null;
   payerGroupId?: string | null;
   splits?: { personId: string; percentage: unknown; value: unknown }[] | null;
+  initialSplits?: { personId: string; percentage: unknown; value: unknown }[] | null;
+  splitVersions?: {
+    effectiveDate: string;
+    splits: { personId: string; percentage: unknown }[];
+  }[] | null;
 }
 
 function toPayment(p: ApiPaymentLike): Payment {
@@ -57,6 +63,11 @@ function toPayment(p: ApiPaymentLike): Payment {
     description: p.description ?? undefined,
     payerGroupId: p.payerGroupId ?? null,
     splits: toSplits(p.splits),
+    initialSplits: toSplits(p.initialSplits),
+    splitVersions: (p.splitVersions ?? []).map(v => ({
+      effectiveDate: v.effectiveDate,
+      splits: toSplits(v.splits),
+    })),
   };
 }
 
@@ -192,6 +203,17 @@ export class PaymentService {
 
   removeValue(paymentId: string, effectiveDate: string): Observable<void> {
     return this.api.removePaymentValue(paymentId, effectiveDate);
+  }
+
+  addSplitVersion(paymentId: string, req: AddPaymentSplitsRequest): Observable<{ paymentId: string; effectiveDate: string }> {
+    return this.api.addPaymentSplits(paymentId, {
+      effectiveDate: req.effectiveDate,
+      splits: req.splits.map(s => ({ personId: s.personId, percentage: s.percentage })),
+    }).pipe(map(r => ({ paymentId: r.paymentId, effectiveDate: r.effectiveDate })));
+  }
+
+  removeSplitVersion(paymentId: string, effectiveDate: string): Observable<void> {
+    return this.api.removePaymentSplits(paymentId, effectiveDate);
   }
 
   delete(id: string): Observable<void> {

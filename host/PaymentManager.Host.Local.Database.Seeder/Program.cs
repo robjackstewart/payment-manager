@@ -107,6 +107,16 @@ foreach (var split in Seed.PaymentSplits)
 }
 await context.SaveChanges(CancellationToken.None);
 
+foreach (var effectiveSplit in Seed.EffectivePaymentSplits)
+{
+    if (!await context.EffectivePaymentSplits.AnyAsync(s => s.PaymentId == effectiveSplit.PaymentId && s.EffectiveDate == effectiveSplit.EffectiveDate && s.PersonId == effectiveSplit.PersonId))
+    {
+        context.EffectivePaymentSplits.Add(effectiveSplit);
+        logger.LogInformation("Seeded effective payment split: ({PaymentId}, {EffectiveDate}, {PersonId}) = {Percentage}%", effectiveSplit.PaymentId, effectiveSplit.EffectiveDate, effectiveSplit.PersonId, effectiveSplit.Percentage);
+    }
+}
+await context.SaveChanges(CancellationToken.None);
+
 foreach (var effectiveValue in Seed.EffectivePaymentValues)
 {
     if (!await context.EffectivePaymentValues.AnyAsync(v => v.PaymentId == effectiveValue.PaymentId && v.EffectiveDate == effectiveValue.EffectiveDate))

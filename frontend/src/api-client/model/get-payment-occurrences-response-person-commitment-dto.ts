@@ -7,15 +7,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 
 
 export interface GetPaymentOccurrencesResponsePersonCommitmentDto { 
     personId: string;
     currency: string;
-    income: AddPaymentValueResponseAmount;
-    committed: AddPaymentValueResponseAmount;
-    remaining: AddPaymentValueResponseAmount;
+    income: AddPaymentSplitsResponseSplitDtoPercentage;
+    committed: AddPaymentSplitsResponseSplitDtoPercentage;
+    remaining: AddPaymentSplitsResponseSplitDtoPercentage;
     isOverCommitted: boolean;
 }
 

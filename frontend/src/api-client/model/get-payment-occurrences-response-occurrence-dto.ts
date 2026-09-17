@@ -8,14 +8,14 @@
  * Do not edit the class manually.
  */
 import { GetPaymentOccurrencesResponseOccurrenceDtoSplitDto } from './get-payment-occurrences-response-occurrence-dto-split-dto';
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 
 
 export interface GetPaymentOccurrencesResponseOccurrenceDto { 
     paymentId: string;
     paymentSourceId: string;
     payeeId: string;
-    amount: AddPaymentValueResponseAmount;
+    amount: AddPaymentSplitsResponseSplitDtoPercentage;
     currency: string;
     frequency: number;
     direction: number;

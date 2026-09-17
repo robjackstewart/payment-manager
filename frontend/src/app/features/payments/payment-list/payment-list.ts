@@ -15,7 +15,7 @@ import { PayeeService } from '../../../core/services/payee.service';
 import { PersonService } from '../../../core/services/person.service';
 import { PayerGroupService } from '../../../core/services/payer-group.service';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
-import { AddPaymentValueRequest, Payment, UpdatePaymentRequest } from '../../../core/models/payment.model';
+import { AddPaymentSplitsRequest, AddPaymentValueRequest, Payment, UpdatePaymentRequest } from '../../../core/models/payment.model';
 import { PAYMENT_FREQUENCY_LABELS, PaymentFrequency } from '../../../core/models/payment-frequency.enum';
 import { PaymentDirection } from '../../../core/models/payment-direction.enum';
 import { firstValueFrom, forkJoin, of } from 'rxjs';
@@ -179,7 +179,19 @@ export class PaymentListComponent {
     const result = await firstValueFrom(ref.afterClosed());
     if (!result) return;
     try {
-      const { metadataRequest, valuesToUpsert, valuesToRemove }: { metadataRequest: UpdatePaymentRequest; valuesToUpsert: AddPaymentValueRequest[]; valuesToRemove: string[] } = result;
+      const {
+        metadataRequest,
+        valuesToUpsert,
+        valuesToRemove,
+        splitVersionsToUpsert,
+        splitVersionsToRemove,
+      }: {
+        metadataRequest: UpdatePaymentRequest;
+        valuesToUpsert: AddPaymentValueRequest[];
+        valuesToRemove: string[];
+        splitVersionsToUpsert: AddPaymentSplitsRequest[];
+        splitVersionsToRemove: string[];
+      } = result;
       const update$ = this.paymentService.update(payment.id, metadataRequest);
       const removes$ = (valuesToRemove ?? []).length
         ? (valuesToRemove ?? []).map(d => this.paymentService.removeValue(payment.id, d))
@@ -187,7 +199,19 @@ export class PaymentListComponent {
       const valueUpserts$ = valuesToUpsert.length
         ? valuesToUpsert.map(v => this.paymentService.addValue(payment.id, v))
         : [of(null)];
-      await firstValueFrom(forkJoin([update$, ...removes$, ...valueUpserts$]));
+      const splitVersionRemoves$ = (splitVersionsToRemove ?? []).length
+        ? (splitVersionsToRemove ?? []).map(d => this.paymentService.removeSplitVersion(payment.id, d))
+        : [of(null)];
+      const splitVersionUpserts$ = (splitVersionsToUpsert ?? []).length
+        ? (splitVersionsToUpsert ?? []).map(v => this.paymentService.addSplitVersion(payment.id, v))
+        : [of(null)];
+      await firstValueFrom(forkJoin([
+        update$,
+        ...removes$,
+        ...valueUpserts$,
+        ...splitVersionRemoves$,
+        ...splitVersionUpserts$,
+      ]));
       this.snackBar.open('Payment updated', 'Close', { duration: 2000 });
       this.reload();
     } catch {

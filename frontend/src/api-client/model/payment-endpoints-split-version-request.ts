@@ -7,8 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { PaymentEndpointsSplitRequest } from './payment-endpoints-split-request';
 
 
-export interface AddPaymentValueResponseAmount { 
+export interface PaymentEndpointsSplitVersionRequest { 
+    effectiveDate: string;
+    splits: Array<PaymentEndpointsSplitRequest>;
 }
 

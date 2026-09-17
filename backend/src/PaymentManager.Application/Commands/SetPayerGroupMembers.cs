@@ -67,6 +67,10 @@ public record SetPayerGroupMembers(Guid PayerGroupId, Guid UserId, IReadOnlyList
                     .Join(context.Payments, s => s.PaymentId, p => p.Id, (s, p) => new { s.PersonId, p.PayerGroupId })
                     .Where(x => x.PayerGroupId == request.PayerGroupId && removedIds.Contains(x.PersonId))
                     .Select(x => x.PersonId)
+                    .Concat(context.EffectivePaymentSplits
+                        .Join(context.Payments, s => s.PaymentId, p => p.Id, (s, p) => new { s.PersonId, p.PayerGroupId })
+                        .Where(x => x.PayerGroupId == request.PayerGroupId && removedIds.Contains(x.PersonId))
+                        .Select(x => x.PersonId))
                     .Distinct()
                     .ToArrayAsync(cancellationToken);
 

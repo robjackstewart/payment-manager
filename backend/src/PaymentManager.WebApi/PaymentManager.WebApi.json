@@ -1170,10 +1170,163 @@
           }
         }
       }
+    },
+    "/api/payments/{id}/splits": {
+      "post": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Add Payment Splits",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentEndpointsSplitVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddPaymentSplitsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/{id}/splits/{effectiveDate}": {
+      "delete": {
+        "tags": [
+          "PaymentManager.WebApi"
+        ],
+        "operationId": "Remove Payment Splits",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "effectiveDate",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AddPaymentSplitsResponse": {
+        "required": [
+          "paymentId",
+          "effectiveDate",
+          "splits"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddPaymentSplitsResponseSplitDto"
+            }
+          }
+        }
+      },
+      "AddPaymentSplitsResponseSplitDto": {
+        "required": [
+          "personId",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "double"
+          }
+        }
+      },
       "AddPaymentValueResponse": {
         "required": [
           "paymentId",
@@ -1262,7 +1415,9 @@
           "endDate",
           "description",
           "payerGroupId",
-          "splits"
+          "splits",
+          "initialSplits",
+          "splitVersions"
         ],
         "type": "object",
         "properties": {
@@ -1344,6 +1499,18 @@
             "items": {
               "$ref": "#/components/schemas/CreatePaymentResponseSplitDto"
             }
+          },
+          "initialSplits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePaymentResponseSplitDto"
+            }
+          },
+          "splitVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePaymentResponseSplitVersionDto"
+            }
           }
         }
       },
@@ -1372,6 +1539,50 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "CreatePaymentResponseSplitVersionDto": {
+        "required": [
+          "effectiveDate",
+          "splits"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePaymentResponseSplitVersionDtoSplitDto"
+            }
+          }
+        }
+      },
+      "CreatePaymentResponseSplitVersionDtoSplitDto": {
+        "required": [
+          "personId",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "percentage": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "anyOf": [
               {
@@ -1611,7 +1822,9 @@
           "endDate",
           "description",
           "payerGroupId",
-          "splits"
+          "splits",
+          "initialSplits",
+          "splitVersions"
         ],
         "type": "object",
         "properties": {
@@ -1693,6 +1906,18 @@
             "items": {
               "$ref": "#/components/schemas/GetAllPaymentsResponsePaymentDtoSplitDto"
             }
+          },
+          "initialSplits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAllPaymentsResponsePaymentDtoSplitDto"
+            }
+          },
+          "splitVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAllPaymentsResponsePaymentDtoSplitVersionDto"
+            }
           }
         }
       },
@@ -1721,6 +1946,50 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "GetAllPaymentsResponsePaymentDtoSplitVersionDto": {
+        "required": [
+          "effectiveDate",
+          "splits"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetAllPaymentsResponsePaymentDtoSplitVersionDtoSplitDto"
+            }
+          }
+        }
+      },
+      "GetAllPaymentsResponsePaymentDtoSplitVersionDtoSplitDto": {
+        "required": [
+          "personId",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "percentage": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "anyOf": [
               {
@@ -2259,7 +2528,9 @@
           "endDate",
           "description",
           "payerGroupId",
-          "splits"
+          "splits",
+          "initialSplits",
+          "splitVersions"
         ],
         "type": "object",
         "properties": {
@@ -2341,6 +2612,18 @@
             "items": {
               "$ref": "#/components/schemas/GetPaymentResponseSplitDto"
             }
+          },
+          "initialSplits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentResponseSplitDto"
+            }
+          },
+          "splitVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentResponseSplitVersionDto"
+            }
           }
         }
       },
@@ -2369,6 +2652,50 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "GetPaymentResponseSplitVersionDto": {
+        "required": [
+          "effectiveDate",
+          "splits"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetPaymentResponseSplitVersionDtoSplitDto"
+            }
+          }
+        }
+      },
+      "GetPaymentResponseSplitVersionDtoSplitDto": {
+        "required": [
+          "personId",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "percentage": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "anyOf": [
               {
@@ -2625,6 +2952,25 @@
           }
         }
       },
+      "PaymentEndpointsSplitVersionRequest": {
+        "required": [
+          "effectiveDate",
+          "splits"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentEndpointsSplitRequest"
+            }
+          }
+        }
+      },
       "PaymentEndpointsUpdateRequest": {
         "required": [
           "paymentSourceId",
@@ -2859,7 +3205,9 @@
           "endDate",
           "description",
           "payerGroupId",
-          "splits"
+          "splits",
+          "initialSplits",
+          "splitVersions"
         ],
         "type": "object",
         "properties": {
@@ -2941,6 +3289,18 @@
             "items": {
               "$ref": "#/components/schemas/UpdatePaymentResponseSplitDto"
             }
+          },
+          "initialSplits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdatePaymentResponseSplitDto"
+            }
+          },
+          "splitVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdatePaymentResponseSplitVersionDto"
+            }
           }
         }
       },
@@ -2969,6 +3329,50 @@
             "format": "double"
           },
           "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "UpdatePaymentResponseSplitVersionDto": {
+        "required": [
+          "effectiveDate",
+          "splits"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdatePaymentResponseSplitVersionDtoSplitDto"
+            }
+          }
+        }
+      },
+      "UpdatePaymentResponseSplitVersionDtoSplitDto": {
+        "required": [
+          "personId",
+          "percentage"
+        ],
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "percentage": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "anyOf": [
               {

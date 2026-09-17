@@ -9,7 +9,8 @@
  */
 import { GetAllPaymentsResponsePaymentDtoValueDto } from './get-all-payments-response-payment-dto-value-dto';
 import { GetAllPaymentsResponsePaymentDtoSplitDto } from './get-all-payments-response-payment-dto-split-dto';
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { GetAllPaymentsResponsePaymentDtoSplitVersionDto } from './get-all-payments-response-payment-dto-split-version-dto';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 
 
 export interface GetAllPaymentsResponsePaymentDto { 
@@ -17,8 +18,8 @@ export interface GetAllPaymentsResponsePaymentDto {
     userId: string;
     paymentSourceId: string;
     payeeId: string;
-    currentAmount: AddPaymentValueResponseAmount;
-    initialAmount: AddPaymentValueResponseAmount;
+    currentAmount: AddPaymentSplitsResponseSplitDtoPercentage;
+    initialAmount: AddPaymentSplitsResponseSplitDtoPercentage;
     values: Array<GetAllPaymentsResponsePaymentDtoValueDto>;
     currency: string;
     frequency: number;
@@ -28,5 +29,7 @@ export interface GetAllPaymentsResponsePaymentDto {
     description: string | null;
     payerGroupId: string | null;
     splits: Array<GetAllPaymentsResponsePaymentDtoSplitDto>;
+    initialSplits: Array<GetAllPaymentsResponsePaymentDtoSplitDto>;
+    splitVersions: Array<GetAllPaymentsResponsePaymentDtoSplitVersionDto>;
 }
 

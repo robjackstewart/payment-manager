@@ -7,12 +7,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 
 
 export interface GetPaymentResponseSplitDto { 
     personId: string;
-    percentage: AddPaymentValueResponseAmount;
-    value: AddPaymentValueResponseAmount;
+    percentage: AddPaymentSplitsResponseSplitDtoPercentage;
+    value: AddPaymentSplitsResponseSplitDtoPercentage;
 }
 

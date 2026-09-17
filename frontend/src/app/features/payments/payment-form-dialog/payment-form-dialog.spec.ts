@@ -30,6 +30,11 @@ const mockPayment: Payment = {
     { personId: 'self', percentage: 60 },
     { personId: 'c1', percentage: 40 },
   ],
+  initialSplits: [
+    { personId: 'self', percentage: 60 },
+    { personId: 'c1', percentage: 40 },
+  ],
+  splitVersions: [],
   description: 'Rent',
 };
 
@@ -38,7 +43,22 @@ const mockIncome: Payment = {
   direction: PaymentDirection.Incoming,
   payerGroupId: null,
   splits: [{ personId: 'c1', percentage: 100 }],
+  initialSplits: [{ personId: 'c1', percentage: 100 }],
+  splitVersions: [],
   description: 'Salary',
+};
+
+const mockPaymentWithSplitVersions: Payment = {
+  ...mockPayment,
+  splitVersions: [
+    {
+      effectiveDate: '2024-06-01',
+      splits: [
+        { personId: 'self', percentage: 80 },
+        { personId: 'c1', percentage: 20 },
+      ],
+    },
+  ],
 };
 
 async function setup(data: {
@@ -295,6 +315,76 @@ describe('PaymentFormDialogComponent', () => {
           metadataRequest: expect.objectContaining({ direction: PaymentDirection.Outgoing, payerGroupId: 'g1' }),
         })
       );
+    });
+  });
+
+  describe('split changes', () => {
+    it('pre-fills dated split versions from the payment', async () => {
+      const { component } = await setup({ payment: mockPaymentWithSplitVersions });
+      const versions = component.splitVersions();
+      expect(versions.length).toBe(1);
+      expect(versions[0].splits.length).toBe(2);
+      expect(versions[0].splits[0].percentage).toBe(80);
+    });
+
+    it('flags a version whose splits do not total 100%', async () => {
+      const { component } = await setup({ payment: mockPaymentWithSplitVersions });
+      component.model.update(m => ({
+        ...m,
+        splitVersions: m.splitVersions.map(v => ({
+          ...v,
+          splits: v.splits.map((s, i) => (i === 1 ? { ...s, percentage: 10 } : s)),
+        })),
+      }));
+
+      expect(component.splitVersionTotalsInvalid()[0]).toBe(true);
+      expect(component.submitDisabled()).toBe(true);
+    });
+
+    it('adds and removes dated split versions', async () => {
+      const { component } = await setup({ payment: mockPayment });
+      component.addSplitVersion();
+      expect(component.splitVersions().length).toBe(1);
+      component.removeSplitVersion(0);
+      expect(component.splitVersions().length).toBe(0);
+    });
+
+    it('submits split version upserts and removals', async () => {
+      const { fixture, component } = await setup({ payment: mockPaymentWithSplitVersions });
+      component.removeSplitVersion(0);
+      component.addSplitVersion();
+      component.model.update(m => ({
+        ...m,
+        splitVersions: m.splitVersions.map(v => ({
+          ...v,
+          effectiveDate: new Date(2025, 0, 1),
+          splits: [{ personId: 'self', percentage: 100 }],
+        })),
+      }));
+      fixture.detectChanges();
+
+      component.submit();
+
+      const originalSerialized = new Date(2024, 5, 1).toISOString().split('T')[0];
+      const dialogRef = TestBed.inject(MatDialogRef);
+      expect(dialogRef.close).toHaveBeenCalledWith(
+        expect.objectContaining({
+          splitVersionsToUpsert: [
+            { effectiveDate: '2025-01-01', splits: [{ personId: 'self', percentage: 100 }] },
+          ],
+          splitVersionsToRemove: [originalSerialized],
+        })
+      );
+    });
+
+    it('clears split versions when the payer group changes', async () => {
+      const { fixture, component } = await setup({ payment: mockPaymentWithSplitVersions });
+      expect(component.splitVersions().length).toBe(1);
+
+      component.model.update(m => ({ ...m, payerGroupId: null }));
+      fixture.detectChanges();
+
+      expect(component.splitVersions().length).toBe(0);
     });
   });
 

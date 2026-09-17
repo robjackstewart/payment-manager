@@ -7,11 +7,15 @@ api/payment-manager-web-api.service.ts
 configuration.ts
 encoder.ts
 index.ts
-model/add-payment-value-response-amount.ts
+model/add-payment-splits-response-split-dto-percentage.ts
+model/add-payment-splits-response-split-dto.ts
+model/add-payment-splits-response.ts
 model/add-payment-value-response.ts
 model/create-payee-response.ts
 model/create-payer-group-response.ts
 model/create-payment-response-split-dto.ts
+model/create-payment-response-split-version-dto-split-dto.ts
+model/create-payment-response-split-version-dto.ts
 model/create-payment-response-value-dto.ts
 model/create-payment-response.ts
 model/create-payment-source-response.ts
@@ -24,6 +28,8 @@ model/get-all-payer-groups-response.ts
 model/get-all-payment-sources-response-payment-source-dto.ts
 model/get-all-payment-sources-response.ts
 model/get-all-payments-response-payment-dto-split-dto.ts
+model/get-all-payments-response-payment-dto-split-version-dto-split-dto.ts
+model/get-all-payments-response-payment-dto-split-version-dto.ts
 model/get-all-payments-response-payment-dto-value-dto.ts
 model/get-all-payments-response-payment-dto.ts
 model/get-all-payments-response.ts
@@ -44,6 +50,8 @@ model/get-payment-occurrences-response-person-amount-dto.ts
 model/get-payment-occurrences-response-person-commitment-dto.ts
 model/get-payment-occurrences-response.ts
 model/get-payment-response-split-dto.ts
+model/get-payment-response-split-version-dto-split-dto.ts
+model/get-payment-response-split-version-dto.ts
 model/get-payment-response-value-dto.ts
 model/get-payment-response.ts
 model/get-payment-source-response.ts
@@ -57,6 +65,7 @@ model/payer-group-endpoints-update-request.ts
 model/payment-endpoints-create-request.ts
 model/payment-endpoints-effective-value-request.ts
 model/payment-endpoints-split-request.ts
+model/payment-endpoints-split-version-request.ts
 model/payment-endpoints-update-request.ts
 model/payment-source-endpoints-create-request.ts
 model/payment-source-endpoints-update-request.ts
@@ -68,6 +77,8 @@ model/set-payer-group-members-response.ts
 model/update-payee-response.ts
 model/update-payer-group-response.ts
 model/update-payment-response-split-dto.ts
+model/update-payment-response-split-version-dto-split-dto.ts
+model/update-payment-response-split-version-dto.ts
 model/update-payment-response-value-dto.ts
 model/update-payment-response.ts
 model/update-payment-source-response.ts

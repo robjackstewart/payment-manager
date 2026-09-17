@@ -273,6 +273,38 @@ internal sealed class PaymentOccurrenceTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task GetOccurrences_Should_Apply_Dated_SplitSets_Per_Occurrence()
+    {
+        var ct = TestContext.CurrentContext.CancellationToken;
+        var (psId, payeeId) = await SetupPrerequisitesAsync(ct);
+        var personId1 = await SetupPersonAsync("Alice", ct);
+        var personId2 = await SetupPersonAsync("Bob", ct);
+        var context = GetService<IPaymentManagerContext>();
+        var payment = MakePayment(DefaultUserService.DefaultUserId, psId, payeeId, "USD", PaymentFrequency.Monthly, new DateOnly(2025, 1, 1));
+        context.Payments.Add(payment);
+        AddEffectiveValue(context, payment.Id, payment.StartDate, 100m);
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment.Id, PersonId = personId1, Percentage = 50m });
+        context.PaymentSplits.Add(new PaymentSplit { PaymentId = payment.Id, PersonId = personId2, Percentage = 50m });
+        context.EffectivePaymentSplits.Add(new EffectivePaymentSplit { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 3, 1), PersonId = personId1, Percentage = 70m });
+        context.EffectivePaymentSplits.Add(new EffectivePaymentSplit { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 3, 1), PersonId = personId2, Percentage = 30m });
+        await context.SaveChanges(ct);
+
+        var response = await CreateApiClient()
+            .GetAsync("/api/payments/occurrences?from=2025-01-01&to=2025-03-31", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetOccurrencesResponse>(ct);
+        body.ShouldNotBeNull();
+        var ordered = body.Occurrences.OrderBy(o => o.OccurrenceDate).ToArray();
+        ordered.Length.ShouldBe(3);
+        ordered[0].Splits.Single(s => s.PersonId == personId1).Percentage.ShouldBe(50m);
+        ordered[1].Splits.Single(s => s.PersonId == personId1).Percentage.ShouldBe(50m);
+        ordered[2].Splits.Single(s => s.PersonId == personId1).Percentage.ShouldBe(70m);
+        ordered[2].Splits.Single(s => s.PersonId == personId1).Value.ShouldBe(70m);
+        ordered[2].Splits.Single(s => s.PersonId == personId2).Percentage.ShouldBe(30m);
+    }
+
+    [Test]
     public async Task GetOccurrences_Summary_Should_Aggregate_By_Currency_And_PaymentSource()
     {
         var ct = TestContext.CurrentContext.CancellationToken;

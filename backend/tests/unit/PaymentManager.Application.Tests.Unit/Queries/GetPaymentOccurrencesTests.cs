@@ -52,10 +52,15 @@ internal sealed class GetPaymentOccurrencesTests
     private static async Task<GetPaymentOccurrences.Response> Handle(
         Payment[] payments, PaymentSplit[] splits, EffectivePaymentValue[] effectiveValues, DateOnly from, DateOnly to,
         CancellationToken ct = default) =>
-        await Handle(payments, splits, effectiveValues, [], from, to, ct);
+        await Handle(payments, splits, effectiveValues, [], [], from, to, ct);
 
     private static async Task<GetPaymentOccurrences.Response> Handle(
         Payment[] payments, PaymentSplit[] splits, EffectivePaymentValue[] effectiveValues, PayerGroupMember[] members, DateOnly from, DateOnly to,
+        CancellationToken ct = default) =>
+        await Handle(payments, splits, effectiveValues, [], members, from, to, ct);
+
+    private static async Task<GetPaymentOccurrences.Response> Handle(
+        Payment[] payments, PaymentSplit[] splits, EffectivePaymentValue[] effectiveValues, EffectivePaymentSplit[] effectiveSplits, PayerGroupMember[] members, DateOnly from, DateOnly to,
         CancellationToken ct = default)
     {
         var dbSet = payments.BuildMockDbSet();
@@ -63,6 +68,7 @@ internal sealed class GetPaymentOccurrencesTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(dbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(effectiveSplits.BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(effectiveValues.BuildMockDbSet());
         A.CallTo(() => context.PayerGroupMembers).Returns(members.BuildMockDbSet());
         var logger = new FakeLogger<GetPaymentOccurrences.Handler>();
@@ -372,6 +378,38 @@ internal sealed class GetPaymentOccurrencesTests
         ordered[0].Amount.ShouldBe(10m);   // Jan 1
         ordered[1].Amount.ShouldBe(10m);   // Feb 1
         ordered[2].Amount.ShouldBe(20m);   // Mar 1
+    }
+
+    [Test]
+    public async Task EffectiveSplitSet_Changes_MidPeriod_OccurrenceUsesCorrectSplit()
+    {
+        // Monthly payment from 2025-01-01 split 50/50 initially; from 2025-03-01 it becomes 70/30.
+        // Jan/Feb occurrences use 50/50; March uses 70/30.
+        var payment = MakePayment(PaymentFrequency.Monthly, new DateOnly(2025, 1, 1));
+        var alice = Guid.NewGuid();
+        var bob = Guid.NewGuid();
+        var splits = new[]
+        {
+            new PaymentSplit { PaymentId = payment.Id, PersonId = alice, Percentage = 50m },
+            new PaymentSplit { PaymentId = payment.Id, PersonId = bob, Percentage = 50m },
+        };
+        var effectiveSplits = new[]
+        {
+            new EffectivePaymentSplit { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 3, 1), PersonId = alice, Percentage = 70m },
+            new EffectivePaymentSplit { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 3, 1), PersonId = bob, Percentage = 30m },
+        };
+
+        var result = await Handle(
+            [payment], splits, [], effectiveSplits, [], new DateOnly(2025, 1, 1), new DateOnly(2025, 3, 31));
+
+        var ordered = result.Occurrences.OrderBy(o => o.OccurrenceDate).ToArray();
+        ordered.Length.ShouldBe(3);
+        ordered[0].Splits.Single(s => s.PersonId == alice).Percentage.ShouldBe(50m);
+        ordered[0].Splits.Single(s => s.PersonId == alice).Value.ShouldBe(50m);
+        ordered[1].Splits.Single(s => s.PersonId == alice).Percentage.ShouldBe(50m);
+        ordered[2].Splits.Single(s => s.PersonId == alice).Percentage.ShouldBe(70m);
+        ordered[2].Splits.Single(s => s.PersonId == alice).Value.ShouldBe(70m);
+        ordered[2].Splits.Single(s => s.PersonId == bob).Percentage.ShouldBe(30m);
     }
 
     [Test]

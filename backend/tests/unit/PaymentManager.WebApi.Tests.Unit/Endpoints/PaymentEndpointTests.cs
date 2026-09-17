@@ -39,7 +39,7 @@ internal sealed class PaymentEndpointTests
         var userService = CreateUserService(userId);
         var responseValues = new List<CreatePayment.Response.ValueDto> { new(startDate, amount) };
         A.CallTo(() => sender.Send(A<CreatePayment>._, A<CancellationToken>._))
-            .Returns(new CreatePayment.Response(responseId, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, direction, startDate, endDate, null, null, []));
+            .Returns(new CreatePayment.Response(responseId, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, direction, startDate, endDate, null, null, [], [], []));
 
         var result = await PaymentEndpoints.HandleCreate(request, sender, userService, cancellationToken);
 
@@ -71,8 +71,8 @@ internal sealed class PaymentEndpointTests
         var startDate2 = new DateOnly(2025, 6, 1);
         var payments = new List<GetAllPayments.Response.PaymentDto>
         {
-            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 50.00m, 50.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate1, 50.00m)], "USD", PaymentFrequency.Once, PaymentDirection.Outgoing, startDate1, null, null, null, []),
-            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 200.00m, 200.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate2, 200.00m)], "USD", PaymentFrequency.Annually, PaymentDirection.Outgoing, startDate2, new DateOnly(2026, 6, 1), null, null, [])
+            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 50.00m, 50.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate1, 50.00m)], "USD", PaymentFrequency.Once, PaymentDirection.Outgoing, startDate1, null, null, null, [], [], []),
+            new(Guid.NewGuid(), userId, Guid.NewGuid(), Guid.NewGuid(), 200.00m, 200.00m, [new GetAllPayments.Response.PaymentDto.ValueDto(startDate2, 200.00m)], "USD", PaymentFrequency.Annually, PaymentDirection.Outgoing, startDate2, new DateOnly(2026, 6, 1), null, null, [], [], [])
         };
         A.CallTo(() => sender.Send(A<GetAllPayments>._, A<CancellationToken>._))
             .Returns(new GetAllPayments.Response(payments));
@@ -103,7 +103,7 @@ internal sealed class PaymentEndpointTests
         var sender = A.Fake<ISender>();
         var responseValues = new List<GetPayment.Response.ValueDto> { new(startDate, amount) };
         A.CallTo(() => sender.Send(A<GetPayment>._, A<CancellationToken>._))
-            .Returns(new GetPayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, PaymentDirection.Outgoing, startDate, endDate, null, null, []));
+            .Returns(new GetPayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, PaymentDirection.Outgoing, startDate, endDate, null, null, [], [], []));
 
         var result = await PaymentEndpoints.HandleGet(id, sender, cancellationToken);
 
@@ -142,7 +142,7 @@ internal sealed class PaymentEndpointTests
         var userService = CreateUserService(userId);
         var responseValues = new List<UpdatePayment.Response.ValueDto> { new(startDate, amount) };
         A.CallTo(() => sender.Send(A<UpdatePayment>._, A<CancellationToken>._))
-            .Returns(new UpdatePayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, direction, startDate, endDate, null, null, []));
+            .Returns(new UpdatePayment.Response(id, userId, paymentSourceId, payeeId, amount, amount, responseValues, currency, frequency, direction, startDate, endDate, null, null, [], [], []));
 
         var result = await PaymentEndpoints.HandleUpdate(id, request, sender, userService, cancellationToken);
 
@@ -174,4 +174,41 @@ internal sealed class PaymentEndpointTests
         result.ShouldNotBeNull();
         result.ShouldBeOfType<Microsoft.AspNetCore.Http.HttpResults.NoContent>();
     }
+
+    [Test]
+    public async Task HandleAddSplits_Should_Return_CreatedResponse()
+    {
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var id = Guid.NewGuid();
+        var personId = Guid.NewGuid();
+        var effectiveDate = new DateOnly(2025, 6, 1);
+        var request = new PaymentEndpoints.SplitVersionRequest(effectiveDate, [new PaymentEndpoints.SplitRequest(personId, 100m)]);
+        var sender = A.Fake<ISender>();
+        A.CallTo(() => sender.Send(A<AddPaymentSplits>._, A<CancellationToken>._))
+            .Returns(new AddPaymentSplits.Response(id, effectiveDate, [new AddPaymentSplits.Response.SplitDto(personId, 100m)]));
+
+        var result = await PaymentEndpoints.HandleAddSplits(id, request, sender, cancellationToken);
+
+        result.ShouldNotBeNull();
+        result.ShouldBeOfType<Microsoft.AspNetCore.Http.HttpResults.Created<AddPaymentSplits.Response>>();
+        var created = result as Microsoft.AspNetCore.Http.HttpResults.Created<AddPaymentSplits.Response>;
+        created.ShouldNotBeNull();
+        created.Value!.PaymentId.ShouldBe(id);
+        created.Value.EffectiveDate.ShouldBe(effectiveDate);
+        created.Location.ShouldBe($"/api/payments/{id}/splits");
+    }
+
+    [Test]
+    public async Task HandleRemoveSplits_Should_Return_NoContentResponse()
+    {
+        var cancellationToken = TestContext.CurrentContext.CancellationToken;
+        var id = Guid.NewGuid();
+        var sender = A.Fake<ISender>();
+
+        var result = await PaymentEndpoints.HandleRemoveSplits(id, new DateOnly(2025, 6, 1), sender, cancellationToken);
+
+        result.ShouldNotBeNull();
+        result.ShouldBeOfType<Microsoft.AspNetCore.Http.HttpResults.NoContent>();
+    }
 }
+

@@ -16,5 +16,6 @@ internal sealed class ReadOnlyPaymentManagerContext(IPaymentManagerContext conte
     public IQueryable<PayerGroupMember> PayerGroupMembers => context.PayerGroupMembers.AsNoTracking().AsQueryable();
     public IQueryable<PayerGroup> PayerGroups => context.PayerGroups.AsNoTracking().AsQueryable();
     public IQueryable<PaymentSplit> PaymentSplits => context.PaymentSplits.AsNoTracking().AsQueryable();
+    public IQueryable<EffectivePaymentSplit> EffectivePaymentSplits => context.EffectivePaymentSplits.AsNoTracking().AsQueryable();
     public IQueryable<EffectivePaymentValue> EffectivePaymentValues => context.EffectivePaymentValues.AsNoTracking().AsQueryable();
 }

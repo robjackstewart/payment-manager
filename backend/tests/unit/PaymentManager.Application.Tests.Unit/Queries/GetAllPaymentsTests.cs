@@ -78,6 +78,7 @@ internal sealed class GetAllPaymentsTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(effectiveValues.BuildMockDbSet());
         var logger = new FakeLogger<GetAllPayments.Handler>();
         var request = new GetAllPayments(targetUserId);
@@ -125,6 +126,7 @@ internal sealed class GetAllPaymentsTests
         var context = A.Fake<IReadOnlyPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { payment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(splits.BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(new[]
         {
             new EffectivePaymentValue { PaymentId = payment.Id, EffectiveDate = new DateOnly(2025, 1, 1), Amount = 200m }

@@ -17,6 +17,17 @@ export interface AddPaymentValueRequest {
   amount: number;
 }
 
+/** A complete split set that takes effect on `effectiveDate`, overriding the initial split. */
+export interface PaymentSplitVersion {
+  effectiveDate: string;
+  splits: PaymentSplit[];
+}
+
+export interface AddPaymentSplitsRequest {
+  effectiveDate: string;
+  splits: PaymentSplit[];
+}
+
 export interface Payment {
   id: string;
   userId: string;
@@ -32,7 +43,12 @@ export interface Payment {
   endDate?: string;
   description?: string;
   payerGroupId?: string | null;
+  /** The split in effect today (resolved server-side). */
   splits: PaymentSplit[];
+  /** The initial split, in effect from the payment's start date. */
+  initialSplits: PaymentSplit[];
+  /** Dated split sets that override the initial split from their effective date. */
+  splitVersions: PaymentSplitVersion[];
 }
 
 export interface CreatePaymentRequest {

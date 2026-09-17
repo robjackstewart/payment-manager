@@ -13,5 +13,6 @@ public interface IReadOnlyPaymentManagerContext
     public IQueryable<PayerGroupMember> PayerGroupMembers { get; }
     public IQueryable<PayerGroup> PayerGroups { get; }
     public IQueryable<PaymentSplit> PaymentSplits { get; }
+    public IQueryable<EffectivePaymentSplit> EffectivePaymentSplits { get; }
     public IQueryable<EffectivePaymentValue> EffectivePaymentValues { get; }
 }

@@ -8,12 +8,12 @@
  * Do not edit the class manually.
  */
 import { GetPaymentOccurrencesResponsePersonAmountDto } from './get-payment-occurrences-response-person-amount-dto';
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 
 
 export interface GetPaymentOccurrencesResponsePaymentSourceBreakdownDto { 
     paymentSourceId: string;
-    totalAmount: AddPaymentValueResponseAmount;
+    totalAmount: AddPaymentSplitsResponseSplitDtoPercentage;
     personTotals: Array<GetPaymentOccurrencesResponsePersonAmountDto>;
 }
 

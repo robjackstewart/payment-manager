@@ -7,8 +7,9 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { CreatePaymentResponseSplitVersionDto } from './create-payment-response-split-version-dto';
 import { CreatePaymentResponseSplitDto } from './create-payment-response-split-dto';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 import { CreatePaymentResponseValueDto } from './create-payment-response-value-dto';
 
 
@@ -17,8 +18,8 @@ export interface CreatePaymentResponse {
     userId: string;
     paymentSourceId: string;
     payeeId: string;
-    currentAmount: AddPaymentValueResponseAmount;
-    initialAmount: AddPaymentValueResponseAmount;
+    currentAmount: AddPaymentSplitsResponseSplitDtoPercentage;
+    initialAmount: AddPaymentSplitsResponseSplitDtoPercentage;
     values: Array<CreatePaymentResponseValueDto>;
     currency: string;
     frequency: number;
@@ -28,5 +29,7 @@ export interface CreatePaymentResponse {
     description: string | null;
     payerGroupId: string | null;
     splits: Array<CreatePaymentResponseSplitDto>;
+    initialSplits: Array<CreatePaymentResponseSplitDto>;
+    splitVersions: Array<CreatePaymentResponseSplitVersionDto>;
 }
 

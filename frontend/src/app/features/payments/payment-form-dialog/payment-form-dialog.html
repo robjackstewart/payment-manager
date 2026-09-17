@@ -186,6 +186,68 @@
         <p class="split-hint">{{ splitHint() }}</p>
       }
     </div>
+
+    <!-- Dated split changes: each set overrides the initial split from its effective date -->
+    @if (isEditing && isOutgoing) {
+      <div class="split-section">
+        <div class="split-header">
+          <span class="split-title">Split changes</span>
+        </div>
+
+        @for (version of splitVersions(); track $index; let versionIndex = $index) {
+          <div class="split-version">
+            <div class="split-row">
+              <mat-form-field appearance="outline" class="split-contact">
+                <mat-label>Effective Date</mat-label>
+                <input matInput [matDatepicker]="splitVersionPicker" [formField]="form.splitVersions[versionIndex].effectiveDate" />
+                <mat-datepicker-toggle matIconSuffix [for]="splitVersionPicker" />
+                <mat-datepicker #splitVersionPicker />
+              </mat-form-field>
+              <button mat-icon-button color="warn" type="button" (click)="removeSplitVersion(versionIndex)">
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
+            </div>
+
+            @for (split of version.splits; track $index; let splitIndex = $index) {
+              <div class="split-row">
+                <mat-form-field appearance="outline" class="split-contact">
+                  <mat-label>Person</mat-label>
+                  <mat-select [formField]="form.splitVersions[versionIndex].splits[splitIndex].personId">
+                    @for (person of splitPersonOptions(); track person.id) {
+                      <mat-option [value]="person.id">{{ person.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="split-pct">
+                  <mat-label>%</mat-label>
+                  <input matInput type="number" [formField]="form.splitVersions[versionIndex].splits[splitIndex].percentage" step="0.01" />
+                </mat-form-field>
+                <button mat-icon-button color="warn" type="button" (click)="removeVersionSplit(versionIndex, splitIndex)">
+                  <mat-icon>remove_circle_outline</mat-icon>
+                </button>
+              </div>
+            }
+
+            <button mat-stroked-button type="button" (click)="addVersionSplit(versionIndex)" class="add-split-btn">
+              <mat-icon>add</mat-icon> Add person
+            </button>
+            <p class="split-total" [class.split-total--invalid]="splitVersionTotalsInvalid()[versionIndex]">
+              Total: <strong>{{ splitVersionTotalDisplays()[versionIndex] }}</strong>
+              @if (splitVersionTotalsInvalid()[versionIndex]) {
+                <span> — splits must total exactly 100%</span>
+              }
+              @if (splitVersionHasDuplicatePeople()[versionIndex]) {
+                <span> — each person can only appear once</span>
+              }
+            </p>
+          </div>
+        }
+
+        <button mat-stroked-button type="button" (click)="addSplitVersion()" class="add-split-btn">
+          <mat-icon>add</mat-icon> Add split change
+        </button>
+      </div>
+    }
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">

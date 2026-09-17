@@ -23,10 +23,12 @@ public record DeletePerson(Guid Id) : IRequest
                 throw new NotFoundException<Person>($"Id: {request.Id}");
             }
 
-            // PaymentSplit -> Person is Restrict, so surface the reason rather than letting the
-            // database reject it as an unhandled failure.
+            // PaymentSplit/EffectivePaymentSplit -> Person are Restrict, so surface the reason
+            // rather than letting the database reject it as an unhandled failure.
             var holdsSplits = await context.PaymentSplits
-                .AnyAsync(s => s.PersonId == person.Id, cancellationToken);
+                .AnyAsync(s => s.PersonId == person.Id, cancellationToken)
+                || await context.EffectivePaymentSplits
+                    .AnyAsync(s => s.PersonId == person.Id, cancellationToken);
             if (holdsSplits)
             {
                 throw Invalid("Id", "This person still has a share of one or more payments. Remove them from those payments first.");

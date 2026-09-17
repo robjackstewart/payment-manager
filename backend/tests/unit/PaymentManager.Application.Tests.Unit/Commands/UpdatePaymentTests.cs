@@ -195,6 +195,7 @@ internal sealed class UpdatePaymentTests
         var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.People).Returns(new[] { new Person { Id = ownerId, UserId = newUserId, Name = "Current User" } }.BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
         var logger = new FakeLogger<UpdatePayment.Handler>();
@@ -285,6 +286,7 @@ internal sealed class UpdatePaymentTests
         var splitsDbSet = Array.Empty<PaymentSplit>().BuildMockDbSet();
         A.CallTo(() => context.Payments).Returns(paymentsDbSet);
         A.CallTo(() => context.PaymentSplits).Returns(splitsDbSet);
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.People).Returns(new[] { new Person { Id = ownerId, UserId = existingPayment.UserId, Name = "Current User" } }.BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
         var logger = new FakeLogger<UpdatePayment.Handler>();
@@ -323,6 +325,7 @@ internal sealed class UpdatePaymentTests
         var context = A.Fake<IPaymentManagerContext>();
         A.CallTo(() => context.Payments).Returns(new[] { existingPayment }.BuildMockDbSet());
         A.CallTo(() => context.PaymentSplits).Returns(Array.Empty<PaymentSplit>().BuildMockDbSet());
+        A.CallTo(() => context.EffectivePaymentSplits).Returns(Array.Empty<EffectivePaymentSplit>().BuildMockDbSet());
         A.CallTo(() => context.EffectivePaymentValues).Returns(Array.Empty<EffectivePaymentValue>().BuildMockDbSet());
         A.CallTo(() => context.PayerGroups).Returns(new[] { payerGroup }.BuildMockDbSet());
         A.CallTo(() => context.People).Returns(new[]

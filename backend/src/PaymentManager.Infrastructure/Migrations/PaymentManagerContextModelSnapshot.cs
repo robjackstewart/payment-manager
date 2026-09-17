@@ -17,6 +17,28 @@ namespace PaymentManager.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("PaymentManager.Domain.Entities.EffectivePaymentSplit", b =>
+                {
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("EffectiveDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Percentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PaymentId", "EffectiveDate", "PersonId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("EffectivePaymentSplits");
+                });
+
             modelBuilder.Entity("PaymentManager.Domain.Entities.EffectivePaymentValue", b =>
                 {
                     b.Property<Guid>("PaymentId")
@@ -231,6 +253,21 @@ namespace PaymentManager.Infrastructure.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             Name = "Default User"
                         });
+                });
+
+            modelBuilder.Entity("PaymentManager.Domain.Entities.EffectivePaymentSplit", b =>
+                {
+                    b.HasOne("PaymentManager.Domain.Entities.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PaymentManager.Domain.Entities.Person", null)
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PaymentManager.Domain.Entities.EffectivePaymentValue", b =>

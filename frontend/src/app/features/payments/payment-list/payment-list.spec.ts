@@ -38,6 +38,11 @@ const mockPayment: Payment = {
     { personId: 'self', percentage: 50 },
     { personId: 'c1', percentage: 50 },
   ],
+  initialSplits: [
+    { personId: 'self', percentage: 50 },
+    { personId: 'c1', percentage: 50 },
+  ],
+  splitVersions: [],
   description: 'Rent',
 };
 

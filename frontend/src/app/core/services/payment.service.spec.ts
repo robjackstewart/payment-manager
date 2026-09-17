@@ -23,6 +23,8 @@ const mockPaymentDto = {
   initialAmount: '100.50',
   values: [{ effectiveDate: '2024-01-01', amount: '100.50' }],
   splits: [{ personId: 'c1', percentage: '40', value: '40.20' }],
+  initialSplits: [{ personId: 'c1', percentage: '60', value: '60.30' }],
+  splitVersions: [{ effectiveDate: '2024-06-01', splits: [{ personId: 'c1', percentage: '25' }] }],
 };
 
 function setup() {
@@ -34,6 +36,8 @@ function setup() {
     updatePayment: vi.fn(),
     addPaymentValue: vi.fn(),
     removePaymentValue: vi.fn(),
+    addPaymentSplits: vi.fn(),
+    removePaymentSplits: vi.fn(),
     deletePayment: vi.fn(),
   };
 
@@ -66,6 +70,10 @@ describe('PaymentService', () => {
       expect(payment.splits[0].percentage).toBe(40);
       expect(typeof payment.splits[0].value).toBe('number');
       expect(payment.splits[0].value).toBe(40.2);
+      expect(payment.initialSplits[0].percentage).toBe(60);
+      expect(payment.initialSplits[0].value).toBe(60.3);
+      expect(payment.splitVersions[0].effectiveDate).toBe('2024-06-01');
+      expect(payment.splitVersions[0].splits[0].percentage).toBe(25);
     });
 
     it('returns an empty array when there are no payments', async () => {
@@ -419,6 +427,39 @@ describe('PaymentService', () => {
       await firstValueFrom(service.removeValue('1', '2024-06-01'));
 
       expect(apiSpy['removePaymentValue']).toHaveBeenCalledWith('1', '2024-06-01');
+    });
+  });
+
+  describe('addSplitVersion(paymentId, req)', () => {
+    it('delegates to the API with percentage-only splits', async () => {
+      const { service, apiSpy } = setup();
+      apiSpy['addPaymentSplits'].mockReturnValue(
+        of({ paymentId: '1', effectiveDate: '2024-06-01' })
+      );
+
+      const result = await firstValueFrom(
+        service.addSplitVersion('1', {
+          effectiveDate: '2024-06-01',
+          splits: [{ personId: 'c1', percentage: 40 }],
+        })
+      );
+
+      expect(apiSpy['addPaymentSplits']).toHaveBeenCalledWith('1', {
+        effectiveDate: '2024-06-01',
+        splits: [{ personId: 'c1', percentage: 40 }],
+      });
+      expect(result).toEqual({ paymentId: '1', effectiveDate: '2024-06-01' });
+    });
+  });
+
+  describe('removeSplitVersion(paymentId, effectiveDate)', () => {
+    it('delegates directly to the API', async () => {
+      const { service, apiSpy } = setup();
+      apiSpy['removePaymentSplits'].mockReturnValue(of(undefined));
+
+      await firstValueFrom(service.removeSplitVersion('1', '2024-06-01'));
+
+      expect(apiSpy['removePaymentSplits']).toHaveBeenCalledWith('1', '2024-06-01');
     });
   });
 

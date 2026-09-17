@@ -158,6 +158,14 @@ public static class Seed
         new() { PaymentId = PaymentIds.SideIncome, PersonId = PersonIds.CurrentUser, Percentage = 100.00m },
     ];
 
+    public static IReadOnlyList<EffectivePaymentSplit> EffectivePaymentSplits =>
+    [
+        // From 2026 the electric bill is shared 50/25/25 rather than three ways.
+        new() { PaymentId = PaymentIds.Electric, EffectiveDate = new DateOnly(2026, 1, 1), PersonId = PersonIds.CurrentUser, Percentage = 50.00m },
+        new() { PaymentId = PaymentIds.Electric, EffectiveDate = new DateOnly(2026, 1, 1), PersonId = PersonIds.Jane, Percentage = 25.00m },
+        new() { PaymentId = PaymentIds.Electric, EffectiveDate = new DateOnly(2026, 1, 1), PersonId = PersonIds.Sam, Percentage = 25.00m },
+    ];
+
     public static IReadOnlyList<EffectivePaymentValue> EffectivePaymentValues =>
     [
         new() { PaymentId = PaymentIds.Rent, EffectiveDate = new DateOnly(2026, 3, 1), Amount = 1250.00m },

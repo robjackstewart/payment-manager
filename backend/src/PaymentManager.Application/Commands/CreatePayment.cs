@@ -82,13 +82,17 @@ public record CreatePayment(Guid UserId, Guid PaymentSourceId, Guid PayeeId, dec
                 .Select(s => new Response.SplitDto(s.PersonId, s.Percentage, s.Value))
                 .ToArray();
 
-            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, request.Amount, request.Amount, [], payment.Currency, payment.Frequency, payment.Direction, payment.StartDate, payment.EndDate, payment.Description, payment.PayerGroupId, splitDtos);
+            return new Response(payment.Id, payment.UserId, payment.PaymentSourceId, payment.PayeeId, request.Amount, request.Amount, [], payment.Currency, payment.Frequency, payment.Direction, payment.StartDate, payment.EndDate, payment.Description, payment.PayerGroupId, splitDtos, splitDtos, []);
         }
     }
 
-    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal CurrentAmount, decimal InitialAmount, ICollection<Response.ValueDto> Values, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId, ICollection<Response.SplitDto> Splits)
+    public record Response(Guid Id, Guid UserId, Guid PaymentSourceId, Guid PayeeId, decimal CurrentAmount, decimal InitialAmount, ICollection<Response.ValueDto> Values, string Currency, PaymentFrequency Frequency, PaymentDirection Direction, DateOnly StartDate, DateOnly? EndDate, string? Description, Guid? PayerGroupId, ICollection<Response.SplitDto> Splits, ICollection<Response.SplitDto> InitialSplits, ICollection<Response.SplitVersionDto> SplitVersions)
     {
         public record ValueDto(DateOnly EffectiveDate, decimal Amount);
         public record SplitDto(Guid PersonId, decimal Percentage, decimal Value);
+        public record SplitVersionDto(DateOnly EffectiveDate, ICollection<SplitVersionDto.SplitDto> Splits)
+        {
+            public record SplitDto(Guid PersonId, decimal Percentage);
+        }
     }
 }

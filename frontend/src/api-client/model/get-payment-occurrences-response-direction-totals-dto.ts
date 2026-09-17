@@ -9,11 +9,11 @@
  */
 import { GetPaymentOccurrencesResponsePaymentSourceBreakdownDto } from './get-payment-occurrences-response-payment-source-breakdown-dto';
 import { GetPaymentOccurrencesResponsePersonAmountDto } from './get-payment-occurrences-response-person-amount-dto';
-import { AddPaymentValueResponseAmount } from './add-payment-value-response-amount';
+import { AddPaymentSplitsResponseSplitDtoPercentage } from './add-payment-splits-response-split-dto-percentage';
 
 
 export interface GetPaymentOccurrencesResponseDirectionTotalsDto { 
-    totalAmount: AddPaymentValueResponseAmount;
+    totalAmount: AddPaymentSplitsResponseSplitDtoPercentage;
     personTotals: Array<GetPaymentOccurrencesResponsePersonAmountDto>;
     byPaymentSource: Array<GetPaymentOccurrencesResponsePaymentSourceBreakdownDto>;
 }
