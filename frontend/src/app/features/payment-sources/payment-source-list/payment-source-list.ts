@@ -16,7 +16,6 @@ import { LOADING, LoadingState, isLoaded } from '../../../core/utils/loading.uti
 
 @Component({
   selector: 'app-payment-source-list',
-  standalone: true,
   imports: [
     MatTable,
     MatColumnDef,

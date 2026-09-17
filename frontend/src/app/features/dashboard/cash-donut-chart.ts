@@ -1,4 +1,4 @@
-import { Component, input, AfterViewInit, OnChanges, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, input, AfterViewInit, OnChanges, OnDestroy, ElementRef, viewChild } from '@angular/core';
 import { AgCharts, ModuleRegistry, PieSeriesModule } from 'ag-charts-community';
 
 ModuleRegistry.registerModules([PieSeriesModule]);
@@ -17,7 +17,6 @@ export interface DonutSlice {
  */
 @Component({
   selector: 'app-cash-donut-chart',
-  standalone: true,
   template: `<div #container class="donut-container"></div>`,
   styles: [`
     .donut-container {
@@ -30,7 +29,7 @@ export class CashDonutChartComponent implements AfterViewInit, OnChanges, OnDest
   readonly slices = input<DonutSlice[]>([]);
   readonly currency = input<string>('');
 
-  @ViewChild('container') private readonly containerRef!: ElementRef<HTMLDivElement>;
+  private readonly containerRef = viewChild.required<ElementRef<HTMLDivElement>>('container');
 
   private chart?: ReturnType<typeof AgCharts.create>;
   private themeObserver?: MutationObserver;
@@ -59,7 +58,7 @@ export class CashDonutChartComponent implements AfterViewInit, OnChanges, OnDest
     const dark = document.body.classList.contains('dark-theme');
     const fontFamily = getComputedStyle(document.body).fontFamily;
     return {
-      container: this.containerRef.nativeElement,
+      container: this.containerRef().nativeElement,
       data: this.slices(),
       theme: {
         baseTheme: dark ? 'ag-material-dark' as const : 'ag-material' as const,

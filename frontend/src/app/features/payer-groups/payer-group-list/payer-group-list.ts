@@ -22,7 +22,6 @@ interface PayerGroupViewModel {
 
 @Component({
   selector: 'app-payer-group-list',
-  standalone: true,
   imports: [
     MatTable,
     MatColumnDef,

@@ -22,7 +22,6 @@ interface PersonViewModel {
 
 @Component({
   selector: 'app-person-list',
-  standalone: true,
   imports: [
     MatTable,
     MatColumnDef,

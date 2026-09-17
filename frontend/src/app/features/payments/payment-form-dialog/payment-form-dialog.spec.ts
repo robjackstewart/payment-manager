@@ -63,6 +63,17 @@ async function setup(data: {
   return { fixture, component: fixture.componentInstance };
 }
 
+function validCreateFields() {
+  return {
+    paymentSourceId: 'ps1',
+    payeeId: 'py1',
+    currency: 'USD',
+    frequency: PaymentFrequency.Monthly,
+    startDate: new Date(2025, 0, 1),
+    amount: 3200,
+  };
+}
+
 describe('PaymentFormDialogComponent', () => {
   describe('create mode (Outgoing, default)', () => {
     it('has title "New Payment"', async () => {
@@ -82,7 +93,7 @@ describe('PaymentFormDialogComponent', () => {
 
     it('starts with no splits and can be split across any person', async () => {
       const { component } = await setup();
-      expect(component.splits.length).toBe(0);
+      expect(component.splits().length).toBe(0);
       expect(component.splitPersonOptions()).toEqual([mockCurrentUser, mockAlice, mockBob]);
     });
   });
@@ -105,7 +116,7 @@ describe('PaymentFormDialogComponent', () => {
 
     it('never carries a payer group (income belongs to people)', async () => {
       const { component } = await setup({ direction: PaymentDirection.Incoming });
-      expect(component.form.controls.payerGroupId.value).toBeNull();
+      expect(component.model().payerGroupId).toBeNull();
       expect(component.splitPersonOptions()).toEqual([mockCurrentUser, mockAlice, mockBob]);
     });
   });
@@ -118,32 +129,34 @@ describe('PaymentFormDialogComponent', () => {
 
     it('pre-fills payerGroupId from the payment', async () => {
       const { component } = await setup({ payment: mockPayment });
-      expect(component.form.controls.payerGroupId.value).toBe('g1');
+      expect(component.model().payerGroupId).toBe('g1');
     });
 
     it('pre-fills the splits array from the payment', async () => {
       const { component } = await setup({ payment: mockPayment });
-      expect(component.splits.length).toBe(2);
-      expect(component.splits.at(0).value).toEqual({ personId: 'self', percentage: 60 });
-      expect(component.splits.at(1).value).toEqual({ personId: 'c1', percentage: 40 });
+      expect(component.splits().length).toBe(2);
+      expect(component.splits()[0].personId).toBe('self');
+      expect(component.splits()[0].percentage).toBe(60);
+      expect(component.splits()[1].personId).toBe('c1');
+      expect(component.splits()[1].percentage).toBe(40);
     });
   });
 
   describe('split validation', () => {
     it('requires the splits to total exactly 100%', async () => {
       const { component } = await setup({ payment: mockPayment });
-      component.splits.at(1).patchValue({ percentage: 30 });
+      component.model.update(m => ({ ...m, splits: m.splits.map((s, i) => i === 1 ? { ...s, percentage: 30 } : s) }));
       expect(component.splitsTotalDisplay()).toBe('90%');
       expect(component.splitsSumValid()).toBe(false);
       expect(component.submitDisabled()).toBe(true);
 
-      component.splits.at(1).patchValue({ percentage: 40 });
+      component.model.update(m => ({ ...m, splits: m.splits.map((s, i) => i === 1 ? { ...s, percentage: 40 } : s) }));
       expect(component.splitsSumValid()).toBe(true);
     });
 
     it('flags a person appearing more than once', async () => {
       const { component } = await setup({ payment: mockPayment });
-      component.splits.at(1).patchValue({ personId: 'self' });
+      component.model.update(m => ({ ...m, splits: m.splits.map((s, i) => i === 1 ? { ...s, personId: 'self' } : s) }));
       expect(component.hasDuplicatePeople()).toBe(true);
       expect(component.submitDisabled()).toBe(true);
     });
@@ -151,40 +164,34 @@ describe('PaymentFormDialogComponent', () => {
 
   describe('payer group selection', () => {
     it('clears splits when the payer group changes', async () => {
-      const { component } = await setup({ payment: mockPayment });
-      expect(component.splits.length).toBe(2);
+      const { fixture, component } = await setup({ payment: mockPayment });
+      expect(component.splits().length).toBe(2);
 
-      component.form.controls.payerGroupId.setValue(null);
+      component.model.update(m => ({ ...m, payerGroupId: null }));
+      fixture.detectChanges();
 
-      expect(component.splits.length).toBe(0);
+      expect(component.splits().length).toBe(0);
     });
 
     it('filters split people to the chosen group\'s members', async () => {
       const { component } = await setup();
-      component.form.controls.payerGroupId.setValue('g1');
+      component.model.update(m => ({ ...m, payerGroupId: 'g1' }));
       expect(component.splitPersonOptions()).toEqual([mockCurrentUser, mockAlice]);
     });
 
     it('does not clear splits on initial load in edit mode', async () => {
       const { component } = await setup({ payment: mockPayment });
-      expect(component.splits.length).toBe(2);
+      expect(component.splits().length).toBe(2);
     });
   });
 
   describe('submit() — create mode', () => {
     it('closes the dialog with the person splits included', async () => {
-      const { component } = await setup({ direction: PaymentDirection.Outgoing });
-      component.form.patchValue({
-        paymentSourceId: 'ps1',
-        payeeId: 'py1',
-        currency: 'USD',
-        frequency: PaymentFrequency.Monthly,
-        startDate: new Date(2025, 0, 1),
-        amount: 3200,
-      });
-      component.form.controls.payerGroupId.setValue('g1');
+      const { fixture, component } = await setup({ direction: PaymentDirection.Outgoing });
+      component.model.update(m => ({ ...m, ...validCreateFields(), payerGroupId: 'g1' }));
+      fixture.detectChanges();
       component.addSplit();
-      component.splits.at(0).patchValue({ personId: 'c1', percentage: 100 });
+      component.model.update(m => ({ ...m, splits: [{ personId: 'c1', percentage: 100 }] }));
 
       component.submit();
 
@@ -201,16 +208,9 @@ describe('PaymentFormDialogComponent', () => {
 
     it('forces payerGroupId to null for income', async () => {
       const { component } = await setup({ direction: PaymentDirection.Incoming });
-      component.form.patchValue({
-        paymentSourceId: 'ps1',
-        payeeId: 'py1',
-        currency: 'USD',
-        frequency: PaymentFrequency.Monthly,
-        startDate: new Date(2025, 0, 1),
-        amount: 3200,
-      });
+      component.model.update(m => ({ ...m, ...validCreateFields() }));
       component.addSplit();
-      component.splits.at(0).patchValue({ personId: 'self', percentage: 100 });
+      component.model.update(m => ({ ...m, splits: [{ personId: 'self', percentage: 100 }] }));
 
       component.submit();
 
@@ -232,18 +232,11 @@ describe('PaymentFormDialogComponent', () => {
     });
 
     it('does not close the dialog when the splits do not total 100%', async () => {
-      const { component } = await setup({ direction: PaymentDirection.Outgoing });
-      component.form.patchValue({
-        paymentSourceId: 'ps1',
-        payeeId: 'py1',
-        currency: 'USD',
-        frequency: PaymentFrequency.Monthly,
-        startDate: new Date(2025, 0, 1),
-        amount: 3200,
-      });
-      component.form.controls.payerGroupId.setValue('g1');
+      const { fixture, component } = await setup({ direction: PaymentDirection.Outgoing });
+      component.model.update(m => ({ ...m, ...validCreateFields(), payerGroupId: 'g1' }));
+      fixture.detectChanges();
       component.addSplit();
-      component.splits.at(0).patchValue({ personId: 'c1', percentage: 40 });
+      component.model.update(m => ({ ...m, splits: [{ personId: 'c1', percentage: 40 }] }));
 
       component.submit();
 
@@ -270,11 +263,11 @@ describe('PaymentFormDialogComponent', () => {
   describe('frequency — end date clearing', () => {
     it('clears endDate when frequency changes to Once', async () => {
       const { fixture, component } = await setup();
-      component.form.controls.endDate.setValue(new Date(2025, 5, 1));
-      component.form.controls.frequency.setValue(PaymentFrequency.Once);
+      component.model.update(m => ({ ...m, endDate: new Date(2025, 5, 1) }));
+      component.model.update(m => ({ ...m, frequency: PaymentFrequency.Once }));
       fixture.detectChanges();
 
-      expect(component.form.controls.endDate.value).toBeNull();
+      expect(component.model().endDate).toBeNull();
     });
   });
 });

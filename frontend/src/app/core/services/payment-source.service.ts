@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PaymentManagerWebApiService } from '../../../api-client';
@@ -8,7 +8,7 @@ import {
   UpdatePaymentSourceRequest
 } from '../models/payment-source.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PaymentSourceService {
   private readonly api = inject(PaymentManagerWebApiService);
 

@@ -34,7 +34,6 @@ interface PaymentViewModel {
 
 @Component({
   selector: 'app-payment-list',
-  standalone: true,
   providers: [CurrencyPipe, DatePipe, DecimalPipe],
   imports: [
     MatTable,

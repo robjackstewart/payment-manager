@@ -1,34 +1,34 @@
 <h2 mat-dialog-title>{{ title }}</h2>
 <mat-dialog-content>
-  <form [formGroup]="form" class="form-grid">
+  <form [formRoot]="form" class="form-grid">
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ paymentSourceLabel }}</mat-label>
-      <mat-select formControlName="paymentSourceId">
+      <mat-select [formField]="form.paymentSourceId">
         @for (ps of data.paymentSources; track ps.id) {
           <mat-option [value]="ps.id">{{ ps.name }}</mat-option>
         }
       </mat-select>
-      @if (form.controls.paymentSourceId.hasError('required')) {
-        <mat-error>This field is required</mat-error>
+      @if (paymentSourceError()) {
+        <mat-error>{{ paymentSourceError() }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ payeeLabel }}</mat-label>
-      <mat-select formControlName="payeeId">
+      <mat-select [formField]="form.payeeId">
         @for (payee of data.payees; track payee.id) {
           <mat-option [value]="payee.id">{{ payee.name }}</mat-option>
         }
       </mat-select>
-      @if (form.controls.payeeId.hasError('required')) {
-        <mat-error>This field is required</mat-error>
+      @if (payeeError()) {
+        <mat-error>{{ payeeError() }}</mat-error>
       }
     </mat-form-field>
 
-    @if (!isIncoming) {
+    @if (isOutgoing) {
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Payer Group (optional)</mat-label>
-        <mat-select formControlName="payerGroupId">
+        <mat-select [formField]="form.payerGroupId">
           <mat-option [value]="null">None (split with individuals)</mat-option>
           @for (group of payerGroups; track group.id) {
             <mat-option [value]="group.id">{{ group.name }}</mat-option>
@@ -39,42 +39,42 @@
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Currency</mat-label>
-      <mat-select formControlName="currency">
+      <mat-select [formField]="form.currency">
         @for (code of currencyOptions; track code) {
           <mat-option [value]="code">{{ code }}</mat-option>
         }
       </mat-select>
-      @if (form.controls.currency.hasError('required')) {
-        <mat-error>Currency is required</mat-error>
+      @if (currencyError()) {
+        <mat-error>{{ currencyError() }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Frequency</mat-label>
-      <mat-select formControlName="frequency">
+      <mat-select [formField]="form.frequency">
         @for (opt of frequencyOptions; track opt.value) {
           <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
         }
       </mat-select>
-      @if (form.controls.frequency.hasError('required')) {
-        <mat-error>Frequency is required</mat-error>
+      @if (frequencyError()) {
+        <mat-error>{{ frequencyError() }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Start Date</mat-label>
-      <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+      <input matInput [matDatepicker]="startPicker" [formField]="form.startDate" />
       <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
       <mat-datepicker #startPicker />
-      @if (form.controls.startDate.hasError('required')) {
-        <mat-error>Start date is required</mat-error>
+      @if (startDateError()) {
+        <mat-error>{{ startDateError() }}</mat-error>
       }
     </mat-form-field>
 
     @if (showEndDate()) {
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>End Date (optional)</mat-label>
-        <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
+        <input matInput [matDatepicker]="endPicker" [formField]="form.endDate" />
         <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
         <mat-datepicker #endPicker />
       </mat-form-field>
@@ -82,9 +82,9 @@
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Description (optional)</mat-label>
-      <textarea matInput formControlName="description" rows="3" [placeholder]="descriptionPlaceholder"></textarea>
-      @if (form.controls.description.hasError('maxlength')) {
-        <mat-error>Description cannot exceed 500 characters</mat-error>
+      <textarea matInput [formField]="form.description" rows="3" [placeholder]="descriptionPlaceholder"></textarea>
+      @if (descriptionError()) {
+        <mat-error>{{ descriptionError() }}</mat-error>
       }
     </mat-form-field>
 
@@ -97,45 +97,31 @@
       <!-- Amount field shown in both modes; labelled "Initial Amount" in edit mode -->
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ isEditing ? 'Initial Amount' : 'Amount' }}</mat-label>
-        <input matInput type="number" formControlName="amount" placeholder="0.00" min="0.01" step="0.01" />
-        @if (form.controls.amount.hasError('required')) {
-          <mat-error>Amount is required</mat-error>
-        }
-        @if (form.controls.amount.hasError('min')) {
-          <mat-error>Amount must be at least 0.01</mat-error>
+        <input matInput type="number" [formField]="form.amount" placeholder="0.00" step="0.01" />
+        @if (amountError()) {
+          <mat-error>{{ amountError() }}</mat-error>
         }
       </mat-form-field>
 
       @if (isEditing) {
         <!-- Edit mode: price change overrides (EffectivePaymentValues) -->
-        <div formArrayName="values">
-          @for (ctrl of valueControls; track $index) {
-            <div [formGroupName]="$index" class="split-row">
-              <mat-form-field appearance="outline" class="split-contact">
-                <mat-label>Effective Date</mat-label>
-                <input matInput [matDatepicker]="valPicker" formControlName="effectiveDate" />
-                <mat-datepicker-toggle matIconSuffix [for]="valPicker" />
-                <mat-datepicker #valPicker />
-                @if (ctrl.get('effectiveDate')?.hasError('required')) {
-                  <mat-error>Date is required</mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="split-pct">
-                <mat-label>Amount</mat-label>
-                <input matInput type="number" formControlName="amount" min="0.01" step="0.01" placeholder="0.00" />
-                @if (ctrl.get('amount')?.hasError('required')) {
-                  <mat-error>Required</mat-error>
-                }
-                @if (ctrl.get('amount')?.hasError('min')) {
-                  <mat-error>Min 0.01</mat-error>
-                }
-              </mat-form-field>
-              <button mat-icon-button color="warn" type="button" (click)="removeValue($index)">
-                <mat-icon>remove_circle_outline</mat-icon>
-              </button>
-            </div>
-          }
-        </div>
+        @for (value of values(); track $index) {
+          <div class="split-row">
+            <mat-form-field appearance="outline" class="split-contact">
+              <mat-label>Effective Date</mat-label>
+              <input matInput [matDatepicker]="valPicker" [formField]="form.values[$index].effectiveDate" />
+              <mat-datepicker-toggle matIconSuffix [for]="valPicker" />
+              <mat-datepicker #valPicker />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="split-pct">
+              <mat-label>Amount</mat-label>
+              <input matInput type="number" [formField]="form.values[$index].amount" step="0.01" placeholder="0.00" />
+            </mat-form-field>
+            <button mat-icon-button color="warn" type="button" (click)="removeValue($index)">
+              <mat-icon>remove_circle_outline</mat-icon>
+            </button>
+          </div>
+        }
         <button mat-stroked-button type="button" (click)="addValue()" class="add-split-btn">
           <mat-icon>add</mat-icon> Add price change
         </button>
@@ -148,42 +134,40 @@
         <span class="split-title">{{ splitSectionTitle }}</span>
       </div>
 
-      @if (splitPersonOptions().length === 0) {
-        <p class="split-hint">{{ splitHint() }}</p>
-      } @else {
-        <div formArrayName="splits">
-          @for (ctrl of splitControls; track $index) {
-            <div [formGroupName]="$index" class="split-row">
-              <mat-form-field appearance="outline" class="split-contact">
-                <mat-label>Person</mat-label>
-                <mat-select formControlName="personId">
-                  @for (person of splitPersonOptions(); track person.id) {
-                    <mat-option [value]="person.id">{{ person.name }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="split-pct">
-                <mat-label>%</mat-label>
-                <input matInput type="number" formControlName="percentage" min="0.01" max="100" step="0.01" />
-              </mat-form-field>
-              <button mat-icon-button color="warn" type="button" (click)="removeSplit($index)">
-                <mat-icon>remove_circle_outline</mat-icon>
-              </button>
-            </div>
-          }
-        </div>
+      @if (hasSplitPeople()) {
+        @for (split of splits(); track $index) {
+          <div class="split-row">
+            <mat-form-field appearance="outline" class="split-contact">
+              <mat-label>Person</mat-label>
+              <mat-select [formField]="form.splits[$index].personId">
+                @for (person of splitPersonOptions(); track person.id) {
+                  <mat-option [value]="person.id">{{ person.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="split-pct">
+              <mat-label>%</mat-label>
+              <input matInput type="number" [formField]="form.splits[$index].percentage" step="0.01" />
+            </mat-form-field>
+            <button mat-icon-button color="warn" type="button" (click)="removeSplit($index)">
+              <mat-icon>remove_circle_outline</mat-icon>
+            </button>
+          </div>
+        }
         <button mat-stroked-button type="button" (click)="addSplit()" class="add-split-btn">
           <mat-icon>add</mat-icon> Add person
         </button>
-        <p class="split-total" [class.split-total--invalid]="!splitsSumValid()">
+        <p class="split-total" [class.split-total--invalid]="splitsTotalInvalid()">
           Total: <strong>{{ splitsTotalDisplay() }}</strong>
-          @if (!splitsSumValid()) {
+          @if (splitsTotalInvalid()) {
             <span> — splits must total exactly 100%</span>
           }
           @if (hasDuplicatePeople()) {
             <span> — each person can only appear once</span>
           }
         </p>
+      } @else {
+        <p class="split-hint">{{ splitHint() }}</p>
       }
     </div>
   </form>
@@ -194,4 +178,3 @@
     {{ submitLabel }}
   </button>
 </mat-dialog-actions>
-

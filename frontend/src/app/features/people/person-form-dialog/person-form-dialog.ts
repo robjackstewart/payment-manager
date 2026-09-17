@@ -1,14 +1,17 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose, MatDialogRef } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField, FormRoot, form, required } from '@angular/forms/signals';
 import { Person } from '../../../core/models/person.model';
+
+interface PersonFormModel {
+  name: string;
+}
 
 @Component({
   selector: 'app-person-form-dialog',
-  standalone: true,
   imports: [
     MatDialogTitle,
     MatDialogContent,
@@ -19,7 +22,8 @@ import { Person } from '../../../core/models/person.model';
     MatLabel,
     MatError,
     MatInput,
-    ReactiveFormsModule,
+    FormRoot,
+    FormField,
   ],
   templateUrl: './person-form-dialog.html'
 })
@@ -30,13 +34,19 @@ export class PersonFormDialogComponent {
   readonly title = this.data?.person ? 'Edit Person' : 'New Person';
   readonly submitLabel = this.data?.person ? 'Save' : 'Create';
 
-  readonly form = new FormGroup({
-    name: new FormControl(this.data?.person?.name ?? '', [Validators.required]),
+  readonly model = signal<PersonFormModel>({
+    name: this.data?.person?.name ?? '',
   });
 
+  readonly form = form(this.model, (path) => {
+    required(path.name, { message: 'Name is required' });
+  });
+
+  readonly nameError = computed(() => this.form.name().errors()[0]?.message ?? '');
+  readonly submitDisabled = computed(() => this.form().invalid());
+
   submit(): void {
-    if (this.form.valid) {
-      this.dialogRef.close(this.form.value);
-    }
+    if (this.form().invalid()) return;
+    this.dialogRef.close(this.model());
   }
 }

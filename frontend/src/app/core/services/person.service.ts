@@ -1,10 +1,10 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PaymentManagerWebApiService } from '../../../api-client';
 import { CreatePersonRequest, Person, UpdatePersonRequest } from '../models/person.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PersonService {
   private readonly api = inject(PaymentManagerWebApiService);
 

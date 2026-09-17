@@ -2,11 +2,11 @@
 
 ## Framework
 
-Angular 21.x with Angular Material. TypeScript strict mode is enabled.
+Angular 22.x with Angular Material. TypeScript 6 strict mode is enabled.
 
 ## Standalone Components
 
-All components are `standalone: true`. **Import specific standalone components and directives rather than whole `*Module` barrel imports.** This makes each component's dependencies explicit and keeps the dependency graph clear.
+Components are standalone by default in Angular 22 — **do not set `standalone: true`**. **Import specific standalone components and directives rather than whole `*Module` barrel imports.** This makes each component's dependencies explicit and keeps the dependency graph clear.
 
 ```typescript
 // ✅ Correct — import only the specific components used in the template
@@ -16,7 +16,6 @@ import { MatTable, MatColumnDef, MatHeaderCell, MatHeaderCellDef,
          MatRow, MatRowDef } from '@angular/material/table';
 
 @Component({
-  standalone: true,
   imports: [MatButton, MatIconButton, MatTable, MatColumnDef, ...],
 })
 
@@ -62,19 +61,33 @@ export class PaymentsComponent implements OnInit, OnDestroy {
 
 ### Guidelines
 - Use `signal()` for mutable state, `computed()` for derived state, and `effect()` for side effects.
+- Components use `ChangeDetectionStrategy.OnPush` **by default** in Angular 22 — do not set it explicitly.
 - Use `toSignal()` from `@angular/core/rxjs-interop` when you must consume an Observable (e.g. router events, HTTP responses from the api-client) — this bridges RxJS to signals cleanly.
 - Use `input()` and `output()` signal-based APIs for component inputs and outputs instead of `@Input()` / `@Output()`.
 - Template binding works natively with signals — call the signal as a function in templates: `{{ payments() }}`.
 - Services that hold shared state should expose signals (or `readonly` signal views) rather than BehaviorSubjects.
 
+### Services
+
+Use the Angular 22 **`@Service()`** decorator for global singleton services — it is the concise replacement for `@Injectable({ providedIn: 'root' })`. Reach for `@Injectable` only when you need a different provider scope or extra configuration.
+
 ```typescript
 // ✅ Service exposing signal-based state
-@Injectable({ providedIn: 'root' })
+import { Service } from '@angular/core';
+
+@Service()
 export class PaymentService {
   private readonly _payments = signal<Payment[]>([]);
   readonly payments = this._payments.asReadonly();
 }
-```
+
+// ✅ Correct — use the generated api-client (also a @Service)
+@Service()
+export class PaymentStore {
+  private readonly api = inject(PaymentManagerWebApiService);
+
+  loadPayments = () => toSignal(this.api.getPayments(), { initialValue: [] });
+}
 
 ## View Models and Template Purity
 
@@ -138,6 +151,52 @@ readonly title = this.data.payment ? 'Edit Payment' : 'New Payment';
 readonly submitLabel = this.data.payment ? 'Save' : 'Create';
 ```
 
+## Forms (Signal Forms)
+
+Use Angular's **Signal Forms** (`@angular/forms/signals`) for all forms — reactive forms are no longer the default. A form is a writable `signal` model plus a `form()` call; the template wraps it in `[formRoot]` and binds each field with `[formField]`.
+
+```typescript
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormField, FormRoot, form, required } from '@angular/forms/signals';
+
+interface PayeeFormModel { name: string }
+
+@Component({ imports: [FormRoot, FormField] /* ... */ })
+export class PayeeFormDialogComponent {
+  readonly model = signal<PayeeFormModel>({ name: '' });
+
+  readonly form = form(this.model, (path) => {
+    required(path.name, { message: 'Name is required' });
+  });
+
+  // Precompute display values — templates stay logic-free.
+  readonly nameError = computed(() => this.form.name().errors()[0]?.message ?? '');
+  readonly submitDisabled = computed(() => this.form().invalid());
+
+  submit(): void {
+    if (this.form().invalid()) return;
+    this.dialogRef.close(this.model());
+  }
+}
+```
+
+```html
+<form [formRoot]="form">
+  <input matInput [formField]="form.name" />
+  @if (nameError()) { <mat-error>{{ nameError() }}</mat-error> }
+</form>
+```
+
+### Guidelines
+
+- The model signal is the single source of truth. Read it with `model()`; update it with `model.update(...)`. Never set field values via the field tree.
+- Call a field to read its state: `form.name().value()`, `.valid()`, `.invalid()`, `.touched()`, `.errors()`. The root is callable too: `form().invalid()`.
+- Validators (`required`, `min`, `max`, `minLength`, `maxLength`, `pattern`, `email`) live in the `form()` schema, not on the template. Use `applyEach` for array fields (`splits`, `values`).
+- Never set `min` / `max` / `disabled` / `readonly` attributes on a `[formField]` host — express them as schema rules (`min(...)`, `disabled(...)`, `readonly(...)`).
+- Precompute error messages and disabled state with `computed()` so templates contain no logic (see "View Models and Template Purity").
+- Use `effect()` with `untracked()` for model side effects (e.g. clearing `endDate` when frequency becomes `Once`, clearing splits when the payer group changes). Flush effects in tests with `fixture.detectChanges()`.
+- `[formField]` works with Angular Material controls (`matInput`, `mat-select`, `mat-datepicker`) because it provides `NgControl` and consumes the host's `NG_VALUE_ACCESSOR`.
+
 ## API Client
 
 **All interaction with the backend Web API must go through the generated `api-client`.**
@@ -150,7 +209,7 @@ readonly submitLabel = this.data.payment ? 'Save' : 'Create';
 // ✅ Correct — use the generated api-client
 import { PaymentManagerWebApiService } from '../api-client/api/payment-manager-web-api.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PaymentStore {
   private readonly api = inject(PaymentManagerWebApiService);
 
@@ -189,7 +248,7 @@ frontend/src/
 
 ## Bundle Size
 
-The initial bundle must stay under **400 kB** (warning) / **600 kB** (error) as enforced by `angular.json` budgets. These limits are verified on every build, including CI.
+The initial bundle must stay under **500 kB** (warning) / **750 kB** (error) as enforced by `angular.json` budgets. These limits are verified on every build, including CI.
 
 ### Rules
 

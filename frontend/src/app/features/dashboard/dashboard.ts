@@ -10,7 +10,7 @@ import { MatInput } from '@angular/material/input';
 import { MatDatepicker, MatDatepickerInput, MatDatepickerToggle } from '@angular/material/datepicker';
 import { MatDivider } from '@angular/material/divider';
 import { MatTooltip } from '@angular/material/tooltip';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { form, FormField, readonly } from '@angular/forms/signals';
 import { PaymentSourceService } from '../../core/services/payment-source.service';
 import { PayeeService } from '../../core/services/payee.service';
 import { PaymentService } from '../../core/services/payment.service';
@@ -79,7 +79,6 @@ interface GroupCardViewModel {
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   providers: [
     CurrencyPipe,
     DatePipe,
@@ -125,7 +124,7 @@ interface GroupCardViewModel {
     MatDatepickerToggle,
     MatDivider,
     MatTooltip,
-    ReactiveFormsModule,
+    FormField,
     PaymentsPieChartComponent,
     CashDonutChartComponent,
   ],
@@ -215,8 +214,11 @@ export class DashboardComponent {
   }
 
   // Month picker — defaults to current month
-  readonly monthControl = new FormControl<Date>(new Date());
-  private readonly selectedMonth = signal<Date>(new Date());
+  readonly monthModel = signal<{ month: Date }>({ month: new Date() });
+  readonly monthForm = form(this.monthModel, (path) => {
+    readonly(path.month);
+  });
+  readonly selectedMonth = computed<Date>(() => this.monthModel().month);
 
   readonly selectedMonthLabel = computed(() =>
     this.datePipe.transform(this.selectedMonth(), 'MMMM yyyy') ?? ''
@@ -401,8 +403,7 @@ export class DashboardComponent {
   });
 
   onMonthSelected(date: Date, picker: MatDatepicker<Date>): void {
-    this.monthControl.setValue(date);
-    this.selectedMonth.set(date);
+    this.monthModel.set({ month: date });
     picker.close();
   }
 
