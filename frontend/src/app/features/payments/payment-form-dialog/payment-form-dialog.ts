@@ -92,9 +92,11 @@ export class PaymentFormDialogComponent {
   // Payee/PaymentSource are symmetric concepts read in opposite directions.
   readonly paymentSourceLabel = this.isIncoming ? 'Paid Into' : 'Paid From';
   readonly payeeLabel = this.isIncoming ? 'Paid By' : 'Paid To';
-  readonly splitSectionTitle = this.isIncoming ? 'Income Split' : 'Bill Split';
+  // Income is owned outright by one person; bills may be split across people or a group.
+  readonly splitSectionTitle = this.isIncoming ? 'Income For' : 'Bill Split';
   readonly descriptionPlaceholder = this.isIncoming ? 'What is this income for?' : 'What is this payment for?';
   readonly noGroupHint = 'Split this with individual people, or assign it to a payer group.';
+  readonly incomeHint = 'Income belongs to one person. Add people on the People page first.';
 
   readonly PaymentFrequency = PaymentFrequency;
   readonly frequencyOptions = [
@@ -120,9 +122,12 @@ export class PaymentFormDialogComponent {
     description: this.data?.payment?.description ?? '',
     // Amount field: required in both create and edit modes
     amount: this.data?.payment?.initialAmount ?? this.data?.payment?.currentAmount ?? null,
-    // Edit mode keeps the payment's existing splits. A new payment starts empty — the owner is not
-    // special, so there is no sensible person to pre-select; the user picks the participants.
-    splits: (this.data?.payment?.splits ?? []).map(s => ({ personId: s.personId, percentage: s.percentage })),
+    // Income always carries exactly one 100% split — the person it belongs to (see
+    // PaymentSplitGuard). Bills keep their existing splits; a new bill starts empty because the
+    // owner is not special, so there is no sensible person to pre-select.
+    splits: this.isIncoming
+      ? [{ personId: this.data?.payment?.splits?.[0]?.personId ?? '', percentage: 100 }]
+      : (this.data?.payment?.splits ?? []).map(s => ({ personId: s.personId, percentage: s.percentage })),
     values: this.isEditing
       ? (this.data.payment?.values ?? []).map(v =>
           this.createValueRow(PaymentFormDialogComponent.parseDateOnly(v.effectiveDate), v.amount, true))
@@ -160,6 +165,9 @@ export class PaymentFormDialogComponent {
   readonly startDateError = computed(() => this.form.startDate().errors()[0]?.message ?? '');
   readonly descriptionError = computed(() => this.form.description().errors()[0]?.message ?? '');
   readonly amountError = computed(() => this.form.amount().errors()[0]?.message ?? '');
+  readonly incomePersonError = computed(() =>
+    this.form.splits[0].personId().errors()[0]?.message ?? ''
+  );
 
   private readonly frequency = computed(() => this.model().frequency);
   private readonly payerGroupId = computed(() => this.model().payerGroupId);
@@ -206,7 +214,8 @@ export class PaymentFormDialogComponent {
   readonly hasSplitPeople = computed(() => this.splitPersonOptions().length > 0);
 
   readonly splitHint = computed(() => {
-    const groupId = this.isIncoming ? null : this.payerGroupId();
+    if (this.isIncoming) return this.incomeHint;
+    const groupId = this.payerGroupId();
     return groupId
       ? 'This payer group has no members yet. Add people to it on the People page.'
       : `${this.noGroupHint} Add people on the People page first.`;
@@ -270,10 +279,13 @@ export class PaymentFormDialogComponent {
     const model = this.model();
     const startDateStr = (model.startDate as Date).toISOString().split('T')[0];
     const endDateStr = model.endDate ? model.endDate.toISOString().split('T')[0] : undefined;
-    const splits = model.splits.map(s => ({
-      personId: s.personId,
-      percentage: Number(s.percentage)
-    }));
+    // Income is always a single 100% split; bills keep the percentages the user entered.
+    const splits = this.isIncoming
+      ? [{ personId: model.splits[0]?.personId ?? '', percentage: 100 }]
+      : model.splits.map(s => ({
+          personId: s.personId,
+          percentage: Number(s.percentage)
+        }));
 
     const metadata = {
       paymentSourceId: model.paymentSourceId,

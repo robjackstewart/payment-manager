@@ -13,7 +13,8 @@ namespace PaymentManager.Application.Common;
 /// <list type="bullet">
 /// <item>every payment has at least one split, and its splits total exactly 100%;</item>
 /// <item>every split person belongs to the user;</item>
-/// <item>incoming payments belong to people, not groups, so they carry no payer group;</item>
+/// <item>incoming payments belong to a single person, not groups, so they carry no payer
+/// group and exactly one split at 100%;</item>
 /// <item>an outgoing payment in a group may only be split across that group's members;</item>
 /// <item>an outgoing payment with no group may be split across any of the user's people.</item>
 /// </list>
@@ -70,6 +71,13 @@ internal static class PaymentSplitGuard
                 throw Invalid(
                     "PayerGroupId",
                     "Income belongs to a person, not a payer group. A group's income is the total of its members' income.");
+            }
+
+            // Income is owned outright by one person: splits are not used to divide it. The
+            // total == 100 check above means a single split is necessarily 100%.
+            if (splits.Count != 1)
+            {
+                throw Invalid("Splits", "Income belongs to exactly one person.");
             }
 
             return;

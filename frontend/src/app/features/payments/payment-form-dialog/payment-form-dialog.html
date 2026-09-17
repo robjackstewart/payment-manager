@@ -128,13 +128,29 @@
       }
     </div>
 
-    <!-- Split Section — splits are the only link between a payment and its people (PaymentSplitGuard) -->
+    <!-- Income belongs to one person; bills may be split across people or a group (PaymentSplitGuard) -->
     <div class="split-section">
       <div class="split-header">
         <span class="split-title">{{ splitSectionTitle }}</span>
       </div>
 
-      @if (hasSplitPeople()) {
+      @if (isIncoming) {
+        @if (hasSplitPeople()) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Person</mat-label>
+            <mat-select [formField]="form.splits[0].personId">
+              @for (person of splitPersonOptions(); track person.id) {
+                <mat-option [value]="person.id">{{ person.name }}</mat-option>
+              }
+            </mat-select>
+            @if (incomePersonError()) {
+              <mat-error>{{ incomePersonError() }}</mat-error>
+            }
+          </mat-form-field>
+        } @else {
+          <p class="split-hint">{{ splitHint() }}</p>
+        }
+      } @else if (hasSplitPeople()) {
         @for (split of splits(); track $index) {
           <div class="split-row">
             <mat-form-field appearance="outline" class="split-contact">

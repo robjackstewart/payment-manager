@@ -33,6 +33,14 @@ const mockPayment: Payment = {
   description: 'Rent',
 };
 
+const mockIncome: Payment = {
+  ...mockPayment,
+  direction: PaymentDirection.Incoming,
+  payerGroupId: null,
+  splits: [{ personId: 'c1', percentage: 100 }],
+  description: 'Salary',
+};
+
 async function setup(data: {
   payment?: Payment;
   direction?: PaymentDirection;
@@ -119,6 +127,20 @@ describe('PaymentFormDialogComponent', () => {
       expect(component.model().payerGroupId).toBeNull();
       expect(component.splitPersonOptions()).toEqual([mockCurrentUser, mockAlice, mockBob]);
     });
+
+    it('starts with exactly one 100% split to pick the person it belongs to', async () => {
+      const { component } = await setup({ direction: PaymentDirection.Incoming });
+      const splits = component.splits();
+      expect(splits.length).toBe(1);
+      expect(splits[0].personId).toBe('');
+      expect(splits[0].percentage).toBe(100);
+    });
+
+    it('exposes no payer group picker and an income-specific split title', async () => {
+      const { component } = await setup({ direction: PaymentDirection.Incoming });
+      expect(component.splitSectionTitle).toBe('Income For');
+      expect(component.isOutgoing).toBe(false);
+    });
   });
 
   describe('edit mode', () => {
@@ -139,6 +161,15 @@ describe('PaymentFormDialogComponent', () => {
       expect(component.splits()[0].percentage).toBe(60);
       expect(component.splits()[1].personId).toBe('c1');
       expect(component.splits()[1].percentage).toBe(40);
+    });
+
+    it('pre-fills the person for an income payment as a single 100% split', async () => {
+      const { component } = await setup({ payment: mockIncome, direction: PaymentDirection.Incoming });
+      expect(component.model().payerGroupId).toBeNull();
+      const splits = component.splits();
+      expect(splits.length).toBe(1);
+      expect(splits[0].personId).toBe('c1');
+      expect(splits[0].percentage).toBe(100);
     });
   });
 
@@ -206,11 +237,9 @@ describe('PaymentFormDialogComponent', () => {
       );
     });
 
-    it('forces payerGroupId to null for income', async () => {
+    it('forces payerGroupId to null and a single 100% split for income', async () => {
       const { component } = await setup({ direction: PaymentDirection.Incoming });
-      component.model.update(m => ({ ...m, ...validCreateFields() }));
-      component.addSplit();
-      component.model.update(m => ({ ...m, splits: [{ personId: 'self', percentage: 100 }] }));
+      component.model.update(m => ({ ...m, ...validCreateFields(), splits: [{ personId: 'self', percentage: 100 }] }));
 
       component.submit();
 
@@ -222,6 +251,15 @@ describe('PaymentFormDialogComponent', () => {
           splits: [{ personId: 'self', percentage: 100 }],
         })
       );
+    });
+
+    it('does not close the dialog when income has no person selected', async () => {
+      const { component } = await setup({ direction: PaymentDirection.Incoming });
+      component.model.update(m => ({ ...m, ...validCreateFields() }));
+
+      component.submit();
+
+      expect(TestBed.inject(MatDialogRef).close).not.toHaveBeenCalled();
     });
 
     it('does not close the dialog when required fields are missing', async () => {
