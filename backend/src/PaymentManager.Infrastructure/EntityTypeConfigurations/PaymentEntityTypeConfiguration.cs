@@ -22,5 +22,11 @@ internal class PaymentEntityTypeConfiguration : IEntityTypeConfiguration<Payment
         builder.HasOne<PaymentSource>().WithMany().HasForeignKey(x => x.PaymentSourceId);
         builder.HasOne<Payee>().WithMany().HasForeignKey(x => x.PayeeId);
         builder.HasOne<PayerGroup>().WithMany().HasForeignKey(x => x.PayerGroupId).OnDelete(DeleteBehavior.Restrict);
+
+        // Income belongs to a person, never a payer group (see PaymentSplitGuard). Enforce it
+        // at the database so no code path can persist a grouped income payment.
+        builder.ToTable("Payments", t => t.HasCheckConstraint(
+            "CK_Payments_IncomingHasNoPayerGroup",
+            "\"Direction\" <> 'Incoming' OR \"PayerGroupId\" IS NULL"));
     }
 }
