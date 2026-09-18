@@ -11,7 +11,7 @@ env:
 
 jobs:
   backend:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -33,7 +33,7 @@ jobs:
         run: devcontainer exec --workspace-folder . -- task backend:test:integration
 
   frontend:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
         uses: actions/checkout@v7
