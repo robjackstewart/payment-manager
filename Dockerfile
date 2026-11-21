@@ -11,7 +11,7 @@ RUN task build:production
 
 # Stage 2: Publish .NET WebAPI and build migrations bundle
 # Use Alpine SDK so the native SQLite library targets musl (matching the runtime image)
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS backend-build
+FROM mcr.microsoft.com/dotnet/sdk:11.0-alpine AS backend-build
 WORKDIR /src
 RUN apk add --no-cache curl && \
     sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -b /usr/local/bin
@@ -24,7 +24,7 @@ RUN task publish OUTPUT=/app/publish
 RUN task bundle-migrations OUTPUT=/app/efbundle
 
 # Stage 3: Runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0-alpine AS final
 
 # crond is provided by busybox, which is included in Alpine
 # tini is used as PID 1 to handle zombie reaping and signal forwarding
